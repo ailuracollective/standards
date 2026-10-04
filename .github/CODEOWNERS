@@ -15,10 +15,9 @@
 # Syntax follows gitignore rules and the LAST matching pattern wins, so the
 # catch-all comes first and the specific rules follow it.
 #
-# `*` is the catch-all GitHub documents for CODEOWNERS. `/**` is the
-# gitignore-looking spelling of the same idea and does not resolve: with no
-# owner attached to any path, GitHub silently refuses
-# `require_code_owner_reviews` and the rule is inert.
+# `*` is the catch-all GitHub documents. It is used rather than the
+# gitignore-looking `/**` because `/**` is ambiguous in this grammar, and an
+# ambiguous pattern in a governance file is not worth carrying.
 
 *                       @SiddharthaGF
 

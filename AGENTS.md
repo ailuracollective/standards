@@ -324,11 +324,26 @@ anything. It only binds when the branch is protected, so `main` carries:
 
 | Setting | Value | Why |
 | --- | --- | --- |
-| `required_approving_review_count` | 1 | one human read |
-| `require_code_owner_review` | true | this is what makes CODEOWNERS binding |
+| `required_pull_request_reviews.require_code_owner_reviews` | true | this is what makes CODEOWNERS binding |
+| `required_pull_request_reviews.required_approving_review_count` | 1 | one human read |
+| `required_pull_request_reviews.dismiss_stale_reviews` | true | a new push invalidates the approval it was based on |
+| `required_pull_request_reviews.require_last_push_approval` | true | nobody may push on top of someone else's approval |
+| `required_conversation_resolution` | true | unresolved threads do not merge |
 | `enforce_admins` | **false** | see below |
 | `allow_force_pushes` | false | this repository is the record; rewriting it loses the trail |
 | `allow_deletions` | false | as above |
+
+Two of those field names are easy to get wrong, and both fail silently rather than
+loudly. The API spells it `require_code_owner_reviews`, **plural**; sending the
+singular form returns HTTP 200 and quietly leaves the flag `false`. And the `PUT`
+rejects a body that omits `required_status_checks` and `restrictions` — send them
+explicitly as `null` — so a partial payload never applies anything at all. Always
+read the settings back rather than trusting the 200:
+
+```sh
+gh api /repos/ailuracollective/standards/branches/main/protection \
+  --jq '.required_pull_request_reviews.require_code_owner_reviews'   # must be true
+```
 
 `enforce_admins` is deliberately off, and the reason is a deadlock rather than a
 preference. @SiddharthaGF is both the only code owner and the only account with
@@ -336,7 +351,15 @@ write access. GitHub does not let an author approve their own pull request, so
 enforcing admin review would mean **no pull request could ever be merged** — the
 repository would be frozen after its first commit. As configured, every other
 contributor needs @SiddharthaGF's code-owner review, while @SiddharthaGF keeps a
-direct-push escape hatch.
+direct-push escape hatch, which is verified to work both as a plain `git push` and
+as `gh pr merge --admin`.
+
+**The enforcement is not fully verified, and cannot be while one person holds all
+the access.** A test pull request reports `REVIEW_REQUIRED` and `BLOCKED`, which is
+what a binding code-owner rule looks like — but it looks identical to a plain
+one-approval rule, because the only account that could supply a second approval is
+the author. Distinguishing the two requires granting write access to a second
+person. Until then, treat the code-owner rule as configured rather than proven.
 
 That is a bootstrap state, not a finished one. Turning it into a real guarantee
 takes one thing: **grant write access to a second person**, then flip
