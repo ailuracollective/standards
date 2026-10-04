@@ -1,0 +1,51 @@
+# Code owners — ailuracollective/standards
+#
+# Every file here is load-bearing for every repository in the organisation. A
+# change to a heading in a pull request template changes what every contributor
+# in every repository is required to write; a change to labels.yml changes what
+# every repository can label. There is no file in this repository that is safe
+# to change casually.
+#
+# The rules below all resolve to the same single owner today, because
+# @SiddharthaGF is currently the only collaborator with write access. The
+# grouping is therefore documentation rather than enforcement: it records which
+# files carry which blast radius, so adding a second owner later is a one-line
+# change per group rather than a redesign.
+#
+# Syntax follows gitignore rules and the LAST matching pattern wins, so the
+# catch-all comes first and the specific rules follow it.
+
+/**                      @SiddharthaGF
+
+# CODEOWNERS owns itself. Without this rule, a pull request that removes a
+# reviewer's own required approval could be merged by that reviewer, because
+# the rule that would have demanded their review is the thing being deleted.
+/.github/CODEOWNERS      @SiddharthaGF
+
+# Pull request templates — the widest blast radius in the repository. The
+# body-structure gate in ailuracollective/actions/pull-request@v1 resolves
+# these files from the consuming repository and requires every heading declared
+# here to appear in a pull request body. Renaming or removing a heading changes
+# the contract for every open and future pull request across the organisation.
+/.github/PULL_REQUEST_TEMPLATE/*.md   @SiddharthaGF
+
+# labels.yml — the label set. Mirrored by hand into every consuming repository's
+# manifest AND into the type-labels input of its policy.yml. A change here that
+# is not mirrored makes a gate unsatisfiable rather than merely strict.
+/.github/labels.yml     @SiddharthaGF
+
+# Issue templates — the forms in the issue chooser. Renaming a body field id
+# breaks bookmarked and prefilled links, and GitHub drops a label named here
+# without an error when the repository does not have it, so label changes in
+# these files are invisible until someone files a test issue.
+/.github/ISSUE_TEMPLATE/*.yml        @SiddharthaGF
+
+# ISSUE_STANDARD.md — prose, not data. It does not parse as YAML by design and
+# is not read by any tool, which means nothing validates the type list against
+# the templates. Editing it deserves the same care as editing a template.
+/.github/ISSUE_STANDARD.md           @SiddharthaGF
+
+# AGENTS.md — the instructions every agent and contributor reads before touching
+# this repository. A wrong claim in here propagates into every repository that
+# copies these files.
+/AGENTS.md               @SiddharthaGF

@@ -36,9 +36,10 @@ the *record* of the label set, not the labels on any remote.
   default `PULL_REQUEST_TEMPLATE.md`.
 - **30** labels: six prefixed families (`type` 5, `priority` 4, `status` 5,
   `scope` 8, `meta` 5, `release` 2) plus one unprefixed, `github_actions`.
-- **24** files total: 2 in `.github/`, 8 in `ISSUE_TEMPLATE/`, 13 in
-  `PULL_REQUEST_TEMPLATE/`, and this one. Do not quote these numbers loosely; if
-  you change one of them, update this section.
+- **25** files total: 3 in `.github/` (`labels.yml`, `ISSUE_STANDARD.md`,
+  `CODEOWNERS`), 8 in `ISSUE_TEMPLATE/`, 13 in `PULL_REQUEST_TEMPLATE/`, and this
+  one. Do not quote these numbers loosely; if you change one of them, update this
+  section.
 
 ## The invariant: one type, one template, one title prefix
 
@@ -310,6 +311,41 @@ describe one repository's test strategy, not the type.
 4. Decide its label before writing the file. If it has no home in `type/*`, say
    so rather than inventing an undeclared label — see the known gap above.
 5. Update the counts in this file.
+
+## Ownership and enforcement
+
+`.github/CODEOWNERS` gives every path to `@SiddharthaGF`, the only collaborator
+with write access. The grouping is documentation, not enforcement: each block
+records which files carry which blast radius, so adding a second owner later is a
+one-line change per group rather than a redesign.
+
+**CODEOWNERS is advisory on its own.** It requests a review; it does not block
+anything. It only binds when the branch is protected, so `main` carries:
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| `required_approving_review_count` | 1 | one human read |
+| `require_code_owner_review` | true | this is what makes CODEOWNERS binding |
+| `enforce_admins` | **false** | see below |
+| `allow_force_pushes` | false | this repository is the record; rewriting it loses the trail |
+| `allow_deletions` | false | as above |
+
+`enforce_admins` is deliberately off, and the reason is a deadlock rather than a
+preference. @SiddharthaGF is both the only code owner and the only account with
+write access. GitHub does not let an author approve their own pull request, so
+enforcing admin review would mean **no pull request could ever be merged** — the
+repository would be frozen after its first commit. As configured, every other
+contributor needs @SiddharthaGF's code-owner review, while @SiddharthaGF keeps a
+direct-push escape hatch.
+
+That is a bootstrap state, not a finished one. Turning it into a real guarantee
+takes one thing: **grant write access to a second person**, then flip
+`enforce_admins` to true. Do that before treating this repository as reviewed.
+
+Two rules that must hold while there is a single owner. CODEOWNERS owns itself,
+so a pull request cannot delete the rule demanding the review it needs. And
+nobody with write access may push straight to `main` — open a pull request even
+though you could bypass the review, because the review is the point.
 
 ## Adding a pull request type
 
