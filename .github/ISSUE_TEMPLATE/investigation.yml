@@ -1,0 +1,69 @@
+name: Investigation
+description: Investigate a question or uncertainty before implementation.
+title: "spike: "
+labels:
+  - investigation
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What led to this investigation?
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What needs to be answered?
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+    validations:
+      required: true
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+
+  - type: textarea
+    id: expected-outcome
+    attributes:
+      label: Expected outcome
+      value: |
+        The investigation should produce:
+        - Findings
+        - Relevant alternatives
+        - Trade-offs
+        - Recommendation
+        - Follow-up issues when required
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] The question is answered with evidence.
+        - [ ] Relevant alternatives are evaluated.
+        - [ ] A recommendation is documented.
+        - [ ] Implementation work is tracked separately when appropriate.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes

@@ -1,0 +1,66 @@
+name: Testing
+description: Add or improve automated test coverage.
+title: "test: "
+labels:
+  - testing
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What behavior needs stronger test coverage?
+    validations:
+      required: true
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What should the test suite guarantee?
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+    validations:
+      required: true
+
+  - type: textarea
+    id: scenarios
+    attributes:
+      label: Scenarios
+      description: List important success, failure, and boundary scenarios.
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] Relevant behavior is covered by automated tests.
+        - [ ] Important success scenarios are covered.
+        - [ ] Important failure or boundary scenarios are covered.
+        - [ ] Tests are deterministic and maintainable.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes

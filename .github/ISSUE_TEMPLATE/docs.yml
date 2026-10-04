@@ -1,0 +1,54 @@
+name: Documentation
+description: Add or update project documentation.
+title: "docs: "
+labels:
+  - documentation
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why is this documentation needed?
+    validations:
+      required: true
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What should readers understand or be able to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+    validations:
+      required: true
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] Documented behavior matches the implementation.
+        - [ ] The intended audience can understand the documentation.
+        - [ ] Relevant examples or configuration details are included when needed.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes

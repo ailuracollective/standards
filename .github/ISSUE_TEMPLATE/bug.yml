@@ -1,0 +1,72 @@
+name: Bug Fix
+description: Correct behavior that does not match the expected behavior.
+title: "fix: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: what-happens
+    attributes:
+      label: What happens
+      description: Describe the incorrect behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes: 
+      label: Expected behavior
+      description: Describe what should happen instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Who or what is affected?
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: How to reproduce
+      description: Provide the smallest reliable reproduction.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What work belongs to this fix?
+    validations:
+      required: true
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What related work is excluded?
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] The incorrect behavior no longer occurs.
+        - [ ] Expected behavior is verified by an appropriate test.
+        - [ ] Existing behavior outside the fix remains unchanged.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes

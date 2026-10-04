@@ -1,0 +1,64 @@
+name: Maintenance
+description: Technical maintenance with no intended functional change.
+title: "chore: "
+labels:
+  - maintenance
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why is this maintenance work needed?
+    validations:
+      required: true
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What should be improved, removed, simplified, or maintained?
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+    validations:
+      required: true
+
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      value: |
+        - No functional behavior changes unless explicitly stated.
+        - Preserve public APIs unless explicitly stated otherwise.
+        - Preserve security-sensitive behavior unless explicitly included.
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] Intended maintenance changes are complete.
+        - [ ] Existing behavior remains unchanged.
+        - [ ] Relevant tests pass.
+        - [ ] No unnecessary changes outside the scope are introduced.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
