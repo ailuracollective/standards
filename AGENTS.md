@@ -16,6 +16,7 @@ Three artifacts, each with exactly one owner:
 | `.github/ISSUE_STANDARD.md`                            | how an issue is written                  | humans and agents drafting issues           |
 | `.github/labels.yml`                                   | the label set (30 labels)                | anything that reads or applies labels       |
 | `.github/ISSUE_TEMPLATE/*.yml` (7 templates + config)  | the forms in the issue chooser           | GitHub                                      |
+| `.github/PULL_REQUEST_TEMPLATE/*.md` (12 + default)    | the form per pull request type           | GitHub                                      |
 
 `ISSUE_STANDARD.md` is **prose and is not machine-readable**. It was
 `ISSUE_STANDARD.yml` and did not parse as YAML — the numbered list under Purpose
@@ -31,11 +32,13 @@ the *record* of the label set, not the labels on any remote.
 
 - **7** issue types, declared once in `ISSUE_STANDARD.md` § Issue Types.
 - **7** templates — one per type — plus `config.yml`, which is not a template.
+- **12** pull request templates — one per Conventional Commit type — plus a
+  default `PULL_REQUEST_TEMPLATE.md`.
 - **30** labels: six prefixed families (`type` 5, `priority` 4, `status` 5,
   `scope` 8, `meta` 5, `release` 2) plus one unprefixed, `github_actions`.
-- **11** files total: the 9 YAML files and 1 Markdown file above, plus this one.
-  Do not quote these numbers loosely; if you change one of them, update this
-  section.
+- **24** files total: 2 in `.github/`, 8 in `ISSUE_TEMPLATE/`, 13 in
+  `PULL_REQUEST_TEMPLATE/`, and this one. Do not quote these numbers loosely; if
+  you change one of them, update this section.
 
 ## The invariant: one type, one template, one title prefix
 
@@ -225,6 +228,76 @@ Issue templates:
   pick that form. Reach for markdown only for guidance that must be read before
   a field is filled, never to restate a field's own description.
 
+## Pull request templates
+
+`.github/PULL_REQUEST_TEMPLATE/` holds **12 templates plus a default**, one per
+Conventional Commit type: `breaking-change`, `build`, `chore`, `ci`, `docs`,
+`feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`. That is the eleven
+types `policy.yml` accepts as a branch segment, plus `breaking-change`.
+
+This directory matters more than it looks. The `enable-body-structure` gate in
+`ailuracollective/actions/pull-request@v1` requires that **every `## ` heading in
+the template matching the pull request's title type appears in its body**, and it
+resolves that template from the *consuming* repository. A repository that ships
+no template for a type falls back to `PULL_REQUEST_TEMPLATE.md`, so the twelve
+here are what makes that gate mean the same thing everywhere.
+
+### Structure is universal; commands are not
+
+Every template splits into two kinds of content, and the split is the whole
+design:
+
+- **Structure** — which headings a type must have. Universal. Lives here.
+- **Commands** — the checks CI actually runs. Per repository. Does not.
+
+The `## Test plan` block is therefore a `TODO` placeholder, never a real command.
+A TypeScript repository and a Rust repository cannot share a test plan:
+`vp check` / `pnpm run size` and `cargo clippy` / `cargo test` have nothing to do
+with each other. **Each consuming repository replaces that block**, in the same
+pull request that changes its CI. Do not "helpfully" fill it in here.
+
+### Four headings are common to all thirteen
+
+`## Linked issue (required)`, `## Type (required)`, `## Test plan`, and
+`## Contributor checklist` appear in every file. Three of the four are
+**byte-identical** across all thirteen. `## Type (required)` differs in exactly two
+lines — the `- [ ] \`type\`` checkbox and the label note beneath it — which is the
+point of the heading; the guidance above them is identical.
+
+If you change the guidance in one, change it in all thirteen. A divergence here is
+a divergence in what the gate demands per repository, which is precisely the
+failure this directory exists to prevent.
+
+### The label a template asks for
+
+Each template names the single `type/*` label to apply, because the two
+vocabularies differ and contributors conflate them. Nine of the twelve types map
+to `type/task`, the catch-all. **`breaking-change` has no label of its own**: the
+family has exactly five members and none marks a break, so the template says to
+apply the label of the underlying change instead.
+
+### Merges against the existing consumers
+
+`alpinejs-toolkit` (7 templates) and `colander` (10) both ran this gate with
+templates that shared no headings beyond the first two. Reconciling them was a
+design decision, recorded here because the alternatives are recoverable:
+
+| Decision | Chosen | Over |
+| --- | --- | --- |
+| Test-plan heading | `## Test plan` | `## Checks run` (colander) |
+| Fix regression section | `## Regression test` | `## Regression coverage` + `## How to verify the fix` |
+| Refactor equivalence | `## Behavioral equivalence` | `## Proof that behavior is unchanged` |
+| Perf measurement | `## Measurements (required)` | `## Measurements` |
+
+Near-duplicate headings were merged rather than carried as two required sections;
+colander's `## How to verify the fix` survives as guidance inside
+`## Regression test`. Sections unique to one repo were adopted where they
+generalise — colander's `## Behavior is unchanged` on `perf.md`,
+`## Existing coverage that moved` on `test.md`, `## Packaging and version
+changes` on `build.md`, `## Why the previous text was wrong` on `docs.md`. Repo-
+specific headings such as colander's `## Frozen vectors` were left out: they
+describe one repository's test strategy, not the type.
+
 ## Adding an issue type
 
 1. Add the type to `## Issue Types` in `.github/ISSUE_STANDARD.md` and give it
@@ -237,6 +310,20 @@ Issue templates:
 4. Decide its label before writing the file. If it has no home in `type/*`, say
    so rather than inventing an undeclared label — see the known gap above.
 5. Update the counts in this file.
+
+## Adding a pull request type
+
+1. Add `<type>.md` to `.github/PULL_REQUEST_TEMPLATE/`, named for the Conventional
+   Commit type exactly — the filename is the key the gate resolves against.
+2. Copy the four common headings from an existing template **verbatim**, except
+   the `- [ ] \`type\`` checkbox and the label note inside `## Type (required)`,
+   which are per-type by design.
+3. Name the one `type/*` label to apply. `type/task` is the catch-all; if the type
+   genuinely maps to none of the five, say so in the file rather than inventing a
+   sixth.
+4. Keep the `## Test plan` block as `TODO` placeholders.
+5. If the type is also a valid branch segment, mirror it into the `branch-types`
+   input of every consuming `policy.yml`.
 
 ## Adding or changing a label
 
@@ -275,7 +362,23 @@ PY
 sed -n '/^## Issue Types/,/^## Title/p' .github/ISSUE_STANDARD.md | grep -c '^- `'
 ls .github/ISSUE_TEMPLATE/*.yml | grep -vc config       # 7 templates
 grep -h '^title: ' .github/ISSUE_TEMPLATE/*.yml | sort   # 7 prefixes
+
+# one pull request template per type, common headings intact
+find .github/PULL_REQUEST_TEMPLATE -name '*.md' ! -name 'PULL_REQUEST_TEMPLATE.md' | wc -l  # 12
+find .github/PULL_REQUEST_TEMPLATE -name '*.md' | wc -l                                   # 13
+for h in 'Linked issue (required)' 'Type (required)' 'Test plan' 'Contributor checklist'; do
+  printf '%-24s %s/13\n' "$h" "$(grep -lF "## $h" .github/PULL_REQUEST_TEMPLATE/*.md | wc -l)"
+done
+grep -rn 'vp check\|pnpm run\|cargo ' .github/PULL_REQUEST_TEMPLATE/ \
+  | grep -v 'cannot run' || echo 'no hardcoded CI commands'
 ```
+
+Count the typed templates with `find … ! -name 'PULL_REQUEST_TEMPLATE.md'`, not
+`grep -v PULL_REQUEST_TEMPLATE`: every path contains the *directory's* name, so
+that filter matches all thirteen and returns zero.
+
+The last check is the one that matters most: a repository-specific command in
+these files makes the gate demand a check that repository cannot run.
 
 The first check needs `pyyaml`, which is not vendored. It globs `*.yml`, so it
 never touches `ISSUE_STANDARD.md` — there is nothing to parse there.
@@ -298,6 +401,12 @@ gap above rather than a bug in your change.
 
 ## Do not
 
+- Do not fill in the `## Test plan` commands here. They are per repository by
+  necessity, and a hardcoded `cargo test` in a TypeScript repository is worse
+  than a `TODO`.
+- Do not let the guidance in one of the four common headings drift. It is
+  identical across all thirteen files on purpose; only the checkbox and label
+  note inside `## Type (required)` are per-type.
 - Do not add a template without adding its type to `ISSUE_STANDARD.md`. The
   standard and the chooser must not disagree about what kinds of issue exist.
 - Do not convert `ISSUE_STANDARD.md` back to YAML or point a parser at it. It is
