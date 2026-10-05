@@ -3,13 +3,14 @@
 The origin for how issues and pull requests are written across `ailuracollective`.
 Five artifacts, copied by hand into each repository:
 
-| Artifact                          | What it decides                                             |
-| --------------------------------- | ----------------------------------------------------------- |
-| `.github/ISSUE_STANDARD.md`       | how an issue is written — prose, not data                   |
-| `.github/ISSUE_TEMPLATE/*.yml`    | the 7 forms in the issue chooser, plus `config.yml`         |
-| `.github/PULL_REQUEST_TEMPLATE/`  | 12 forms, one per Conventional Commit type, plus a default  |
-| `.github/labels.yml`              | the 30-label set                                            |
-| `.github/CODEOWNERS`              | who reviews a change, per file                              |
+| Artifact                                 | What it decides                                             |
+| ---------------------------------------- | ----------------------------------------------------------- |
+| `.github/ISSUE_STANDARD.md`              | how an issue is written — prose, not data                   |
+| `.github/ISSUE_TEMPLATE/*.yml`           | the 7 forms in the issue chooser, plus `config.yml`         |
+| `.github/PULL_REQUEST_TEMPLATE/`         | 12 forms, one per Conventional Commit type, plus a default  |
+| `.github/labels.yml`                     | the 30-label set                                            |
+| `.github/CODEOWNERS`                     | who reviews a change, per file                              |
+| `.github/standards.local.example.yml`    | the shape of a customization record — opt-in, see below     |
 
 `AGENTS.md` is the working reference: the invariants, the conventions, the known
 gaps, and the commands to check a change by hand. Read it before editing anything
@@ -39,7 +40,7 @@ check would deadlock the repository. See *Ownership and enforcement* in
 
 ## Adopting it
 
-Copy the five artifacts into the repository's own `.github/`. Three things are not
+Copy the five artifacts into the repository's own `.github/`. Four things are not
 optional.
 
 **Replace the `## Test plan` block in all 12 pull request templates.** Here they
@@ -67,6 +68,25 @@ repository may instead keep it beside the directory at
 chose with `default-template` — its own default is the second, and inheriting it
 while your file is the first makes the body-structure check resolve to nothing.
 
+## If the repository deviates from the standard
+
+Most repositories should not need this section. A repository that changes nothing
+copies the five artifacts and is done.
+
+The moment you add a label of your own, change a color, or tune a gate input, the
+copy stops being identical to the core and there is nothing recording whether that
+difference was decided. Copy `.github/standards.local.example.yml` to
+`.github/standards.local.yml` in your repository and declare what you changed and
+why. It is opt-in, it declares rather than configures — **nothing reads it, not
+even the gate**, so a value there changes nothing until you also edit your own
+`policy.yml` — and `AGENTS.md` § Customizing the standard has the four deviation
+levels and what each one costs.
+
+Two things worth knowing before you start: adding a label in a new family such as
+`area/` needs no approval from anywhere, and a new `type/*` label does — it is the
+family the gate reads, and it is frozen at five. A project-specific concern goes
+into the new family, not into `type/`.
+
 ## Verifying an adoption
 
 Nothing here runs against an adopting repository, so the checks are manual and
@@ -80,6 +100,10 @@ gh label list --limit 100 --json name --jq '.[].name' | sort
 
 # 2. do the gate's inputs name labels that repository has, rather than labels it once had?
 grep -A3 'type-labels:\|approved-label:\|auto-label-name:' .github/workflows/policy.yml
+
+# 3. if it customizes, do the labels it declared also exist on the remote?
+#    (no file means it declares nothing — that is not a defect)
+yq -r '.extensions[]?.name' .github/standards.local.yml 2>/dev/null
 ```
 
 A gate that names a label the repository does not have is not a strict gate, it is

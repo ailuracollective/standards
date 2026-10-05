@@ -59,3 +59,10 @@
 # this repository. A wrong claim in here propagates into every repository that
 # copies these files.
 /AGENTS.md               @SiddharthaGF
+
+# standards.local.example.yml — the schema every adopting repository copies when it
+# customizes the standard, and an interface another project implements a checker
+# against. Two blast radii rather than one: a wrong field name makes every
+# customization record unreadable, and a wrong rule here teaches repositories to
+# record deviations in a shape nobody can check.
+.github/standards.local.example.yml   @SiddharthaGF

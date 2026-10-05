@@ -1,0 +1,132 @@
+# `.github/standards.local.yml` — the customization record.
+#
+# This is an OPT-IN file. A repository that customizes nothing does not have it, and
+# "no file" means "no deviations" as an ASSUMPTION, not as a declared fact.
+#
+# ---------------------------------------------------------------------------
+# It DECLARES. It does not CONFIGURE.
+# ---------------------------------------------------------------------------
+#
+# No workflow anywhere reads this file, including the gates that enforce the standard.
+# The gate in an adopting repository reads that repository's own
+# `.github/workflows/policy.yml`, because a workflow cannot read a file. Changing a
+# value here changes nothing: to change behaviour you still edit the workflow.
+#
+# So what is this for? It answers one question that nothing else answers — *is this
+# difference from the core intentional, or did the copy rot?* Today those two look
+# identical, because the only record of a customization is the customization itself.
+#
+# If you are looking for a place to configure the gate, there is none, by design.
+#
+# ---------------------------------------------------------------------------
+# Levels
+# ---------------------------------------------------------------------------
+#
+#   extensions        level 1  a label in a family the core does not use. No approval.
+#   label-overrides   level 2  changing a core label's color or description.
+#   input-overrides   level 2  changing a gate input's value.
+#   drops             level 3  removing a core label. Needs a reason.
+#   structural        level 3  changing a gate input's set, or the manifest's shape.
+#
+# Level 3 requires an issue in ailuracollective/standards, and `issue:` records which
+# one. Levels 1 and 2 do not.
+#
+# ---------------------------------------------------------------------------
+# Reserved families
+# ---------------------------------------------------------------------------
+#
+# These eight are the core. `type/` is frozen at five members and does not grow per
+# repository — a need for a sixth type label is a `type/*` label plus an entry in
+# `extensions`, not a new type label.
+#
+#   type/    priority/    status/    scope/    meta/
+#   github_actions    release/
+#
+# Any other family — `area/`, `team/`, `product/`, `region/` — is a level 1 extension
+# and needs no approval. The set is open on purpose; the reserved list is what stops
+# an extension from colliding with something load-bearing.
+#
+# ---------------------------------------------------------------------------
+# Copy this file, keep only the sections you use.
+# ---------------------------------------------------------------------------
+
+# An explicit empty mapping, on purpose. A file of nothing but comments parses to
+# `None`, which a checker cannot tell apart from an empty or truncated file. This
+# makes "copied, nothing declared" a real value instead of an accident.
+{}
+
+# Informational. There is no release cadence for the core yet, so nothing validates
+# this value and nothing depends on it. It exists to record which snapshot you
+# customized, for your own benefit.
+# extends: "2026-01"
+
+# --- Level 1: additive extensions ------------------------------------------
+#
+# Labels that are not part of the core. `name`, `color` and `description` are the same
+# three keys the core manifest uses, in the same order, because the recipe that
+# applies a manifest reads files shaped this way.
+#
+# extensions:
+#   - name: "area/auth"
+#     color: "1D76DB"
+#     description: "Authentication, sessions, and permissions."
+#   - name: "team/payments"
+#     color: "0E8A16"
+#     description: "Billing, invoicing, and the payment provider integration."
+
+# --- Level 2: overrides ------------------------------------------------------
+#
+# A core label whose value you changed, or a gate input whose value you changed.
+# `reason` is REQUIRED. An override without a reason is indistinguishable from a copy
+# that rotted, which is the exact thing this file exists to prevent.
+#
+# `field` is required for a label and names one of `color` or `description`.
+#
+# label-overrides:
+#   - name: "type/bug"
+#     field: "color"
+#     value: "B60205"
+#     reason: "Red is reserved for security; a bug is not a security incident."
+#
+# `value` is the literal string the workflow input takes, so a number stays quoted.
+# These are the inputs a repository may reasonably want at a different value; the
+# full list is in `ailuracollective/actions`.
+#
+# input-overrides:
+#   - input: "title-min"
+#     value: "30"
+#     reason: "Our commit subjects are descriptive enough that 15 rejects real work."
+#   - input: "approved-label"
+#     value: "status/triaged"
+#     reason: "Our triage flow renames status/ready for pre-releases."
+
+# --- Level 3: drops and structural deviations --------------------------------
+#
+# Both need a reason, and both should carry `issue:` — the ailuracollective/standards
+# issue that approved the deviation. Without one, this repository cannot tell an
+# approved deviation from a repository that drifted, and that ambiguity is the thing
+# the file is meant to remove.
+#
+# `drops` is a label the repository chose not to carry. A dropped label still has to
+# be explained: "we do not have that surface" and "we forgot" are the same file.
+#
+# drops:
+#   - name: "scope/security"
+#     reason: "Internal-only service with no exposed attack surface."
+#
+# `structural` covers the two kinds of deviation a checker must not mistake for rot.
+# `kind: input` is a gate input whose SET changes rather than its value — the type
+# vocabularies, the branch segments. `kind: manifest` is a local file whose shape
+# differs from the core manifest, which happens because both forms parse as YAML and
+# a mechanical copy changes one into the other without failing anywhere.
+#
+# structural:
+#   - kind: "input"
+#     input: "title-types"
+#     value: "feat,fix,chore,docs,refactor,test,build,ci,perf,revert,style,breaking-change"
+#     reason: "We do not use release automation, so release PRs are not typed."
+#     issue: 13
+#   - kind: "manifest"
+#     manifest: "nested"
+#     reason: "Our labels.yml nests under a `labels:` key; the header and the reconciliation recipe are ours."
+#     issue: 13
