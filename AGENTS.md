@@ -7,20 +7,24 @@ Guidance for AI agents and contributors working in this repository.
 The source of truth for GitHub issue standards shared across an organisation's
 repositories. There is no application code here, no build and no test suite.
 `README.md` is the entry point for a human; this file is the working reference.
-Under `.github/` there are **11 YAML files, 14 Markdown files, and 1 CODEOWNERS
-file**; four more files sit in the repository root.
+Under `.github/` there are **12 YAML files, 14 Markdown files, and 1 CODEOWNERS
+file**; six more files sit in the repository root.
 
-Seven artifacts, each with exactly one owner:
+Seven artifacts, each with exactly one owner. The release files are the
+eighth and ninth, and they are the only two that a machine rewrites without a
+pull request — see § Releases.
 
-| File                                                   | Owns                                     | Read by                                     |
-| ------------------------------------------------------ | ---------------------------------------- | ------------------------------------------- |
-| `.github/ISSUE_STANDARD.md`                            | how an issue is written                  | humans and agents drafting issues           |
-| `.github/labels.yml`                                   | the label set (30 labels)                | anything that reads or applies labels       |
-| `.github/ISSUE_TEMPLATE/*.yml` (7 templates + config)  | the forms in the issue chooser           | GitHub                                      |
-| `.github/PULL_REQUEST_TEMPLATE/*.md` (12 + default)    | the form per pull request type           | GitHub                                      |
-| `.github/CODEOWNERS`                                   | who reviews a change                     | GitHub, via branch protection               |
-| `.github/workflows/policy.yml`                         | the projection of all of the above      | GitHub Actions, on every pull request       |
-| `.github/standards.local.example.yml`                  | the shape of a customization record      | a reader — or a checker, once one exists    |
+| File                                                              | Owns                                        | Read by                                            |
+| ----------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------- |
+| `.github/ISSUE_STANDARD.md`                                       | how an issue is written                     | humans and agents drafting issues                 |
+| `.github/labels.yml`                                              | the label set (30 labels)                   | anything that reads or applies labels             |
+| `.github/ISSUE_TEMPLATE/*.yml` (7 templates + config)             | the forms in the issue chooser              | GitHub                                            |
+| `.github/PULL_REQUEST_TEMPLATE/*.md` (12 + default)               | the form per pull request type              | GitHub                                            |
+| `.github/CODEOWNERS`                                              | who reviews a change                        | GitHub, via branch protection                     |
+| `.github/workflows/policy.yml`                                    | the projection of all of the above          | GitHub Actions, on every pull request             |
+| `.github/workflows/release.yml`                                   | when a release is cut, and what it bumps    | GitHub Actions, on every push to `main`           |
+| `release-please-config.json` + `.release-please-manifest.json`    | the release type, and the current version   | release-please, and anyone reading the version    |
+| `.github/standards.local.example.yml`                             | the shape of a customization record         | a reader — or a checker, once one exists         |
 
 The last one is opt-in and is the only artifact nobody is required to copy; see
 § Customizing the standard for what it is and, more importantly, what it is not.
@@ -40,6 +44,11 @@ runs nothing of this repository either. It checks out the base branch, never the
 head, so no code under review reaches a runner holding a token. It is the
 standard projected onto its own repository, and it is what makes this repository's
 templates and labels load-bearing rather than decorative — see § Enforcement.
+
+`.github/workflows/release.yml` is a second exception, and a different kind of
+one: it runs on a push to `main`, so it acts on merged history rather than on a
+proposal, and it holds a write grant. It is the only workflow here that writes.
+Neither file is part of the standard an adopting repository copies.
 
 ### What is named here, and what is not
 
@@ -65,10 +74,13 @@ of which there may be none, one, or many.
   default `PULL_REQUEST_TEMPLATE.md`.
 - **30** labels: six prefixed families (`type` 5, `priority` 4, `status` 5,
   `scope` 8, `meta` 5, `release` 2) plus one unprefixed, `github_actions`.
-- **30** files total: 4 in `.github/` (`labels.yml`, `ISSUE_STANDARD.md`,
-  `standards.local.example.yml`, `CODEOWNERS`), 1 in `.github/workflows/`, 8 in `ISSUE_TEMPLATE/`, 13 in
-  `PULL_REQUEST_TEMPLATE/`, and 4 in the repository root (`AGENTS.md`,
-  `README.md`, `CONTRIBUTING.md`, `LICENSE`).
+- **33** files total: 4 in `.github/` (`labels.yml`, `ISSUE_STANDARD.md`,
+  `standards.local.example.yml`, `CODEOWNERS`), 2 in `.github/workflows/`, 8 in `ISSUE_TEMPLATE/`, 13 in
+  `PULL_REQUEST_TEMPLATE/`, and 6 in the repository root (`AGENTS.md`,
+  `README.md`, `CONTRIBUTING.md`, `LICENSE`, `release-please-config.json`,
+  `.release-please-manifest.json`).
+  The root count excludes `.gitignore`, which is deliberately not part of the
+  standard anything copies.
   Do not quote these numbers loosely; if you change one of them, update this
   section.
 
@@ -387,6 +399,100 @@ Structural divergences worth knowing before you copy anything either direction:
   action's own default is the beside-the-directory path — so a repository using the
   inside-the-directory layout must say so with `default-template`.
 
+## Releases
+
+Releases here are planned by `release-please`, not remembered by a person. On
+every push to `main` it reads the Conventional Commit subjects since the last
+tag, and when there is anything releasable it opens **a pull request** carrying
+the version bump and a generated changelog. Once that pull request merges, the
+tag and the GitHub release exist. Nothing is published directly from the
+workflow, so a release is a reviewed change like any other — which is the whole
+reason for choosing the pull-request mode over a direct release.
+
+**`release-type: simple`, and that is a consequence, not a preference.** This
+repository has no package, no build output and nothing to publish, so its version
+lives in exactly one place — `.release-please-manifest.json` — and a release type
+that edited a `package.json` would have nothing to edit. The manifest is the
+entire artifact.
+
+**`initial-version: 0.1.0` is load-bearing.** With no previous release,
+release-please opens the first one at `1.0.0`. For a repository other
+repositories already copy from, that is a compatibility claim nobody made.
+
+**`packages` carries `"."` explicitly.** It looks redundant and is not: the
+upstream schema requires the key, `parseConfig` builds `repositoryConfig` by
+iterating it, and `manifest.ts` dereferences `repositoryConfig[path]` on exactly
+the path this repository takes — a manifest naming a version with no release yet.
+Omitting the key fails on the first push, not at configuration time.
+
+### The release pull request cannot pass this repository's own gates
+
+Its head ref is `release-please--branches--<branch>`, which carries no type
+segment where the branch gate requires one, and four of the five pull request
+checks are unsatisfiable by a generated changelog: no issue to close, a body
+that is not any type's template, and no `type/*` label.
+
+**The head ref is not configurable.** release-please hardcodes the prefix in
+`src/util/branch-name.ts` and reopens the same branch every run, so there is no
+setting that makes such a pull request pass. Something has to exempt it.
+
+`policy.yml` exempts it by **head ref**, in the `if:` condition on both jobs:
+
+```yaml
+!startsWith(github.event.pull_request.head.ref, 'release-please--branches--')
+```
+
+It does not use `skip-actors`, and that choice is the interesting part.
+`skip-actors` matches the **login** that opened the pull request, so exempting
+the release identity would also exempt anything else that account ever opens. In
+this repository that account is not exclusively a machine identity — it is the
+account behind `AILURA_KITTY_TOKEN`, which publishes the status comment on every
+pull request — so the usual justification for a whole-action identity exemption
+does not hold. The head ref is the property that actually makes these pull
+requests unrepresentable: a pull request a person wrote has a branch someone
+chose, and that branch has a type segment or the mistake was worth making.
+
+| | keyed on | scope of the exemption | leaves a record |
+| --- | --- | --- | --- |
+| `skip-actors` | who opened it | every pull request that account ever opens | yes — reported *skipped* |
+| head ref | what it is | only a release pull request | no — the job never runs |
+
+The cost is the last column. An exempt pull request leaves **no status comment
+and no check**, because the job does not run rather than running and reporting
+itself skipped. Nothing on the board records that the exemption was deliberate.
+
+The alternative was making release-please satisfy the checks: `extra-label`
+supplies a `type/*` label, and `pull-request-footer` could carry both a closing
+keyword and the template headings. Rejected because `pull-request-footer` is
+static text — it would name the same issue in every release forever, and carry
+heading lines that exist only to be found by a grep. That produces a green board
+and no review, which is worse than an absent one.
+
+### The token does two jobs
+
+`release.yml` uses `AILURA_KITTY_TOKEN`, the same personal access token
+`policy.yml` passes as `comment-token`. The reason is authorship, not
+permissions, and both grants would work either way: release-please creates its
+commit through the API, GitHub attributes the author and committer to whichever
+token made the call, and release-please exposes no author setting to override
+that. **The token is the author setting.** With `GITHUB_TOKEN` every release
+commit is attributed to `github-actions[bot]`.
+
+The trade, accepted deliberately: one credential now publishes status comments on
+every pull request **and** creates tags and releases. Revoking it stops releases
+at the tag rather than merely mis-labelling them, and a leak reaches further than
+it did before. A separate `RELEASE_PLEASE_TOKEN` would keep each blast radius to
+itself; the reason this reuses the existing one is that both tokens would carry
+the same scopes on the same account, so a second would be a second credential
+with the same authority rather than a narrower one.
+
+**Two prerequisites are not configuration and neither is in this repository:**
+`AiluraKitty` needs write access to create tags at all (opening a pull request
+works without it, because the repository is public — the tag does not), and the
+token needs `contents: write` and `issues: write` beyond the
+`pull-requests: write` it was scoped for. Until both hold, the first release
+pull request opens and then fails at merge.
+
 ## Customizing the standard
 
 The structural divergences above are an observation taxonomy: they name what two
@@ -480,7 +586,9 @@ YAML style as observed across all eleven files:
 - Three files have no trailing newline: `labels.yml`, `CODEOWNERS`, and this
   `AGENTS.md`. Do not fix that incidentally in an unrelated change, and do not
   propagate it into another repository. Everything else, `LICENSE` included, ends
-  with one.
+  with one. `policy.yml` also has none — the same rule applies to it, and the two
+  release JSON files end with one because release-please rewrites them wholesale
+  rather than appending to them.
 
 Issue templates:
 
@@ -798,6 +906,38 @@ grep -rn 'vp check\|pnpm run\|cargo ' .github/PULL_REQUEST_TEMPLATE/ \
 gh api repos/ailuracollective/standards/codeowners/errors --jq '.errors'   # expect []
 gh api repos/ailuracollective/standards/collaborators \
   --jq '.[] | select(.permissions.push) | .login'                          # owners must appear
+
+# The release files. Both JSON documents validate against the upstream schemas, and the
+# keys of `packages` must match the paths of the manifest: `parseConfig` builds
+# `repositoryConfig` by iterating `packages`, and manifest.ts dereferences
+# `repositoryConfig[path]` on exactly the path this repository takes — a manifest naming
+# a version with no release yet. A mismatch is not a configuration error the tool reports;
+# it is a crash on the first push to main.
+curl -sSL -o /tmp/rp-schema.json \
+  https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json
+python3 -m venv /tmp/yamlenv && /tmp/yamlenv/bin/pip -q install pyyaml jsonschema
+/tmp/yamlenv/bin/python - <<'PY'
+import json, jsonschema
+cfg = json.load(open('release-please-config.json'))
+man = json.load(open('.release-please-manifest.json'))
+jsonschema.validate(cfg, json.load(open('/tmp/rp-schema.json')))
+assert set(cfg['packages']) == set(man), f"packages vs manifest: {set(cfg['packages']) ^ set(man)}"
+assert cfg['initial-version'] == '0.1.0', 'the first release must not claim 1.0.0'
+print(len(man), 'release path(s), config and manifest agree')
+PY
+
+# The release exemption is keyed on the head ref, so it is worth asserting that the
+# three shapes release-please produces exempt and that a human branch does not.
+python3 - <<'PY'
+PREFIX = 'release-please--branches--'
+exempt = ['release-please--branches--main',
+          'release-please--branches--master',
+          'release-please--branches--master--components--core']
+runs   = ['siddharthagf/feat/customization-policy', 'dependabot/npm_and_yarn/core-1.2.3']
+assert all(r.startswith(PREFIX) for r in exempt), 'a release PR would hit the gate'
+assert not any(r.startswith(PREFIX) for r in runs),   'a human PR would be exempted'
+print(f'{len(exempt)} release refs exempt, {len(runs)} human refs still checked')
+PY
 ```
 
 Count the typed templates with `find … ! -name 'PULL_REQUEST_TEMPLATE.md'`, not
@@ -830,6 +970,20 @@ dropped without an error, so "no label appeared" is the expected symptom of the
 gap above rather than a bug in your change.
 
 ## Do not
+
+- Do not use `skip-actors` to exempt a release pull request. Exempt it by head
+  ref, as `policy.yml` does. `skip-actors` is keyed on the login, and the account
+  behind `AILURA_KITTY_TOKEN` is not exclusively a machine identity here.
+- Do not make release-please satisfy the pull request gates. `pull-request-footer`
+  is static text, so the closing keyword and the template headings it would carry
+  are fabricated rather than written, and a green board over fabricated content
+  is the outcome this repository exists to avoid.
+- Do not drop `initial-version` from `release-please-config.json`, and do not
+  raise it above `0.1.0` without a release that earns it. With no previous
+  release the default is `1.0.0`, which is a compatibility claim nobody made.
+- Do not omit `packages` from that file. It is required by the schema and by
+  `parseConfig`, and the failure lands on the first push rather than at
+  configuration time.
 
 - Do not fill in the `## Test plan` commands here. They are per repository by
   necessity, and a hardcoded `cargo test` in a TypeScript repository is worse

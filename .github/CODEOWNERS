@@ -55,6 +55,16 @@
 # the templates. Editing it deserves the same care as editing a template.
 .github/ISSUE_STANDARD.md         @SiddharthaGF
 
+# The release files — the only artifacts here that a machine rewrites without a pull
+# request, and the only workflow here that holds a write grant. `release.yml` decides
+# when a tag exists; the manifest is the current version, and `initial-version` in the
+# config decides what the FIRST tag claims. Raising that number above 0.1.0 asserts a
+# compatibility guarantee that no release has earned, and every repository that copies
+# this one inherits the claim.
+release-please-config.json          @SiddharthaGF
+.release-please-manifest.json       @SiddharthaGF
+.github/workflows/release.yml       @SiddharthaGF
+
 # AGENTS.md — the instructions every agent and contributor reads before touching
 # this repository. A wrong claim in here propagates into every repository that
 # copies these files.

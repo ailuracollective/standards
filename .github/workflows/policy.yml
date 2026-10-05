@@ -52,9 +52,30 @@ concurrency:
 jobs:
   branch-validation:
     name: Branch name
+    # Two conditions, and the second is about the release automation rather than the event.
+    #
     # `state == 'open'`, because `labeled` on a merged pull request is still an event and
     # the head ref it names no longer exists.
-    if: github.event_name == 'pull_request' && github.event.pull_request.state == 'open'
+    #
+    # The head-ref guard exempts release-please's own pull requests, which cannot pass this
+    # gate by any configuration. Their head ref is `release-please--branches--<branch>`, which
+    # carries no type segment, and that name is not configurable: release-please hardcodes the
+    # prefix in `src/util/branch-name.ts` and reopens the same branch on every run. The gate
+    # requires three segments with the first being the author's own login, so the only way for
+    # such a pull request to match is for the author to be a login called `release-please`.
+    #
+    # `skip-actors` below would exempt the same pull requests and is left empty on purpose.
+    # It is keyed on WHO opened the pull request, so it would also exempt anything else that
+    # account ever opens, by hand or by a future workflow. This guard is keyed on WHAT the
+    # pull request is, which is the property that actually makes it unrepresentable: a
+    # hand-written pull request has a branch someone chose, and that branch has a type segment
+    # or the mistake was worth making. The trade is that an exempt pull request leaves no
+    # status comment and no check on the board — the job never runs, rather than running and
+    # reporting itself skipped — so nothing here records that the exemption was deliberate.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.state == 'open' &&
+      !startsWith(github.event.pull_request.head.ref, 'release-please--branches--')
     runs-on: ubuntu-latest
     # Reads the pull request's head ref and nothing else, so an empty permission set is
     # correct here rather than a shortcut.
@@ -67,12 +88,12 @@ jobs:
           # work, and the commit already carries it as `!` or a `BREAKING CHANGE:` footer.
           # This is the same list `title-types` below, minus that one type.
           branch-types: feat,fix,chore,docs,style,refactor,perf,test,build,ci,revert
-          # Empty on purpose. Every other repository in this organisation exempts
-          # `AiluraKitty`, the release-please identity, because its pull requests have a
-          # generated head ref and a generated changelog body. This repository has no
-          # release automation, so there is nothing to exempt. Leaving the list empty is a
-          # decision; if release-please is ever added here, this is where the exemption
-          # belongs, and skipping it would mean no release could merge.
+          # Empty on purpose, and not because there is nothing to exempt. Release-please's pull
+          # requests ARE exempted — by the `if:` condition on this job's head ref above, not by
+          # this input. `skip-actors` is keyed on the login that opened the pull request, so
+          # listing a release identity here would also exempt anything else that account ever
+          # opens. Nothing about a release pull request is decided by who opened it; the head
+          # ref is what makes it unrepresentable, so that is what the exemption is keyed on.
           #
           # Declared rather than left absent, for the reason given in this file's header: a
           # reader should see the whole requirement rather than infer it from what is
@@ -89,8 +110,28 @@ jobs:
 
   pull-request-policy:
     name: Pull request policy
-    # Same guard as the branch-name job above, for the same reason.
-    if: github.event_name == 'pull_request' && github.event.pull_request.state == 'open'
+    # Same guard as the branch-name job above, for the same reason, and the same release-please
+    # exemption with the same reasoning.
+    #
+    # Worth being explicit about what this costs, because four of the five checks here are not
+    # merely inconvenient for a release pull request but unsatisfiable: there is no issue to
+    # close, the body is a generated changelog rather than any type's template, and the one
+    # label release-please applies is its own `autorelease: pending` rather than a `type/*`
+    # one. Its title does satisfy `pr-title-conventional` and `pr-title-length`, so two of the
+    # five would pass on their own. The exemption covers all five because the action has no
+    # per-check escape hatch — `skip-actors` is the only one it has, and it is whole-action —
+    # so there is no way to exempt four checks and keep the fifth running.
+    #
+    # The alternative was to make release-please satisfy them: `extra-label` would have
+    # supplied a `type/*` label and `pull-request-footer` could have carried a closing keyword
+    # and the template headings. Rejected because `pull-request-footer` is static text, so it
+    # would name the same issue in every release forever and carry heading lines that exist
+    # only to be found by a grep. That produces a green board and no review, which is worse
+    # than an absent one.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.state == 'open' &&
+      !startsWith(github.event.pull_request.head.ref, 'release-please--branches--')
     runs-on: ubuntu-latest
     permissions:
       # Read-only, and it stays that way even though this job publishes a comment: the action
@@ -126,9 +167,11 @@ jobs:
           # silently resolve to a file that does not exist and report a configuration defect.
           template-dir: .github/PULL_REQUEST_TEMPLATE
           default-template: .github/PULL_REQUEST_TEMPLATE/PULL_REQUEST_TEMPLATE.md
-          # Empty on purpose: no actor is exempt from any check here. `dependabot[bot]` is the
-          # case that forces the list to exist in other repositories, and this repository has
-          # no `dependabot.yml`. Declared rather than left absent, for the reason given above.
+          # Empty on purpose, and for the same reason as in the branch job above: this job's
+          # own `if:` condition exempts the release-please pull requests by head ref, rather
+          # than an identity exemption that would follow them everywhere else too.
+          # `dependabot[bot]` is the case that would force this list to exist in other
+          # repositories, and this repository has no `dependabot.yml`.
           skip-actors: ''
           # Already `true` at `v2`'s default; declared because every other input here is.
           # The PAT is what keeps the board out of `github-actions[bot]`'s name, and being a
