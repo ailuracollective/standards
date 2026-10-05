@@ -60,7 +60,7 @@ jobs:
     # correct here rather than a shortcut.
     permissions: {}
     steps:
-      - uses: ailuracollective/actions/branch-validation@v1
+      - uses: ailuracollective/actions/branch-validation@v2
         with:
           # Eleven, not twelve. `breaking-change` is the twelfth Conventional Commit type
           # but it is not a branch segment: it describes the commit, not the shape of the
@@ -73,6 +73,19 @@ jobs:
           # release automation, so there is nothing to exempt. Leaving the list empty is a
           # decision; if release-please is ever added here, this is where the exemption
           # belongs, and skipping it would mean no release could merge.
+          #
+          # Declared rather than left absent, for the reason given in this file's header: a
+          # reader should see the whole requirement rather than infer it from what is
+          # missing.
+          skip-actors: ''
+          # `false` is this action's default. Declared, like every input here.
+          enable-status-comment: true
+          # A comment is authored by whoever owns the token that writes it, so this account's
+          # PAT is what keeps the board out of `github-actions[bot]`'s name — one nobody can
+          # edit or delete. A separate input is also what keeps `permissions: {}` above
+          # honest.
+          comment-token: ${{ secrets.AILURA_KITTY_TOKEN }}
+          comment-author: AiluraKitty
 
   pull-request-policy:
     name: Pull request policy
@@ -80,10 +93,13 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.state == 'open'
     runs-on: ubuntu-latest
     permissions:
+      # Read-only, and it stays that way even though this job publishes a comment: the action
+      # writes with `comment-token`, which carries its own scope, so widening this would
+      # hand a write grant on the pull request to five checks that only read.
       pull-requests: read
       contents: read
     steps:
-      - uses: ailuracollective/actions/pull-request@v1
+      - uses: ailuracollective/actions/pull-request@v2
         with:
           # All five checks are left at their defaults, which are `true`. That is the point
           # of this file: it is the complete projection, so a reader can see the full
@@ -112,17 +128,25 @@ jobs:
           default-template: .github/PULL_REQUEST_TEMPLATE/PULL_REQUEST_TEMPLATE.md
           # Empty on purpose: no actor is exempt from any check here. `dependabot[bot]` is the
           # case that forces the list to exist in other repositories, and this repository has
-          # no `dependabot.yml`.
+          # no `dependabot.yml`. Declared rather than left absent, for the reason given above.
+          skip-actors: ''
+          # Already `true` at `v2`'s default; declared because every other input here is.
+          # The PAT is what keeps the board out of `github-actions[bot]`'s name, and being a
+          # separate input is what keeps `permissions` above at `read`.
+          enable-status-comment: true
+          comment-token: ${{ secrets.AILURA_KITTY_TOKEN }}
+          comment-author: AiluraKitty
 
   triage:
     name: Issue triage
     if: github.event_name == 'issues'
     runs-on: ubuntu-latest
-    # The only job that writes, and the only grant of `issues: write` in this repository.
+    # The only `issues: write` here, and the only job that writes with the workflow's own
+    # token rather than with `comment-token`.
     permissions:
       issues: write
     steps:
-      - uses: ailuracollective/actions/triage@v1
+      - uses: ailuracollective/actions/triage@v2
         with:
           # Every one of the seven issue templates already declares this label, so the action
           # is idempotent in the ordinary case. It is kept because it is what covers an issue

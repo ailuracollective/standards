@@ -50,7 +50,7 @@ up CI, so the form never names a command the repository cannot run.
 
 **Reconcile the label vocabulary.** Do not copy `labels.yml` over a manifest that
 has a reconciliation recipe without porting the recipe across — see *Sync model* in
-`AGENTS.md`. And if the repository runs `pull-request@v1`, fix `type-labels` in the
+`AGENTS.md`. And if the repository runs `pull-request@v2`, fix `type-labels` in the
 same change, or the type-label check will reject the very labels the templates tell
 contributors to apply.
 

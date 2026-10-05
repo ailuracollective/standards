@@ -261,16 +261,46 @@ gate demanding them can never see satisfied.
 
 **This was a fix in the gate's own repository, and it could not have been made
 in an adopting repository.** Editing `type-labels` alone would have replaced one
-broken check with two. **Nothing worked until the `v1` tag moved.** `v1`
-points at a commit; a workflow writes `uses: ailuracollective/actions/pull-request@v1`,
-which resolves the tag, not `main`. Moving that tag is a separate, deliberate
-step from merging the pull request, and it changes every repository in the
-organisation at once. Verify before assuming:
+broken check with two. **Nothing worked until a tag moved.** A tag points at a
+commit; a workflow writes `uses: ailuracollective/actions/pull-request@v2`,
+which resolves the tag, not `main`. Moving it is a separate, deliberate step
+from merging the pull request, and it changes every repository that resolves
+that tag at once. Verify before assuming:
 
 ```sh
-gh api /repos/ailuracollective/actions/git/refs/tags/v1 --jq '.object.sha'
-gh api /repos/ailuracollective/actions/commits/main --jq .sha   # equal means the tag moved
+# which commit does the tag a workflow writes actually resolve to?
+gh api /repos/ailuracollective/actions/git/refs/tags/v2 --jq '.object.sha'
+gh api /repos/ailuracollective/actions/commits/main --jq .sha   # equal means the tag is current
 ```
+
+**Two majors exist, and picking one is a decision rather than a search.** `v2`
+adds the sticky status comment, which publishes into the pull request
+conversation and therefore needs a token that can write there. Note *which*
+token: `comment-token` is separate from `github-token` and carries its own
+scope, so a job can publish a comment while its own grant stays read-only —
+or, in the branch-name job here, stays empty. Widening `permissions` to
+`pull-requests: write` is the third way to make it work and the worst one:
+it hands a write grant on the pull request to the five check scripts, which
+only ever read. Three outcomes:
+
+| Choice | Cost |
+| --- | --- |
+| `enable-status-comment: false` | nothing; the job summary carries the same table |
+| `comment-token` for an organisation account | a secret, but the comment can be edited by a person, and the job's grant stays read-only |
+| `comment-author` naming the identity your token actually has | no secret, but a `github-actions[bot]` comment can be edited or deleted by nobody |
+
+The third is the tempting one and it is a trap worth naming: it works, the
+comment appears, and the reason the action refuses to post under an unheld
+identity by default is precisely that a bot comment outlives whoever would have
+fixed a wrong one. Prefer the second. The first is the honest answer for a
+repository with no opinion.
+
+**A comment is authored by the token that wrote it, so the identity is chosen
+by which token is passed, not by a field.** `comment-author` only says which
+identity the comment is *required* to have, and the action checks it against
+`gh api user` before writing anything. Setting it to match whatever token you
+already have is not configuring an author; it is agreeing to publish under that
+account. The default exists so the two cannot drift apart unnoticed.
 
 ### Enforcement: how to tell, for any repository
 
@@ -414,7 +444,7 @@ Conventional Commit type: `breaking-change`, `build`, `chore`, `ci`, `docs`,
 types `policy.yml` accepts as a branch segment, plus `breaking-change`.
 
 This directory matters more than it looks. The `enable-body-structure` gate in
-`pull-request@v1` requires that **every `## ` heading in the template matching the
+`pull-request@v2` requires that **every `## ` heading in the template matching the
 pull request's title type appears in its body**, and it resolves that template from
 the repository under review, not from here. A repository that ships no template for
 a type falls back to whatever `default-template` names, so the twelve here are what
