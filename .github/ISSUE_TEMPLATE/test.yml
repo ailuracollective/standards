@@ -2,7 +2,8 @@ name: Testing
 description: Add or improve automated test coverage.
 title: "test: "
 labels:
-  - testing
+  - type/task
+  - status/needs-review
 body:
   - type: textarea
     id: context

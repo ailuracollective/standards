@@ -2,7 +2,8 @@ name: Maintenance
 description: Technical maintenance with no intended functional change.
 title: "chore: "
 labels:
-  - maintenance
+  - type/task
+  - status/needs-review
 body:
   - type: textarea
     id: context

@@ -2,7 +2,8 @@ name: Documentation
 description: Add or update project documentation.
 title: "docs: "
 labels:
-  - documentation
+  - type/documentation
+  - status/needs-review
 body:
   - type: textarea
     id: context

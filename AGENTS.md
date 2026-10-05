@@ -93,48 +93,59 @@ type. It does not belong in `ISSUE_STANDARD.md`, and there is deliberately no
 `type/breaking-change`: consumers enforce "exactly one of five `type/*` labels"
 on a pull request, so growing the family breaks a gate that is already deployed.
 
-## Known gap: no template applies a label that exists
+## Every template applies a label that exists
 
-This is the one real inconsistency in the repository, and it is deliberate that
-it is documented rather than quietly patched. **None of the seven `labels:`
-values in the templates is a member of `labels.yml`.**
+This was the one real inconsistency in the repository, and it is closed. It is
+recorded here because the reasoning behind the three judgement calls is not
+recoverable from the files.
 
-| Template            | `labels:` today | In the manifest? | Intended `type/*`                     |
-| ------------------- | --------------- | --------------- | ------------------------------------- |
-| `feature.yml`       | `enhancement`   | no              | `type/feature`                        |
-| `improvement.yml`   | `enhancement`   | no              | `type/improvement`                    |
-| `bug.yml`           | `bug`           | no              | `type/bug`                            |
-| `docs.yml`          | `documentation` | no              | `type/documentation`                  |
-| `maintenance.yml`   | `maintenance`   | no              | `type/task` (no `chore` exists)       |
-| `test.yml`          | `testing`       | no              | none fits — `scope/testing` is a scope |
-| `investigation.yml` | `investigation` | no              | none                                  |
+**All seven templates now name labels that are members of `labels.yml`.**
 
-GitHub drops a label a template names but the repository does not have, without
-an error, so an issue opened through any of these forms currently arrives with
-**no type label at all**. `enhancement` is doubly wrong: it is undeclared, and
-`feature.yml` and `improvement.yml` both apply it, so even if it existed it could
-not tell the two apart.
+| Template            | `labels:`             | Why                                                     |
+| ------------------- | --------------------- | ------------------------------------------------------- |
+| `feature.yml`       | `type/feature`        | exact match                                             |
+| `improvement.yml`   | `type/improvement`    | exact match                                             |
+| `bug.yml`           | `type/bug`            | exact match                                             |
+| `docs.yml`          | `type/documentation`  | exact match                                             |
+| `maintenance.yml`   | `type/task`           | no `chore` label exists; `type/task` is the catch-all    |
+| `test.yml`          | `type/task`           | no `test` label exists — see below                      |
+| `investigation.yml` | `type/task`           | no `spike` label exists — see below                     |
 
-Four of the seven have an unambiguous fix. Three do not, and that is what makes
-this a decision rather than a mechanical change:
+Every template also applies `status/needs-review`, which is what the triage
+action would otherwise apply automatically on `issues` events. Declaring it
+means the label is present from the moment the form is submitted, so an issue is
+never briefly unlabelled.
 
-- `type/task` is declared in the manifest and applied by no template, which is
-  the strongest signal that it is `chore`'s home.
-- `test:` has no type label. It either maps to `type/task` alongside `chore`, or
-  the family gains a sixth member.
-- `spike:` has no type label and no candidate. `type/task` is the only
-  defensible stretch.
+The old values were `enhancement`, `bug`, `documentation`, `maintenance`,
+`testing` and `investigation`. **None was a member of the manifest**, so GitHub
+dropped every one of them without an error and an issue opened through any of
+these forms arrived with no type label at all. `enhancement` was doubly wrong: it
+was undeclared, and `feature.yml` and `improvement.yml` both applied it, so even
+if it had existed it could not tell those two apart.
 
-Adding `type/chore`, `type/test`, and `type/spike` would grow the family from 5
-to 8. That is a real cost, but not for the reason previously recorded here:
-downstream does **not** enforce this family's size. Each consumer's `policy.yml`
-declares its own `type-labels`, and those lists name a different vocabulary
-entirely — bare, unprefixed labels such as `feat` and `fix` (12 entries in
-`alpinejs-toolkit`, 10 in `colander`), not `type/feature`. Widening this
-repository's family would not break them. Changing the label vocabulary at all is
-a cross-repository change: amend the seven templates, then mirror the decision
-into every consumer's manifest and into the `type-labels` input of its
-`policy.yml`. Nothing here should be changed in isolation.
+Three of the seven were judgement calls rather than mechanical:
+
+- `chore` (`maintenance.yml`) → `type/task`. Unambiguous in substance:
+  `type/task` was declared in the manifest and applied by no template at all,
+  which is the strongest available signal that it was `chore`'s intended home.
+- `test` (`test.yml`) → `type/task`. `scope/testing` exists but is a scope, and
+  applying a scope as a type would be a category error. `type/task` is the
+  defensible reading: a test-only change is a defined piece of work that is not
+  itself a feature or a bug, which is the manifest's own description of
+  `type/task`. The alternative is a sixth family member, which is a larger
+  decision than this gap required.
+- `spike` (`investigation.yml`) → `type/task`. The weakest of the three, and the
+  one to revisit first if the family ever grows. A spike is exploratory work, and
+  `type/task` is the only label whose description admits that. Nothing in the
+  standard claims a spike is a task; this is the least-wrong available answer.
+
+**Adding `type/chore`, `type/test` and `type/spike` would grow the family from 5
+to 8.** That remains a real cost and a legitimate future decision, but note what
+it is *not*: downstream does not enforce this family's size. Each consumer
+declares its own `type-labels`, and after the alignment recorded below those
+lists name `type/*` labels. Widening this repository's family would break
+nothing — but it would be a cross-repository change regardless, because the
+consumers' manifests are copies that nothing syncs automatically.
 
 ## Sync model
 
@@ -159,18 +170,59 @@ Verified state of the two comparable consumers:
 | `policy.yml` `type-labels` | 12 bare names | 10 bare names |
 | Policy job a required status check | no — `master` has no protection | no — two other checks are required |
 
-The consumer *manifest files* are a different, older scheme: bare names (`feat`,
-`fix`) and a colon form (`status:approved`) instead of prefixed slash names. Both
-carry a `gh label create --force` reconciliation recipe, and running either today
-would try to create labels that do not exist on the remote.
+Both consumer *manifest files* were a different, older scheme: bare names
+(`feat`, `fix`) and a colon form (`status:approved`) instead of prefixed slash
+names. Both carried a `gh label create --force` reconciliation recipe, and running
+either today would have tried to create labels that do not exist on the remote.
+Both have since been reconciled against their remotes in the same change that
+fixed their `policy.yml`.
 
-That vocabulary split is live in the gates too. `type-labels` feeds three checks
-at once — the label check, the Conventional Commit subject grammar, and pull
-request template resolution — and both consumers fill it with bare names. The
-check compares by exact, case-folded name, so `type/bug` can never satisfy a list
-containing `bug`, and its own error message says so: *"all bare, with no `type:`
-prefix"*. The same applies to `approved-label: status:approved`, which no remote
-carries; the remotes have `status/ready`.
+### The two vocabularies, and the input that separated them
+
+`type-labels` used to feed three checks at once: the label check, the Conventional
+Commit subject grammar, and pull request template resolution. That made it
+impossible to configure, because the three want different sets.
+
+The label set is coarse — five `type/*` labels, because that is what a
+contributor picks from. The title set is the twelve Conventional Commit types,
+because release tooling parses the squashed subject and the template directory
+is named for them. One input cannot be both, and neither available value worked:
+
+| Value of `type-labels` | Label check | Title grammar | Template resolution |
+| ---------------------- | ----------- | ------------- | ------------------- |
+| `feat,fix,…` (bare)    | **unsatisfiable** — no such labels on any remote | works | works |
+| `type/feature,…`       | works | **rejects every `feat:`/`fix:` title** | **hard error** — `/` is a path character |
+
+So the fix was not a choice of vocabulary. `ailuracollective/actions` now has a
+second input, `title-types`, which feeds the grammar and the resolution, while
+`type-labels` feeds the label check alone. `title-types` defaults to
+`type-labels`, so a consumer that uses one vocabulary for both declares nothing
+extra.
+
+Two consequences in the scripts, both deliberate:
+
+- **The template resolves from the pull request's title, not from its label.**
+  This is what lets the two sets differ, and it makes `pr-body-structure`
+  independent of `type-label`: each check owns its own failure, so a pull request
+  missing both a label and a section is told about both instead of one hiding the
+  other. When the title's type is not allowed, the check reports `skip` and
+  names `pr-title-conventional` as the owner rather than inventing a second
+  diagnosis for the same mistake.
+- **The `type-label` error message no longer claims the labels are "all bare,
+  with no `type:` prefix".** That was advice about the hub's own vocabulary
+  printed as if it were a rule, and it was actively wrong for anyone who had
+  moved to a prefixed family. The worked example is now read from the configured
+  set.
+
+Both consumers now declare both lists: `type-labels` names the five `type/*`
+labels that exist on their remotes, `title-types` names the Conventional Commit
+types. `approved-label` became `status/ready` and `auto-label-name` became
+`status/needs-review`, replacing the colon forms `status:approved` and
+`status:needs-review` that no remote in this organisation carries.
+
+**This was a fix in `ailuracollective/actions`, and it could not have been made
+in the consumers.** Editing a consumer's `type-labels` alone would have replaced
+one broken check with two.
 
 **None of this currently blocks anything, and that is the most important fact in
 this section.** Neither consumer requires the policy job as a status check:

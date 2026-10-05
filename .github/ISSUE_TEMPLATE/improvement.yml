@@ -2,7 +2,8 @@ name: Improvement
 description: Improve existing behavior without correcting a bug.
 title: "improvement: "
 labels:
-  - enhancement
+  - type/improvement
+  - status/needs-review
 body:
   - type: textarea
     id: context

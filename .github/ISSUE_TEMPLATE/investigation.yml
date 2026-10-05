@@ -2,7 +2,8 @@ name: Investigation
 description: Investigate a question or uncertainty before implementation.
 title: "spike: "
 labels:
-  - investigation
+  - type/task
+  - status/needs-review
 body:
   - type: textarea
     id: context
