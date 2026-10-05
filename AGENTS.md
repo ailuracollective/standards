@@ -5,12 +5,12 @@ Guidance for AI agents and contributors working in this repository.
 ## What this repository is
 
 The source of truth for GitHub issue standards shared across an organisation's
-repositories. There is no application code here, no build, no test suite, and no
-CI. `README.md` is the entry point for a human; this file is the working
-reference. Under `.github/` there are **9 YAML files, 14 Markdown files, and 1
-CODEOWNERS file**; four more files sit in the repository root.
+repositories. There is no application code here, no build and no test suite.
+`README.md` is the entry point for a human; this file is the working reference.
+Under `.github/` there are **10 YAML files, 14 Markdown files, and 1 CODEOWNERS
+file**; four more files sit in the repository root.
 
-Four artifacts, each with exactly one owner:
+Six artifacts, each with exactly one owner:
 
 | File                                                   | Owns                                     | Read by                                     |
 | ------------------------------------------------------ | ---------------------------------------- | ------------------------------------------- |
@@ -19,6 +19,7 @@ Four artifacts, each with exactly one owner:
 | `.github/ISSUE_TEMPLATE/*.yml` (7 templates + config)  | the forms in the issue chooser           | GitHub                                      |
 | `.github/PULL_REQUEST_TEMPLATE/*.md` (12 + default)    | the form per pull request type           | GitHub                                      |
 | `.github/CODEOWNERS`                                   | who reviews a change                     | GitHub, via branch protection               |
+| `.github/workflows/policy.yml`                         | the projection of all of the above      | GitHub Actions, on every pull request       |
 
 `ISSUE_STANDARD.md` is **prose and is not machine-readable**. It was
 `ISSUE_STANDARD.yml` and did not parse as YAML — the numbered list under Purpose
@@ -26,9 +27,15 @@ reads as mapping keys, so the file failed to load from its first numbered line
 onward. It was renamed rather than repaired. Nothing should parse it, and no
 validator should be pointed at it.
 
-Nothing in this repository executes. `labels.yml` is a reviewed manifest, not
-workflow input: GitHub does not read it and no CI parses it. Editing it changes
-the *record* of the label set, not the labels on any remote.
+Nothing in this repository is application code. `labels.yml` is a reviewed
+manifest, not workflow input: GitHub does not read it and no CI parses it.
+Editing it changes the *record* of the label set, not the labels on any remote.
+
+`.github/workflows/policy.yml` is the exception to "nothing here runs", and it
+runs nothing of this repository either. It checks out the base branch, never the
+head, so no code under review reaches a runner holding a token. It is the
+standard projected onto its own repository, and it is what makes this repository's
+templates and labels load-bearing rather than decorative — see § Enforcement.
 
 ## Inventory
 
@@ -38,9 +45,10 @@ the *record* of the label set, not the labels on any remote.
   default `PULL_REQUEST_TEMPLATE.md`.
 - **30** labels: six prefixed families (`type` 5, `priority` 4, `status` 5,
   `scope` 8, `meta` 5, `release` 2) plus one unprefixed, `github_actions`.
-- **28** files total: 3 in `.github/` (`labels.yml`, `ISSUE_STANDARD.md`,
-  `CODEOWNERS`), 8 in `ISSUE_TEMPLATE/`, 13 in `PULL_REQUEST_TEMPLATE/`, and 4 in
-  the repository root (`AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `LICENSE`).
+- **29** files total: 3 in `.github/` (`labels.yml`, `ISSUE_STANDARD.md`,
+  `CODEOWNERS`), 1 in `.github/workflows/`, 8 in `ISSUE_TEMPLATE/`, 13 in
+  `PULL_REQUEST_TEMPLATE/`, and 4 in the repository root (`AGENTS.md`,
+  `README.md`, `CONTRIBUTING.md`, `LICENSE`).
   Do not quote these numbers loosely; if you change one of them, update this
   section.
 
@@ -159,16 +167,17 @@ Two things drift apart here, and confusing them is how this section went wrong
 before. The **remote label set** has converged. The **manifest files** do not
 describe that remote at all.
 
-Verified state of the two comparable consumers:
+Verified state of the two comparable consumers, as reconciled:
 
 | | `alpinejs-toolkit` | `colander` |
 | --- | --- | --- |
 | Remote labels matching this manifest | 30 of 30, colors identical | 29 of 30, 2 colors differ |
 | Extra label on the remote | — | `type:feature`, a leftover |
 | Missing from the remote | — | `github_actions` |
-| Its own `.github/labels.yml` declares | 14 labels, **none** of them the 30 | 12 labels, **none** of them the 30 |
-| `policy.yml` `type-labels` | 12 bare names | 10 bare names |
-| Policy job a required status check | no — `master` has no protection | no — two other checks are required |
+| Its own `.github/labels.yml` now declares | the 30, its own schema | the 30, its own schema |
+| `policy.yml` `type-labels` | the 5 `type/*` labels | the 5 `type/*` labels |
+| `policy.yml` `title-types` | 12, declared separately | 10, declared separately |
+| Policy job a required status check | **yes** | no — and see below |
 
 Both consumer *manifest files* were a different, older scheme: bare names
 (`feat`, `fix`) and a colon form (`status:approved`) instead of prefixed slash
@@ -176,6 +185,10 @@ names. Both carried a `gh label create --force` reconciliation recipe, and runni
 either today would have tried to create labels that do not exist on the remote.
 Both have since been reconciled against their remotes in the same change that
 fixed their `policy.yml`.
+
+Each kept its own schema, header and reconciliation recipe rather than taking
+this file's shape. A mechanical copy between the two is an upgrade in content and
+a regression in form.
 
 ### The two vocabularies, and the input that separated them
 
@@ -222,21 +235,62 @@ types. `approved-label` became `status/ready` and `auto-label-name` became
 
 **This was a fix in `ailuracollective/actions`, and it could not have been made
 in the consumers.** Editing a consumer's `type-labels` alone would have replaced
-one broken check with two.
+one broken check with two. **Nothing worked until the `v1` tag moved.** `v1`
+points at a commit; consumers write `uses: ailuracollective/actions/pull-request@v1`,
+which resolves the tag, not `main`. Moving that tag is a separate, deliberate
+step from merging the pull request, and it changes every repository in the
+organisation at once. Verify before assuming:
 
-**None of this currently blocks anything, and that is the most important fact in
-this section.** Neither consumer requires the policy job as a status check:
-`alpinejs-toolkit`'s `master` has no branch protection at all, and `colander`'s
-requires `Branch name and PR title` plus `fmt-check, lint, check, test, build`,
-neither of which is the policy. Every gate in `pull-request@v1` therefore runs,
-annotates, and is ignored — which is why pull requests carrying no type label at
-all are merged. The twelve pull request templates in this repository are read by
-the gate, and the headings they declare are requirements that no merge is
-currently checked against.
+```sh
+gh api /repos/ailuracollective/actions/git/refs/tags/v1 --jq '.object.sha'
+gh api /repos/ailuracollective/actions/commits/main --jq .sha   # equal means the tag moved
+```
 
-Treat the gates as advisory in both consumers until a required status check says
-otherwise. Do not describe them as enforced, and do not rely on them to keep a
-consumer's copy of this standard aligned — nothing is doing that.
+### Enforcement, verified per repository
+
+This is the part that changes most often, so it is recorded as a dated reading
+rather than a standing claim. Read it against the API before relying on it.
+
+| Repository | Default branch | Mechanism | Policy job required? |
+| --- | --- | --- | --- |
+| `ailuracollective/actions` | `main` | ruleset | **yes** — plus `Check suite`, `Static analysis`, `Branch name` |
+| `ailuracollective/alpinejs-toolkit` | `master` | ruleset | **yes** — plus `Verify` |
+| `ailuracollective/colander` | `master` | classic branch protection | no |
+| `ailuracollective/standards` | `main` | classic branch protection | no — and it cannot become one yet |
+
+**The hub enforces its own gate on itself.** `actions`' `Pull request policy` is a
+required status check, so the split in this section was verified by a real merge,
+not only by the offline harness.
+
+**`alpinejs-toolkit` enforces it too.** Its ruleset requires `Verify` and
+`Pull request policy`, which is why the misconfiguration in this section could
+not have gone unnoticed for long — and why fixing it changed what blocks a merge
+rather than only what an annotation says.
+
+**`colander`'s required checks are all dead.** `master` requires two contexts that
+no workflow in the repository produces:
+
+| required context | what the job is actually called |
+| --- | --- |
+| `Branch name and PR title` | `Branch name` |
+| `fmt-check, lint, check, test, build` | `ci` — and that is **one** context name containing commas, not five |
+
+So `colander`'s `master` is unmergeable by anyone without admin rights, and
+`enforce_admins: false` is the only reason pull requests there merge at all. The
+policy job is not required, so its gates annotate and are ignored. Correcting the
+two context names is a branch-protection change, not a policy change, and is a
+decision rather than a fix.
+
+**`standards` cannot require the policy job without freezing itself.** `main`
+requires a code-owner review and `@SiddharthaGF` is the only account with write
+access, so a policy job that must pass before merge would deadlock the
+repository. § Ownership and enforcement covers this in full.
+
+In every repository, **the twelve pull request templates in *this* repository are
+what the body-structure check reads in the *consuming* repository.** A consumer
+that has not copied them has no template to compare against, and the check skips.
+So the headings those files declare are requirements only in the repositories
+that carry them.
 
 Structural divergences worth knowing before you copy anything either direction:
 
@@ -522,6 +576,50 @@ assert all(re.fullmatch(r'[0-9A-Fa-f]{6}', c) for c in re.findall(r'color: "([0-
 print(len(names), 'labels ok')
 PY
 
+# every label NAMED IN A FIELD resolves against the manifest. This is the check that
+# caught the original defect: seven templates applying six undeclared names, which
+# GitHub discards without an error. It reads fields, not prose -- scanning the raw
+# text reports `type/breaking-change`, which appears here only in a comment saying
+# there deliberately is no such label.
+python3 - <<'PY'
+import re, glob, sys, yaml
+have = {e['name'] for e in yaml.safe_load(open('.github/labels.yml'))}
+bad = []
+for f in sorted(glob.glob('.github/**/*.yml', recursive=True)):
+    doc = yaml.safe_load(open(f))
+    if not isinstance(doc, dict):
+        continue
+    # issue templates: the `labels:` list a chooser form applies on submit
+    for l in (doc.get('labels') or []):
+        if l not in have:
+            bad.append(f'{f}: labels: {l}')
+    # workflows: the gate inputs that name one or more labels
+    for job in (doc.get('jobs') or {}).values():
+        for step in (job or {}).get('steps') or []:
+            w = step.get('with') or {}
+            for key in ('type-labels', 'approved-label', 'auto-label-name'):
+                for l in (w.get(key) or '').split(','):
+                    l = l.strip()
+                    if l and l not in have:
+                        bad.append(f'{f}: {key}: {l}')
+for b in bad:
+    print('DANGLING', b)
+print('no dangling label references' if not bad else f'{len(bad)} dangling')
+sys.exit(1 if bad else 0)
+PY
+
+# the workflow declares two vocabularies, and they are disjoint sets
+python3 - <<'PY'
+import re
+txt = open('.github/workflows/policy.yml').read()
+labels = re.search(r'type-labels: (\S+)', txt).group(1).split(',')
+titles = re.search(r'title-types: (\S+)', txt).group(1).split(',')
+assert labels == ['type/feature','type/bug','type/documentation','type/improvement','type/task'], labels
+assert len(titles) == 12, titles
+assert not set(labels) & set(titles), 'the two sets must not overlap'
+print(len(labels), 'labels,', len(titles), 'title types, disjoint')
+PY
+
 # one template per type, prefixes matching the standard
 sed -n '/^## Issue Types/,/^## Title/p' .github/ISSUE_STANDARD.md | grep -c '^- `'
 ls .github/ISSUE_TEMPLATE/*.yml | grep -vc config       # 7 templates
@@ -551,8 +649,11 @@ that filter matches all thirteen and returns zero.
 The last check is the one that matters most: a repository-specific command in
 these files makes the gate demand a check that repository cannot run.
 
-The first check needs `pyyaml`, which is not vendored. It globs `*.yml`, so it
-never touches `ISSUE_STANDARD.md` — there is nothing to parse there.
+The first and third checks need `pyyaml`, which is not vendored. Both glob
+`*.yml`, so neither ever touches `ISSUE_STANDARD.md` — there is nothing to parse
+there. The label-reference check reads fields rather than raw text on purpose:
+grepping the files for label-shaped tokens reports `type/breaking-change`, which
+appears only in a comment recording that there deliberately is no such label.
 
 The type count is a **text** check against a prose file, which is a weaker
 guarantee than the others: nothing checks that the list is well-formed, only
@@ -594,9 +695,10 @@ gap above rather than a bug in your change.
 - Do not grow the `type/*` family in this repository alone. It is not enforced
   downstream at five members or any other number — see the sync model section for
   what the consumers actually declare and why the two vocabularies disagree.
-- Do not write "the gate requires" about anything in this repository until a
-  required status check confirms it. Every gate in `pull-request@v1` is advisory
-  in both consumers today.
+- Do not write "the gate requires" about **this** repository. Its policy job is
+  not a required status check and cannot become one while one person holds all
+  the write access. The gate is enforced in `actions` and `alpinejs-toolkit`, and
+  advisory in `colander` — check which before describing a rule as binding.
 - Do not overwrite a consuming repository's `labels.yml` with this bare list
   without porting its header and reconciliation recipe back here first.
 - Do not drop the catch-all from `CODEOWNERS`. A pattern with no slash matches at
