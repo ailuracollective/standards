@@ -261,16 +261,26 @@ gate demanding them can never see satisfied.
 
 **This was a fix in the gate's own repository, and it could not have been made
 in an adopting repository.** Editing `type-labels` alone would have replaced one
-broken check with two. **Nothing worked until the `v1` tag moved.** `v1`
-points at a commit; a workflow writes `uses: ailuracollective/actions/pull-request@v1`,
-which resolves the tag, not `main`. Moving that tag is a separate, deliberate
-step from merging the pull request, and it changes every repository in the
-organisation at once. Verify before assuming:
+broken check with two. **Nothing worked until a tag moved.** A tag points at a
+commit; a workflow writes `uses: ailuracollective/actions/pull-request@v2`,
+which resolves the tag, not `main`. Moving it is a separate, deliberate step
+from merging the pull request, and it changes every repository that resolves
+that tag at once. Verify before assuming:
 
 ```sh
-gh api /repos/ailuracollective/actions/git/refs/tags/v1 --jq '.object.sha'
-gh api /repos/ailuracollective/actions/commits/main --jq .sha   # equal means the tag moved
+# which commit does the tag a workflow writes actually resolve to?
+gh api /repos/ailuracollective/actions/git/refs/tags/v2 --jq '.object.sha'
+gh api /repos/ailuracollective/actions/commits/main --jq .sha   # equal means the tag is current
 ```
+
+**Two majors exist, and picking one is a decision rather than a search.** `v2`
+adds the sticky status comment, which publishes into the pull request
+conversation and therefore needs a token belonging to the organisation and a
+job granted `pull-requests: write`. A repository with neither should stay on
+`v1` or set `enable-status-comment: false`; a repository that wants the comment
+needs a secret for that account, and `comment-token` is the input that carries
+it without handing a write-scoped token to the five check scripts. A floating
+tag cannot answer that question for you.
 
 ### Enforcement: how to tell, for any repository
 
@@ -414,7 +424,7 @@ Conventional Commit type: `breaking-change`, `build`, `chore`, `ci`, `docs`,
 types `policy.yml` accepts as a branch segment, plus `breaking-change`.
 
 This directory matters more than it looks. The `enable-body-structure` gate in
-`pull-request@v1` requires that **every `## ` heading in the template matching the
+`pull-request@v2` requires that **every `## ` heading in the template matching the
 pull request's title type appears in its body**, and it resolves that template from
 the repository under review, not from here. A repository that ships no template for
 a type falls back to whatever `default-template` names, so the twelve here are what

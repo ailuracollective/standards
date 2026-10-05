@@ -33,7 +33,7 @@
 .github/CODEOWNERS      @SiddharthaGF
 
 # Pull request templates — the widest blast radius in the repository. The
-# body-structure gate in ailuracollective/actions/pull-request@v1 resolves
+# body-structure gate in ailuracollective/actions/pull-request@v2 resolves
 # these files from the consuming repository and requires every heading declared
 # here to appear in a pull request body. Renaming or removing a heading changes
 # the contract for every open and future pull request across the organisation.

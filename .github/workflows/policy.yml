@@ -60,7 +60,7 @@ jobs:
     # correct here rather than a shortcut.
     permissions: {}
     steps:
-      - uses: ailuracollective/actions/branch-validation@v1
+      - uses: ailuracollective/actions/branch-validation@v2
         with:
           # Eleven, not twelve. `breaking-change` is the twelfth Conventional Commit type
           # but it is not a branch segment: it describes the commit, not the shape of the
@@ -83,7 +83,7 @@ jobs:
       pull-requests: read
       contents: read
     steps:
-      - uses: ailuracollective/actions/pull-request@v1
+      - uses: ailuracollective/actions/pull-request@v2
         with:
           # All five checks are left at their defaults, which are `true`. That is the point
           # of this file: it is the complete projection, so a reader can see the full
@@ -113,6 +113,11 @@ jobs:
           # Empty on purpose: no actor is exempt from any check here. `dependabot[bot]` is the
           # case that forces the list to exist in other repositories, and this repository has
           # no `dependabot.yml`.
+          # The status comment is off. `v2` publishes it by default, which needs a token
+          # that belongs to the organisation and a job granted `pull-requests: write`; this
+          # repository has neither, so leaving the default would buy a warning on every pull
+          # request and no comment. The job summary carries the same table.
+          enable-status-comment: false
 
   triage:
     name: Issue triage
@@ -122,7 +127,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ailuracollective/actions/triage@v1
+      - uses: ailuracollective/actions/triage@v2
         with:
           # Every one of the seven issue templates already declares this label, so the action
           # is idempotent in the ordinary case. It is kept because it is what covers an issue
