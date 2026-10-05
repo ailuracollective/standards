@@ -37,6 +37,22 @@ head, so no code under review reaches a runner holding a token. It is the
 standard projected onto its own repository, and it is what makes this repository's
 templates and labels load-bearing rather than decorative — see § Enforcement.
 
+### What is named here, and what is not
+
+This file names `ailuracollective/actions`, because the gate is implemented
+there and every input it discusses — `type-labels`, `title-types`,
+`approved-label`, `auto-label-name`, `enable-body-structure`, `default-template`,
+and the `v1` tag workflows resolve — belongs to that action rather than to this
+standard. Stripping the name would leave the configuration unwriteable.
+
+It names **no adopting repository**, on purpose. § Sync model explains why, and
+§ Enforcement carries the method for checking any one of them instead.
+
+Where this file says "here", it means this repository: the origin manifest, these
+seven issue templates, these twelve pull request templates, these conventions.
+Where it says "an adopting repository", it means any repository that copied them,
+of which there may be none, one, or many.
+
 ## Inventory
 
 - **7** issue types, declared once in `ISSUE_STANDARD.md` § Issue Types.
@@ -98,7 +114,8 @@ type tokens have no `type/*` label of their own.
 
 `breaking-change` is a Conventional Commit type, not a label and not an issue
 type. It does not belong in `ISSUE_STANDARD.md`, and there is deliberately no
-`type/breaking-change`: consumers enforce "exactly one of five `type/*` labels"
+`type/breaking-change`: adopting repositories enforce "exactly one of five
+`type/*` labels"
 on a pull request, so growing the family breaks a gate that is already deployed.
 
 ## Every template applies a label that exists
@@ -149,46 +166,54 @@ Three of the seven were judgement calls rather than mechanical:
 
 **Adding `type/chore`, `type/test` and `type/spike` would grow the family from 5
 to 8.** That remains a real cost and a legitimate future decision, but note what
-it is *not*: downstream does not enforce this family's size. Each consumer
-declares its own `type-labels`, and after the alignment recorded below those
-lists name `type/*` labels. Widening this repository's family would break
-nothing — but it would be a cross-repository change regardless, because the
-consumers' manifests are copies that nothing syncs automatically.
+it is *not*: no repository enforces this family's size. Each adopting
+repository declares its own `type-labels`, and that list names `type/*` labels
+because those are the names its remote has. Widening this repository's family
+would break nothing — but it would be a change to every adopting repository
+regardless, because their manifests are copies that nothing syncs
+automatically.
 
 ## Sync model
 
 `labels.yml` opens with "Keep this file synchronized across projects."
-Concretely: this repository is the origin, each consuming repository holds its
+Concretely: this repository is the origin, each adopting repository holds its
 own copy under its own `.github/`, and **edits here do not propagate**. There
-is no workflow, submodule, or sync bot in this repository. Synchronization is a
-manual copy, which means drift is expected and has to be checked for by hand.
+is no workflow, submodule, or sync bot in this repository. Synchronization is
+a manual copy, which means drift is expected and has to be checked for by hand.
 
-Two things drift apart here, and confusing them is how this section went wrong
-before. The **remote label set** has converged. The **manifest files** do not
-describe that remote at all.
+**This file deliberately does not record who has adopted it.** A list of adopting
+repositories, their label counts and their gate configuration is the kind of fact
+that is true when written and wrong a week later, and a stale list is worse than
+none because it reads as authoritative. Someone checking a specific repository
+reads that repository. What belongs here is the rule and the command.
 
-Verified state of the two comparable consumers, as reconciled:
+Three layers drift apart independently, and conflating them is how a
+reconciliation goes wrong:
 
-| | `alpinejs-toolkit` | `colander` |
+| Layer | What it is | How it goes stale |
 | --- | --- | --- |
-| Remote labels matching this manifest | 30 of 30, colors identical | 29 of 30, 2 colors differ |
-| Extra label on the remote | — | `type:feature`, a leftover |
-| Missing from the remote | — | `github_actions` |
-| Its own `.github/labels.yml` now declares | the 30, its own schema | the 30, its own schema |
-| `policy.yml` `type-labels` | the 5 `type/*` labels | the 5 `type/*` labels |
-| `policy.yml` `title-types` | 12, declared separately | 10, declared separately |
-| Policy job a required status check | **yes** | no — and see below |
+| The remote label set | what GitHub actually has | a label renamed or deleted by hand |
+| The manifest file | a reviewed record of the intended set | edited here, never copied out |
+| The gate's `type-labels` | what the check compares against | a rename, or a scheme replaced wholesale |
 
-Both consumer *manifest files* were a different, older scheme: bare names
-(`feat`, `fix`) and a colon form (`status:approved`) instead of prefixed slash
-names. Both carried a `gh label create --force` reconciliation recipe, and running
-either today would have tried to create labels that do not exist on the remote.
-Both have since been reconciled against their remotes in the same change that
-fixed their `policy.yml`.
+All three must agree for a gate to be satisfiable, and they fail differently. The
+first two drift silently. The third turns any disagreement into a gate no pull
+request can pass, which reads as though the contributor did something wrong.
+Reconcile all three in the same change, against the remote rather than against
+another copy of the manifest.
 
-Each kept its own schema, header and reconciliation recipe rather than taking
-this file's shape. A mechanical copy between the two is an upgrade in content and
-a regression in form.
+Two traps in the copy itself:
+
+- **Copying a manifest over another manifest is an upgrade in content and a
+  regression in form.** This repository's `labels.yml` is a block sequence under a
+  bare top level; an adopting repository may nest under `labels:`. Both parse as
+  YAML, so a mechanical copy changes the document shape without failing anywhere.
+  Port the target's header and reconciliation recipe across instead of
+  overwriting it.
+- **Quote every color.** An unquoted six-digit hex string is not always a string:
+  `5319E7` parses as the integer `53190000000`, `008672` as `8672`, and `000000`
+  as `0`. It fails silently, and the recipe that reads the file then hands
+  `gh label create` a number rather than a hex value.
 
 ### The two vocabularies, and the input that separated them
 
@@ -209,7 +234,7 @@ is named for them. One input cannot be both, and neither available value worked:
 So the fix was not a choice of vocabulary. `ailuracollective/actions` now has a
 second input, `title-types`, which feeds the grammar and the resolution, while
 `type-labels` feeds the label check alone. `title-types` defaults to
-`type-labels`, so a consumer that uses one vocabulary for both declares nothing
+`type-labels`, so a repository that uses one vocabulary for both declares nothing
 extra.
 
 Two consequences in the scripts, both deliberate:
@@ -227,16 +252,17 @@ Two consequences in the scripts, both deliberate:
   moved to a prefixed family. The worked example is now read from the configured
   set.
 
-Both consumers now declare both lists: `type-labels` names the five `type/*`
-labels that exist on their remotes, `title-types` names the Conventional Commit
-types. `approved-label` became `status/ready` and `auto-label-name` became
-`status/needs-review`, replacing the colon forms `status:approved` and
-`status:needs-review` that no remote in this organisation carries.
+An adopting repository must declare both lists: `type-labels` names the five
+`type/*` labels, `title-types` names the Conventional Commit types. And because
+the status family is slash-named everywhere, `approved-label` is `status/ready`
+and `auto-label-name` is `status/needs-review` — never the colon forms
+`status:approved` and `status:needs-review`, which no remote carries and which a
+gate demanding them can never see satisfied.
 
-**This was a fix in `ailuracollective/actions`, and it could not have been made
-in the consumers.** Editing a consumer's `type-labels` alone would have replaced
-one broken check with two. **Nothing worked until the `v1` tag moved.** `v1`
-points at a commit; consumers write `uses: ailuracollective/actions/pull-request@v1`,
+**This was a fix in the gate's own repository, and it could not have been made
+in an adopting repository.** Editing `type-labels` alone would have replaced one
+broken check with two. **Nothing worked until the `v1` tag moved.** `v1`
+points at a commit; a workflow writes `uses: ailuracollective/actions/pull-request@v1`,
 which resolves the tag, not `main`. Moving that tag is a separate, deliberate
 step from merging the pull request, and it changes every repository in the
 organisation at once. Verify before assuming:
@@ -246,75 +272,86 @@ gh api /repos/ailuracollective/actions/git/refs/tags/v1 --jq '.object.sha'
 gh api /repos/ailuracollective/actions/commits/main --jq .sha   # equal means the tag moved
 ```
 
-### Enforcement, verified per repository
+### Enforcement: how to tell, for any repository
 
-This is the part that changes most often, so it is recorded as a dated reading
-rather than a standing claim. Read it against the API before relying on it.
+A gate being **configured** and a gate being **enforced** are different questions,
+and the second one is per-repository, per-branch, and changes without anyone
+editing a file. So this section carries the method rather than a result. A result
+recorded here would be true when written and wrong later, in a document whose whole
+purpose is to be relied on.
 
-| Repository | Default branch | Mechanism | Policy job required? |
-| --- | --- | --- | --- |
-| `ailuracollective/actions` | `main` | ruleset | **yes** — plus `Check suite`, `Static analysis`, `Branch name` |
-| `ailuracollective/alpinejs-toolkit` | `master` | ruleset | **yes** — plus `Verify` |
-| `ailuracollective/colander` | `master` | classic branch protection | no |
-| `ailuracollective/standards` | `main` | classic branch protection | no — and it cannot become one yet |
+Both mechanisms exist and they do not answer the same request:
 
-**The hub enforces its own gate on itself.** `actions`' `Pull request policy` is a
-required status check, so the split in this section was verified by a real merge,
-not only by the offline harness.
+```sh
+# classic branch protection — 404 means no protection, NOT "unprotected"
+gh api /repos/OWNER/REPO/branches/BRANCH/protection --jq '.required_status_checks'
 
-**`alpinejs-toolkit` enforces it too.** Its ruleset requires `Verify` and
-`Pull request policy`, which is why the misconfiguration in this section could
-not have gone unnoticed for long — and why fixing it changed what blocks a merge
-rather than only what an annotation says.
+# rulesets — a separate API, and this is the one people forget
+gh api /repos/OWNER/REPO/rulesets --jq '.[] | "\(.id) \(.name) \(.enforcement)"'
+for id in $(gh api /repos/OWNER/REPO/rulesets --jq '.[].id'); do
+  gh api /repos/OWNER/REPO/rulesets/$id --jq \
+    '.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context'
+done
+```
 
-**`colander`'s required checks are all dead.** `master` requires two contexts that
-no workflow in the repository produces:
+**The trap is reading a 404 from the first as "this branch is unprotected" when it
+has moved to a ruleset.** That mistake has already been made once here, and it
+produced a confident, wrong claim that the gates enforced nothing anywhere. Check
+both APIs before concluding anything about enforcement.
 
-| required context | what the job is actually called |
+Then read the required contexts against what the workflows actually report:
+
+```sh
+gh pr view N --repo OWNER/REPO --json statusCheckRollup \
+  --jq '.statusCheckRollup[].name' | sort -u
+```
+
+Three failure shapes to recognise, all of which look like a contributor's mistake
+and none of which are:
+
+| What the required context says | What it means |
 | --- | --- |
-| `Branch name and PR title` | `Branch name` |
-| `fmt-check, lint, check, test, build` | `ci` — and that is **one** context name containing commas, not five |
+| the policy job is **not** among them | it annotates and is ignored; a fix to it changes nothing about what merges |
+| it is there, under a **different name** | the branch is unmergeable for anyone who cannot bypass protection |
+| a required context **no workflow reports** | the same, and it is invisible until someone without admin rights tries |
 
-So `colander`'s `master` is unmergeable by anyone without admin rights, and
-`enforce_admins: false` is the only reason pull requests there merge at all. The
-policy job is not required, so its gates annotate and are ignored. Correcting the
-two context names is a branch-protection change, not a policy change, and is a
-decision rather than a fix.
+The second and third rows are the same defect wearing two hats: a required context
+is a literal string, so `Branch name and PR title` and a job actually named
+`Branch name` do not match, and neither does a required context that is one name
+containing commas where five were meant. Bypass permission is what keeps such a
+repository mergeable, and it hides the problem until bypass is removed.
 
-**`standards` cannot require the policy job without freezing itself.** `main`
-requires a code-owner review and `@SiddharthaGF` is the only account with write
-access, so a policy job that must pass before merge would deadlock the
-repository. § Ownership and enforcement covers this in full.
-
-In every repository, **the twelve pull request templates in *this* repository are
-what the body-structure check reads in the *consuming* repository.** A consumer
-that has not copied them has no template to compare against, and the check skips.
-So the headings those files declare are requirements only in the repositories
-that carry them.
+Do not describe a rule as binding without having read one of these for that
+repository and that branch. The same organisation will have one repository where
+the gate blocks and another where it does not.
 
 Structural divergences worth knowing before you copy anything either direction:
 
 - **Label form.** This repository uses a block sequence under a bare top level;
-  the consumers nest under `labels:`. Both parse as YAML; they are not the same
-  schema, so a mechanical copy between them changes the document shape.
-- **Manifest content.** Copying this repository's `labels.yml` over a consumer's
+  another repository may nest under `labels:`. Both parse as YAML; they are not
+  the same schema, so a mechanical copy between them changes the document shape.
+- **Manifest content.** Copying this repository's `labels.yml` over a repository's
   current file would be an upgrade in content and a regression in form: it names
   the labels the remote actually has, but drops the header and the reconciliation
-  recipe. Port the recipe back here instead, and reconcile the consumer's file
-  against its remote in the same change.
+  recipe. Port the recipe across instead, and reconcile the target's file against
+  its remote in the same change.
 - **Field id casing.** This repository uses kebab-case (`out-of-scope`,
-  `acceptance-criteria`); `alpinejs-toolkit` uses snake_case
-  (`proposed_outcome`, `additional_context`).
-- **Field types.** This repository uses only `textarea` and one `markdown`.
-  `alpinejs-toolkit` also uses `checkboxes` with per-option `required: true` for a
-  preflight block, `render: shell` for a log field, `type: input` for a version
-  string, and explicit `validations: required: false` on optional fields.
-- **`blank_issues_enabled`.** `false` here, `true` in `alpinejs-toolkit`. Treat
-  this as a per-repository policy choice, not drift.
-- **Default pull request form location.** `alpinejs-toolkit` and
-  `ailuracollective/actions` keep theirs at `.github/PULL_REQUEST_TEMPLATE.md`,
-  beside the directory; `colander` has none at all; this repository keeps it
-  inside the directory. Copying only the directory silently omits the fallback.
+  `acceptance-criteria`). An adopting repository may use snake_case
+  (`proposed_outcome`). Either parses; only the id string differs, and it becomes
+  a URL fragment.
+- **Field types.** This repository uses only `textarea` and one `markdown`. Others
+  are available and legitimate — `checkboxes` with per-option `required: true` for
+  a preflight block, `render: shell` for a log field, `type: input` for a version
+  string, and explicit `validations: required: false` on optional fields. The set is
+  a style choice, not a rule.
+- **`blank_issues_enabled`.** `false` here. Treat it as a per-repository policy
+  choice, not drift.
+- **Default pull request form location.** Two conventions are in use: inside the
+  directory, as here, or beside it at `.github/PULL_REQUEST_TEMPLATE.md`. A
+  repository may also have none, in which case every type falls back to whatever
+  the gate is told. Copying only the directory omits the fallback silently, and the
+  action's own default is the beside-the-directory path — so a repository using the
+  inside-the-directory layout must say so with `default-template`.
 
 ## Conventions when editing
 
@@ -332,7 +369,8 @@ YAML style as observed across all ten files:
   alphabetical. Match the file, do not re-sort it.
 - Three files have no trailing newline: `labels.yml`, `CODEOWNERS`, and this
   `AGENTS.md`. Do not fix that incidentally in an unrelated change, and do not
-  propagate it into a consumer. Everything else, `LICENSE` included, ends with one.
+  propagate it into another repository. Everything else, `LICENSE` included, ends
+  with one.
 
 Issue templates:
 
@@ -376,11 +414,12 @@ Conventional Commit type: `breaking-change`, `build`, `chore`, `ci`, `docs`,
 types `policy.yml` accepts as a branch segment, plus `breaking-change`.
 
 This directory matters more than it looks. The `enable-body-structure` gate in
-`ailuracollective/actions/pull-request@v1` requires that **every `## ` heading in
-the template matching the pull request's title type appears in its body**, and it
-resolves that template from the *consuming* repository. A repository that ships
-no template for a type falls back to `PULL_REQUEST_TEMPLATE.md`, so the twelve
-here are what makes that gate mean the same thing everywhere.
+`pull-request@v1` requires that **every `## ` heading in the template matching the
+pull request's title type appears in its body**, and it resolves that template from
+the repository under review, not from here. A repository that ships no template for
+a type falls back to whatever `default-template` names, so the twelve here are what
+makes that gate mean the same thing everywhere — and a repository that has not
+copied them has no headings to be checked against at all.
 
 ### Structure is universal; commands are not
 
@@ -393,7 +432,7 @@ design:
 The `## Test plan` block is therefore a `TODO` placeholder, never a real command.
 A TypeScript repository and a Rust repository cannot share a test plan:
 `vp check` / `pnpm run size` and `cargo clippy` / `cargo test` have nothing to do
-with each other. **Each consuming repository replaces that block**, in the same
+with each other. **Each adopting repository replaces that block**, in the same
 pull request that changes its CI. Do not "helpfully" fill it in here.
 
 ### Four headings are common to all thirteen
@@ -416,36 +455,41 @@ to `type/task`, the catch-all. **`breaking-change` has no label of its own**: th
 family has exactly five members and none marks a break, so the template says to
 apply the label of the underlying change instead.
 
-That mapping follows `labels.yml`, which is what both remotes actually carry. It
-does **not** follow what the gate checks: every consumer fills `type-labels` with
-bare names, and the check compares by exact name, so a pull request labelled
-`type/feature` would be reported as carrying no type label at all. Only one of
-the two can be right, and the manifest wins because it is what exists on the
-remotes — which makes `type-labels` the misconfigured half. Correcting it is a
-cross-repository change to each consumer's `policy.yml`, and it is the same change
-that has to happen before any of these templates can be enforced.
+That mapping follows `labels.yml`, and it is the manifest that wins, because the
+manifest is a record of what the remote has while `type-labels` is only what some
+workflow claims to check. When they disagree, the gate is the misconfigured half:
+the check compares by exact name, so a pull request labelled `type/feature`
+against a `type-labels` of bare names is reported as carrying no type label at all,
+correctly labelled ones included. There is no failure mode in which the
+contributor was wrong.
 
-### Merges against the existing consumers
+### Reconciling a divergent template set
 
-`alpinejs-toolkit` (7 templates) and `colander` (10) both ran this gate with
-templates that shared no headings beyond the first two. Reconciling them was a
-design decision, recorded here because the alternatives are recoverable:
+An adopting repository may arrive with its own templates whose headings share
+nothing beyond the first two. Reconciling them is a design decision, and the rule
+that settles almost all of it:
 
-| Decision | Chosen | Over |
-| --- | --- | --- |
-| Test-plan heading | `## Test plan` | `## Checks run` (colander) |
-| Fix regression section | `## Regression test` | `## Regression coverage` + `## How to verify the fix` |
-| Refactor equivalence | `## Behavioral equivalence` | `## Proof that behavior is unchanged` |
-| Perf measurement | `## Measurements (required)` | `## Measurements` |
+- **Merge near-duplicates; do not carry both.** Two headings that ask the same
+  question are one heading. A second required section restating the first is a
+  form contributors fill in twice and reviewers read once. Where a second heading
+  carries real content, demote it to guidance *inside* the merged one — that is
+  where "how to verify" belongs once "regression test" exists.
+- **Adopt a section unique to one repository when it generalises.** "Behaviour is
+  unchanged", "existing coverage that moved", "packaging and version changes",
+  "why the previous text was wrong" each describe a *type*, not a project.
+- **Leave out anything that describes a project's strategy.** A heading about
+  frozen test vectors, a specific benchmark rig, or a particular fixture set
+  belongs to that repository and would be a lie in every other one.
+- **Keep the four common headings byte-identical.** If the guidance in one drifts,
+  the gate demands different things in different repositories, which is the exact
+  failure this directory exists to prevent.
 
-Near-duplicate headings were merged rather than carried as two required sections;
-colander's `## How to verify the fix` survives as guidance inside
-`## Regression test`. Sections unique to one repo were adopted where they
-generalise — colander's `## Behavior is unchanged` on `perf.md`,
-`## Existing coverage that moved` on `test.md`, `## Packaging and version
-changes` on `build.md`, `## Why the previous text was wrong` on `docs.md`. Repo-
-specific headings such as colander's `## Frozen vectors` were left out: they
-describe one repository's test strategy, not the type.
+Two judgement calls worth keeping, because the reasoning is not recoverable from
+the files: the test-plan heading is `## Test plan` rather than `## Checks run`,
+because "test plan" is what a contributor looks for and "checks" invites a list of
+everything CI does; and perf carries `## Measurements (required)` with the
+qualifier in the heading, so an unmeasured perf change is visibly incomplete
+without anyone having to read the section to find out.
 
 ## Adding an issue type
 
@@ -546,7 +590,7 @@ though you could bypass the review, because the review is the point.
 ## Adding or changing a label
 
 1. Edit `.github/labels.yml`. Keep the three-key shape and the family grouping.
-2. If the name is a `type/*` label, mirror it into every consuming repository's
+2. If the name is a `type/*` label, mirror it into every adopting repository's
    manifest **and** into the `type-labels` input of that repository's
    `policy.yml`. A gate that names a label the remote does not have is
    unsatisfiable, not merely strict.
@@ -554,8 +598,9 @@ though you could bypass the review, because the review is the point.
    `type/documentation` already share `0075CA`.
 4. Removing an entry does not remove the remote label, and a remote label absent
    from this manifest is drift in the other direction. The reconciliation recipe
-   to re-apply or prune lives at the bottom of `alpinejs-toolkit/.github/labels.yml`;
-   port it here if this repository should be self-sufficient.
+   travels with the manifest rather than with this repository, so read the target's
+   copy before overwriting it; this repository has one of its own at the bottom of
+   `labels.yml`.
 
 ## Validation
 
@@ -694,13 +739,14 @@ gap above rather than a bug in your change.
   changes no remote and gates no CI.
 - Do not grow the `type/*` family in this repository alone. It is not enforced
   downstream at five members or any other number — see the sync model section for
-  what the consumers actually declare and why the two vocabularies disagree.
+  why the two vocabularies have to be declared separately.
 - Do not write "the gate requires" about **this** repository. Its policy job is
-  not a required status check and cannot become one while one person holds all
-  the write access. The gate is enforced in `actions` and `alpinejs-toolkit`, and
-  advisory in `colander` — check which before describing a rule as binding.
-- Do not overwrite a consuming repository's `labels.yml` with this bare list
-  without porting its header and reconciliation recipe back here first.
+  not a required status check and cannot become one while one person holds all the
+  write access. Enforcement is a per-repository fact, and the same organisation
+  will have repositories on both sides of it — check, per § Enforcement, before
+  describing a rule as binding.
+- Do not overwrite an adopting repository's `labels.yml` with this bare list
+  without porting its header and reconciliation recipe across first.
 - Do not drop the catch-all from `CODEOWNERS`. A pattern with no slash matches at
   every depth, so `*` alone owns every file in the repository, present and future.
   The groups below it document blast radius rather than close a coverage gap, and

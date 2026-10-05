@@ -1,7 +1,7 @@
 name: Contribution policy
 
 # The full projection of this repository's own standard onto itself. Every artifact
-# defined in `.github/` is enforced here by the same actions the consumers use, so
+# defined in `.github/` is enforced here by the actions that enforce it anywhere, so
 # the standard is checked against itself rather than merely described.
 #
 # What "projection" means, precisely: this workflow reads no file in this repository.

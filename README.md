@@ -1,7 +1,7 @@
 # GitHub standards
 
-The origin for how issues and pull requests are written across
-`ailuracollective`. Four artifacts, copied by hand into each repository:
+The origin for how issues and pull requests are written across `ailuracollective`.
+Five artifacts, copied by hand into each repository:
 
 | Artifact                          | What it decides                                             |
 | --------------------------------- | ----------------------------------------------------------- |
@@ -18,37 +18,28 @@ once.
 
 ## What this repository does not do
 
-**It does not enforce its own standard.** There is no CI in this repository: no
-workflows, no validation job, nothing that fails a pull request for violating an
-invariant. Every invariant in `AGENTS.md` is checked by hand, by whoever remembers
-to run the block at the end of it. If you want that changed, it is a real piece of
-work — see *Adding CI* in `AGENTS.md`'s follow-ups — not a toggle.
-
 **It does not propagate.** There is no sync mechanism of any kind: no workflow, no
-submodule, no bot. Editing a file here changes nothing anywhere. Each consumer
-holds its own copy, copies are manual, and drift is the default state rather than
-an exception. See *Sync model* in `AGENTS.md` for the measured drift.
+submodule, no bot. Editing a file here changes nothing anywhere. Each adopting
+repository holds its own copy, copies are manual, and drift is the default state
+rather than an exception.
 
-**The gates in `ailuracollective/actions` are advisory in both current
-consumers.** `pull-request@v1` runs five checks — linked issue, type label, title
-length, Conventional Commit title, body structure — and neither `alpinejs-toolkit`
-nor `colander` requires its job as a status check. `alpinejs-toolkit`'s `master`
-has no branch protection at all. The gates annotate a pull request and are then
-ignored, which is why pull requests carrying no type label have been merged. The
-templates in this repository are read by the gate; the headings they declare are
-requirements that nothing currently checks.
+The consequence worth stating plainly: **this repository cannot tell you whether a
+given repository has adopted it, or has adopted it correctly.** Copies are
+untracked. `AGENTS.md` describes the rules and how to check any one repository; it
+does not, and deliberately does not, hold a list of who has copied what. That list
+would be stale the moment a repository is created or deleted, and a stale list is
+worse than none — it reads as authoritative. To find out about a specific
+repository, read that repository.
 
-There is also a live disagreement about label naming that the gates would expose
-the moment they were enforced. This repository's manifest and both remotes use
-prefixed slash names (`type/bug`). Both `policy.yml` files fill `type-labels`
-with bare names (`feat`, `fix`), and the check compares by exact name, so a pull
-request labelled `type/bug` is reported as carrying no type label at all. Both
-cannot be right. The manifest wins, because it is what exists on the remotes,
-which makes `type-labels` the half that needs fixing.
+**It cannot require its own gate to pass.** `.github/workflows/policy.yml` runs
+the standard against itself, but `main` also requires a code-owner review and one
+account holds all the write access, so making the policy job a required status
+check would deadlock the repository. See *Ownership and enforcement* in
+`AGENTS.md`.
 
 ## Adopting it
 
-Copy the four artifacts into the consumer's own `.github/`. Two things are not
+Copy the five artifacts into the repository's own `.github/`. Three things are not
 optional.
 
 **Replace the `## Test plan` block in all 12 pull request templates.** Here they
@@ -58,41 +49,56 @@ shared test plan would be a shared lie. Do it in the same pull request that wire
 up CI, so the form never names a command the repository cannot run.
 
 **Reconcile the label vocabulary.** Do not copy `labels.yml` over a manifest that
-has a reconciliation recipe without porting the recipe across — see *Sync model*
-in `AGENTS.md`. And if the repository runs `pull-request@v1`, fix `type-labels` in
-the same change, or the type-label check will reject the very labels the templates
-tell contributors to apply.
+has a reconciliation recipe without porting the recipe across — see *Sync model* in
+`AGENTS.md`. And if the repository runs `pull-request@v1`, fix `type-labels` in the
+same change, or the type-label check will reject the very labels the templates tell
+contributors to apply.
 
-Copying only the directory also silently omits the default pull request form,
-whose location differs across the organisation: this repository keeps it at
-`.github/PULL_REQUEST_TEMPLATE/PULL_REQUEST_TEMPLATE.md`, `alpinejs-toolkit` and
-`ailuracollective/actions` at `.github/PULL_REQUEST_TEMPLATE.md`, and `colander`
-has none at all.
+**Create the labels.** A manifest is a record, not a mechanism: GitHub does not
+read it, and nothing applies it. Until the labels exist on the remote, every
+template that names one has that label silently discarded, and the issue arrives
+unlabelled with nothing in any log to say so.
 
-## Current consumers
+**Check where the default pull request form goes.** Its location is not fixed, and
+copying only the directory omits it. This repository keeps it inside the
+directory, at `.github/PULL_REQUEST_TEMPLATE/PULL_REQUEST_TEMPLATE.md`; a
+repository may instead keep it beside the directory at
+`.github/PULL_REQUEST_TEMPLATE.md`. Either is valid, so tell the gate which one you
+chose with `default-template` — its own default is the second, and inheriting it
+while your file is the first makes the body-structure check resolve to nothing.
 
-Measured, not aspirational. `type/*` labels here means labels matching this
-repository's manifest.
+## Verifying an adoption
 
-| Repository             | Remote labels | Its own manifest | Issue forms | PR forms | Gates block merges |
-| ---------------------- | ------------- | ---------------- | ----------- | -------- | ------------------ |
-| `alpinejs-toolkit`     | 30 of 30, colors identical | 14 names, none of them the 30 | 2 | 7 of 12 | no — no branch protection |
-| `colander`             | 29 of 30, plus a stray `type:feature` | 12 names, none of them the 30 | 4 | 10 of 12 | no — two other checks required |
+Nothing here runs against an adopting repository, so the checks are manual and
+per-repository. Two are worth doing first, because both catch the same class of
+defect — a configuration that names something that does not exist, which fails
+silently rather than loudly.
 
-Neither consumer has adopted the 7-type issue standard, and both apply issue
-template labels that exist on no remote, so issues arrive with no type label at
-all. `colander` additionally lacks `github_actions` and has drifted two release
-label colors.
+```sh
+# 1. does every label a template or a workflow names actually exist on the remote?
+gh label list --limit 100 --json name --jq '.[].name' | sort
+
+# 2. do the gate's inputs name labels that repository has, rather than labels it once had?
+grep -A3 'type-labels:\|approved-label:\|auto-label-name:' .github/workflows/policy.yml
+```
+
+A gate that names a label the repository does not have is not a strict gate, it is
+an **unsatisfiable** one: the check matches by exact name, so no pull request can
+pass it, and the failure reads as though the contributor did something wrong.
+
+Then check that the gate is enforced at all, which is a different question from
+whether it is configured correctly. `AGENTS.md` has the commands and the trap
+involved.
 
 ## Changing the standard
 
 Read `CONTRIBUTING.md` first. The short version: open an issue before a pull
 request, and a change to `labels.yml` or to a template is not finished when it
-lands here — it also has to be mirrored into every consumer, which is manual and
-is the part that is easy to forget.
+lands here — it also has to be mirrored into every repository that adopted it, which
+is manual and is the part that is easy to forget.
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE). The other three public repositories in the
-organisation are MIT for the same reason: these files get copied into other
-projects, and the point is that copying them is unencumbered.
+MIT. See [LICENSE](LICENSE). The standard is MIT for the same reason everything
+that adopts it should be: these files get copied into other projects, and the
+point is that copying them is unencumbered.
