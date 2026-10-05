@@ -81,19 +81,22 @@ jobs:
           # above whichever input comes next — which is how the two blocks in this file
           # were once read as one.
           skip-actors: ''
-          # This action's comment is off by default; `v2` turned it on for the PR policy only.
-          # It is declared on here too, and the empty `permissions` above is why that is
-          # possible rather than a compromise: the comment is written with `comment-token`,
-          # which carries its own scope, so publishing one costs this job nothing. The
-          # default is a reasonable choice for a consumer that grants nothing on purpose —
-          # but the reason it costs nothing is the split, not the grant.
-          #
-          # Two boards per pull request, one per action, is the price. They are separate
-          # comments rather than one merged table because each action updates only its own,
-          # and a gate that could not see the other's verdict could still be trusted for its
-          # own. Drop this input if that is more board than is wanted.
+          # Forced on rather than left at this action's default of `false`. Both gates publish a
+          # board into the pull request, one comment each, edited in place rather than added per
+          # run. The input is declared because this file is the complete projection: a reader
+          # should not have to know an action's defaults in order to know what runs here.
           enable-status-comment: true
+          # A comment is authored by the owner of the token that writes it, and the workflow's own
+          # token writes as `github-actions[bot]`. This account's PAT is what makes the status
+          # comment belong to the organisation rather than to the runner, and `comment-token` is
+          # where it goes so that the check above, which only reads, never holds it.
+          #
+          # `permissions` on this job is `{}` and stays `{}`. That is the point rather than a
+          # compromise: the writing token brings its own scope, so a gate that validates branch
+          # names — reading the head ref and nothing else — can still report into the
+          # conversation without being granted anything to do it.
           comment-token: ${{ secrets.AILURA_KITTY_TOKEN }}
+          comment-author: AiluraKitty
 
   pull-request-policy:
     name: Pull request policy
@@ -142,24 +145,28 @@ jobs:
           # case that forces the list to exist in other repositories, and this repository has
           # no `dependabot.yml`. Declared rather than left absent, for the reason given above.
           skip-actors: ''
-          # The status comment is published as Ailura Kitty, not as `github-actions[bot]`.
+          # Forced on. `v2` already defaults the PR policy's comment to on, so this input
+          # changes nothing today — it is declared for the same reason every other input
+          # here is, which is that this file is the complete projection and a reader should
+          # not have to know an action's defaults to know what runs here.
           #
-          # A GitHub comment is authored by whoever owns the token that wrote it — the
-          # payload cannot carry an author — so the identity is chosen by which token is
-          # passed, not by a field. `comment-token` is that choice. Without it the action
-          # falls back to `github-token`, which on this event belongs to
-          # `github-actions[bot]`, and it refuses to post under that identity rather than
-          # leaving a status board nobody in the organisation can edit or delete.
+          # A comment is authored by the owner of the token that writes it, and the
+          # workflow's own token writes as `github-actions[bot]` — which nobody can edit
+          # or delete, so a wrong comment would outlive whoever could have fixed it. This
+          # account's PAT is what makes the board belong to the organisation rather than to
+          # the runner, and `comment-token` is where it goes so that the five checks in
+          # this job, which only ever read, never hold it.
           #
-          # That is the whole reason this input exists, and it is why the job's own grant
-          # above stays `read`: a write-scoped token for the checks would have been the
-          # cheaper change and the worse one.
+          # That is also why `permissions` above stays `read`: the writing token brings its
+          # own scope, so widening this job would hand a write grant on the pull request to
+          # five scripts that do not need one.
           #
-          # The secret is organisation-level, so it is named here but never read here.
-          # `comment-author` is left at its default, which is this same account — declaring
-          # it would be a second record of a value the action already carries, and the
-          # moment they disagreed the comment would be refused rather than mislabelled.
+          # `comment-author` is the same value the action already defaults to. Declared
+          # anyway, and if the two ever disagreed the comment would be refused rather than
+          # mislabelled — which is the failure worth having.
+          enable-status-comment: true
           comment-token: ${{ secrets.AILURA_KITTY_TOKEN }}
+          comment-author: AiluraKitty
 
   triage:
     name: Issue triage
