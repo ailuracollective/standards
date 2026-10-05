@@ -74,27 +74,16 @@ jobs:
           # decision; if release-please is ever added here, this is where the exemption
           # belongs, and skipping it would mean no release could merge.
           #
-          # Declared rather than left absent, for the reason `comment-token` in the job below
-          # is declared: this file is the complete projection, so a reader sees the whole
-          # requirement rather than inferring it from what is missing. A comment describing
-          # an input that is not there is a comment about nothing, and it sits directly
-          # above whichever input comes next — which is how the two blocks in this file
-          # were once read as one.
+          # Declared rather than left absent, for the reason given in this file's header: a
+          # reader should see the whole requirement rather than infer it from what is
+          # missing.
           skip-actors: ''
-          # Forced on rather than left at this action's default of `false`. Both gates publish a
-          # board into the pull request, one comment each, edited in place rather than added per
-          # run. The input is declared because this file is the complete projection: a reader
-          # should not have to know an action's defaults in order to know what runs here.
+          # `false` is this action's default. Declared, like every input here.
           enable-status-comment: true
-          # A comment is authored by the owner of the token that writes it, and the workflow's own
-          # token writes as `github-actions[bot]`. This account's PAT is what makes the status
-          # comment belong to the organisation rather than to the runner, and `comment-token` is
-          # where it goes so that the check above, which only reads, never holds it.
-          #
-          # `permissions` on this job is `{}` and stays `{}`. That is the point rather than a
-          # compromise: the writing token brings its own scope, so a gate that validates branch
-          # names — reading the head ref and nothing else — can still report into the
-          # conversation without being granted anything to do it.
+          # A comment is authored by whoever owns the token that writes it, so this account's
+          # PAT is what keeps the board out of `github-actions[bot]`'s name — one nobody can
+          # edit or delete. A separate input is also what keeps `permissions: {}` above
+          # honest.
           comment-token: ${{ secrets.AILURA_KITTY_TOKEN }}
           comment-author: AiluraKitty
 
@@ -104,13 +93,9 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.state == 'open'
     runs-on: ubuntu-latest
     permissions:
-      # Read-only, and it stays that way even though this job publishes a comment.
-      # The action takes the token it writes with from `comment-token`, not from
-      # `github-token`, and that token carries its own scope — so widening this job
-      # to `pull-requests: write` would hand the five check scripts a write grant on
-      # the pull request and buy nothing. The split is the load-bearing part: the
-      # scripts only ever read, and only the report writes, and those are two
-      # different tokens.
+      # Read-only, and it stays that way even though this job publishes a comment: the action
+      # writes with `comment-token`, which carries its own scope, so widening this would
+      # hand a write grant on the pull request to five checks that only read.
       pull-requests: read
       contents: read
     steps:
@@ -145,25 +130,9 @@ jobs:
           # case that forces the list to exist in other repositories, and this repository has
           # no `dependabot.yml`. Declared rather than left absent, for the reason given above.
           skip-actors: ''
-          # Forced on. `v2` already defaults the PR policy's comment to on, so this input
-          # changes nothing today — it is declared for the same reason every other input
-          # here is, which is that this file is the complete projection and a reader should
-          # not have to know an action's defaults to know what runs here.
-          #
-          # A comment is authored by the owner of the token that writes it, and the
-          # workflow's own token writes as `github-actions[bot]` — which nobody can edit
-          # or delete, so a wrong comment would outlive whoever could have fixed it. This
-          # account's PAT is what makes the board belong to the organisation rather than to
-          # the runner, and `comment-token` is where it goes so that the five checks in
-          # this job, which only ever read, never hold it.
-          #
-          # That is also why `permissions` above stays `read`: the writing token brings its
-          # own scope, so widening this job would hand a write grant on the pull request to
-          # five scripts that do not need one.
-          #
-          # `comment-author` is the same value the action already defaults to. Declared
-          # anyway, and if the two ever disagreed the comment would be refused rather than
-          # mislabelled — which is the failure worth having.
+          # Already `true` at `v2`'s default; declared because every other input here is.
+          # The PAT is what keeps the board out of `github-actions[bot]`'s name, and being a
+          # separate input is what keeps `permissions` above at `read`.
           enable-status-comment: true
           comment-token: ${{ secrets.AILURA_KITTY_TOKEN }}
           comment-author: AiluraKitty
@@ -172,10 +141,8 @@ jobs:
     name: Issue triage
     if: github.event_name == 'issues'
     runs-on: ubuntu-latest
-    # The only grant of `issues: write` in this repository, and the only job whose write
-    # comes from the workflow's own token rather than from `comment-token`. The two jobs
-    # above also write, into pull request conversations, and they do it with a token whose
-    # scope travels with it — which is why their own grant blocks stayed read-only.
+    # The only `issues: write` here, and the only job that writes with the workflow's own
+    # token rather than with `comment-token`.
     permissions:
       issues: write
     steps:
