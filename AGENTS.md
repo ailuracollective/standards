@@ -275,12 +275,20 @@ gh api /repos/ailuracollective/actions/commits/main --jq .sha   # equal means th
 
 **Two majors exist, and picking one is a decision rather than a search.** `v2`
 adds the sticky status comment, which publishes into the pull request
-conversation and therefore needs a token belonging to the organisation and a
-job granted `pull-requests: write`. A repository with neither should stay on
-`v1` or set `enable-status-comment: false`; a repository that wants the comment
-needs a secret for that account, and `comment-token` is the input that carries
-it without handing a write-scoped token to the five check scripts. A floating
-tag cannot answer that question for you.
+conversation and therefore needs a job granted `pull-requests: write` — a grant
+`v1` never asked for. Three outcomes, and only one of them is free:
+
+| Choice | Cost |
+| --- | --- |
+| `enable-status-comment: false` | nothing; the job summary carries the same table |
+| `comment-token` for an organisation account | a secret, but the comment can be edited by a person |
+| `comment-author` naming the identity your token actually has | no secret, but a `github-actions[bot]` comment can be edited or deleted by nobody |
+
+The third is the tempting one and it is a trap worth naming: it works, the
+comment appears, and the reason the action refuses to post under an unheld
+identity by default is precisely that a bot comment outlives whoever would have
+fixed a wrong one. Prefer the second. The first is the honest answer for a
+repository with no opinion.
 
 ### Enforcement: how to tell, for any repository
 

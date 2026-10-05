@@ -74,8 +74,8 @@ jobs:
           # decision; if release-please is ever added here, this is where the exemption
           # belongs, and skipping it would mean no release could merge.
           #
-          # Declared rather than left absent, for the reason `enable-status-comment` below
-          # is declared: this file is the complete projection, so a reader sees the whole
+          # Declared rather than left absent, for the reason `comment-author` below is
+          # declared: this file is the complete projection, so a reader sees the whole
           # requirement rather than inferring it from what is missing. A comment describing
           # an input that is not there is a comment about nothing, and it sits directly
           # above whichever input comes next — which is how the two blocks in this file
@@ -88,7 +88,17 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.state == 'open'
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: read
+      # `write`, not `read`: the action publishes its report into the pull request
+      # conversation, and that is the one call it makes that needs more than a read.
+      # Everything else here still only reads, and `contents: read` is unchanged.
+      #
+      # The trade is a token that can comment on any pull request in this repository,
+      # held for the length of a job that reads contributor-supplied text. That text is
+      # read through `env:` and never spliced into script text, so nothing a
+      # contributor writes reaches a command unquoted — but the grant is real and is
+      # why a token whose identity is `github-actions[bot]` is the one declared below
+      # rather than an organisation account nobody can be tricked into running as.
+      pull-requests: write
       contents: read
     steps:
       - uses: ailuracollective/actions/pull-request@v2
@@ -122,11 +132,22 @@ jobs:
           # case that forces the list to exist in other repositories, and this repository has
           # no `dependabot.yml`. Declared rather than left absent, for the reason given above.
           skip-actors: ''
-          # The status comment is off. `v2` publishes it by default, which needs a token
-          # that belongs to the organisation and a job granted `pull-requests: write`; this
-          # repository has neither, so leaving the default would buy a warning on every pull
-          # request and no comment. The job summary carries the same table.
-          enable-status-comment: false
+          # The status comment is on, published as this workflow's own token. `v2` defaults
+          # it to an organisation account and refuses to post under any other identity, so
+          # the three real options are: pass a token for that account, accept the identity
+          # the token actually has, or turn the comment off. This repository has no such
+          # secret, so it accepts the second — `github-actions[bot]`, which is what the
+          # workflow's own token is.
+          #
+          # What that costs: a `github-actions[bot]` comment can be edited or deleted by
+          # nobody but GitHub, so it outlives whoever would have fixed a wrong one. That is
+          # why the action defaults the other way, and why this line is written out rather
+          # than inherited — a reader who disagrees should be able to see that the comment
+          # exists because of this line and not because somebody forgot to turn it off.
+          #
+          # Adding `comment-token: ${{ secrets.AILURA_KITTY_TOKEN }}` and deleting this line
+          # is the whole of the upgrade.
+          comment-author: github-actions[bot]
 
   triage:
     name: Issue triage
