@@ -7,7 +7,7 @@ Guidance for AI agents and contributors working in this repository.
 The source of truth for GitHub issue standards shared across an organisation's
 repositories. There is no application code here, no build and no test suite.
 `README.md` is the entry point for a human; this file is the working reference.
-Under `.github/` there are **10 YAML files, 14 Markdown files, and 1 CODEOWNERS
+Under `.github/` there are **11 YAML files, 14 Markdown files, and 1 CODEOWNERS
 file**; four more files sit in the repository root.
 
 Six artifacts, each with exactly one owner:
@@ -61,8 +61,8 @@ of which there may be none, one, or many.
   default `PULL_REQUEST_TEMPLATE.md`.
 - **30** labels: six prefixed families (`type` 5, `priority` 4, `status` 5,
   `scope` 8, `meta` 5, `release` 2) plus one unprefixed, `github_actions`.
-- **29** files total: 3 in `.github/` (`labels.yml`, `ISSUE_STANDARD.md`,
-  `CODEOWNERS`), 1 in `.github/workflows/`, 8 in `ISSUE_TEMPLATE/`, 13 in
+- **30** files total: 4 in `.github/` (`labels.yml`, `ISSUE_STANDARD.md`,
+  `standards.local.example.yml`, `CODEOWNERS`), 1 in `.github/workflows/`, 8 in `ISSUE_TEMPLATE/`, 13 in
   `PULL_REQUEST_TEMPLATE/`, and 4 in the repository root (`AGENTS.md`,
   `README.md`, `CONTRIBUTING.md`, `LICENSE`).
   Do not quote these numbers loosely; if you change one of them, update this
@@ -383,9 +383,85 @@ Structural divergences worth knowing before you copy anything either direction:
   action's own default is the beside-the-directory path — so a repository using the
   inside-the-directory layout must say so with `default-template`.
 
+## Customizing the standard
+
+The structural divergences above are an observation taxonomy: they name what two
+copies may disagree about. They are not a policy, and nothing records which
+divergences an adopting repository actually has. So the question "is this difference
+intentional, or did the copy rot?" has no answer today, and four situations that need
+different responses are indistinguishable in the result:
+
+| What a repository did | What it must also remember | What goes wrong |
+| --- | --- | --- |
+| added `area/auth` | nothing | looks like drift forever |
+| added `type/chore` | edit `type-labels` in its `policy.yml` | the second record is in no file anyone reads |
+| recolored a core label | the reason | invisible, and reverted by the next copy |
+| dropped `scope/security` | whether that was a decision | cannot be told from an incomplete copy |
+
+The answer is an **opt-in delta file**, `.github/standards.local.yml`, whose schema
+ships as `.github/standards.local.example.yml`. It records what the repository
+changed and why. It is not a sixth artifact anyone is required to copy.
+
+**It declares; it does not configure.** No workflow reads it, including the gate. The
+gate reads the repository's own `policy.yml`, because a workflow cannot read a file —
+the reason every input in `policy.yml` is duplicated rather than loaded. Writing a
+value here changes nothing at all. That sentence has to survive every future edit of
+this section, because the failure it prevents is silent: a repository that assumes
+the file configures the gate sees no error and no effect.
+
+Deviations are costed in four levels, and the level decides the process, not the data
+shape:
+
+| Level | Deviation | Process |
+| --- | --- | --- |
+| 0 | none — an exact copy | nothing to declare |
+| 1 | a label in a family the core does not use | no approval |
+| 2 | a core label's `color`/`description`, or a gate input's value | declare it with a reason |
+| 3 | dropping a core label, changing an input's set, changing the manifest's shape | issue here first; `issue:` records which one |
+
+Level 1 needs no approval **because level 2 does not need approval either, and a
+tiered policy with an approval step at the bottom is a policy nobody follows.** What
+is reserved is the list of core families — `type/`, `priority/`, `status/`, `scope/`,
+`meta/`, `github_actions`, `release/` — not a closed set of new ones. An open
+extension set costs little: two repositories inventing `area/ownership`
+independently is a smaller problem than one repository inventing `type/chore` and
+having to edit a second record in a second file to make it pass.
+
+`type/` is frozen at five members. It is the family the gate reads, and a sixth
+member is a change to every adopting repository's `policy.yml` and manifest — all
+copies that nothing synchronizes. A need for a sixth type is a `type/*` label plus an
+entry in `extensions`.
+
+`reason` is **required** wherever a deviation is recorded. That is the whole
+mechanism: an override with a reason is a decision someone can review and a verifier
+can recognise, and an override without one is precisely the thing the file exists to
+distinguish from rot.
+
+### What a checker must be able to answer
+
+The schema is a public interface. The consistency checker belongs to another project,
+and it is the only thing that can turn this file from a note into a guarantee. Four
+questions it has to answer, and one it must not invent:
+
+- Does every label named in a field resolve against the manifest? (Already a manual
+  check here; the defect it caught was seven templates applying six undeclared
+  names.)
+- Is a difference from the core declared in this file?
+- Is a label on the remote missing from the manifest, or in the manifest missing from
+  the remote?
+- Does a level-3 deviation carry the issue that approved it?
+- **Absence of the file means "no deviations" by assumption, not by declaration.** It
+  must not report a missing file as a defect, and it must not report the absence of a
+  field it did not expect as one either.
+
+The last one is the failure mode of this whole design. Opt-in means the common case is
+an absent file; a checker that treats absence as an error trains every repository to
+create an empty one, and an empty file is indistinguishable from a customized one to
+anyone skimming.
+
 ## Conventions when editing
 
-YAML style as observed across all ten files:
+YAML style as observed across all eleven files:
 
 - 2-space indent. No tabs, no CRLF anywhere in the repository.
 - Hex colors are quoted six-digit strings with no `#`: `"D73A4A"`. That is the
@@ -537,7 +613,7 @@ without anyone having to read the section to find out.
 ## Ownership and enforcement
 
 `.github/CODEOWNERS` gives every path to `@SiddharthaGF`, the only collaborator
-with write access. Because all seven rules resolve to that same account, the
+with write access. Because all eight rules resolve to that same account, the
 grouping currently changes no outcome — but it is not decoration. GitHub
 applies the **last** matching pattern, so each group is a real rule that
 overrides the catch-all above it, and the file is written as though a second
@@ -631,6 +707,9 @@ though you could bypass the review, because the review is the point.
    travels with the manifest rather than with this repository, so read the target's
    copy before overwriting it; this repository has one of its own at the bottom of
    `labels.yml`.
+5. If the change is for **one** repository rather than the standard, it is not an
+   edit here at all: declare it in that repository's `.github/standards.local.yml`
+   under `extensions`, per § Customizing the standard.
 
 ## Validation
 
@@ -767,6 +846,16 @@ gap above rather than a bug in your change.
   Conventional Commits and pull request titles; it is not an issue type here.
 - Do not treat `labels.yml` as configuration that applies itself. Editing it
   changes no remote and gates no CI.
+- Do not treat `.github/standards.local.yml` as configuration either. Nothing
+  reads it, not even the gate; it records a deviation so that a human or a checker
+  can recognise one. The failure is silent — a repository that believes it
+  configures something sees no error and no effect.
+- Do not record a deviation without a `reason`. That is the one field the whole
+  file exists for: an unexplained difference from the core is exactly what the
+  record was supposed to make recognisable.
+- Do not express a repository's own concern as a new `type/*` member. Use the
+  existing five plus an `extensions` entry; `type/` is frozen for the reason in
+  § Customizing the standard, which is not "the gate forbids it".
 - Do not grow the `type/*` family in this repository alone. It is not enforced
   downstream at five members or any other number — see the sync model section for
   why the two vocabularies have to be declared separately.
