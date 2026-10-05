@@ -78,7 +78,8 @@ jobs:
           # reader should see the whole requirement rather than infer it from what is
           # missing.
           skip-actors: ''
-          # `false` is this action's default. Declared, like every input here.
+          # `false` is this action's default, so this one overrides it. Declared, like every
+          # input here.
           enable-status-comment: true
           # A comment is authored by whoever owns the token that writes it, so this account's
           # PAT is what keeps the board out of `github-actions[bot]`'s name — one nobody can
