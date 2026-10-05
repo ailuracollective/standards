@@ -6,17 +6,23 @@
 # every repository can label. There is no file in this repository that is safe
 # to change casually.
 #
-# The rules below all resolve to the same single owner today, because
-# @SiddharthaGF is currently the only collaborator with write access. The
-# grouping is therefore documentation rather than enforcement: it records which
-# files carry which blast radius, so adding a second owner later is a one-line
-# change per group rather than a redesign.
+# Every rule below resolves to the same single owner today, because
+# @SiddharthaGF is currently the only collaborator with write access, so the
+# grouping changes no outcome yet. It is written as though a second owner
+# already existed: each group is a real rule that overrides the catch-all, and
+# it records which files carry which blast radius, so adding an owner later is
+# a one-line change per group rather than a redesign.
 #
 # Syntax follows gitignore rules and the LAST matching pattern wins, so the
-# catch-all comes first and the specific rules follow it.
+# catch-all comes first and the specific rules follow it. Rules do not
+# accumulate: naming a second owner on a later pattern REPLACES the owners of
+# the patterns before it for that path, it does not add to them. Put both
+# accounts on one line, separated by a space, when both should be asked.
 #
-# `*` is the catch-all GitHub documents. It is used rather than the
-# gitignore-looking `/**` because `/**` is ambiguous in this grammar, and an
+# `*` is the catch-all GitHub documents, and it matches at every depth: a
+# pattern containing no slash applies in subdirectories too, so this line alone
+# owns every file in the repository, present and future. It is used rather than
+# the gitignore-looking `/**` because `/**` is ambiguous in this grammar, and an
 # ambiguous pattern in a governance file is not worth carrying.
 
 *                       @SiddharthaGF

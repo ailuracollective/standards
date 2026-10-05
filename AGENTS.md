@@ -6,10 +6,11 @@ Guidance for AI agents and contributors working in this repository.
 
 The source of truth for GitHub issue standards shared across an organisation's
 repositories. There is no application code here, no build, no test suite, and no
-CI. The entire repository is **9 YAML files and 1 Markdown file** under
-`.github/`, plus this `AGENTS.md`.
+CI. `README.md` is the entry point for a human; this file is the working
+reference. Under `.github/` there are **9 YAML files, 14 Markdown files, and 1
+CODEOWNERS file**; four more files sit in the repository root.
 
-Three artifacts, each with exactly one owner:
+Four artifacts, each with exactly one owner:
 
 | File                                                   | Owns                                     | Read by                                     |
 | ------------------------------------------------------ | ---------------------------------------- | ------------------------------------------- |
@@ -17,6 +18,7 @@ Three artifacts, each with exactly one owner:
 | `.github/labels.yml`                                   | the label set (30 labels)                | anything that reads or applies labels       |
 | `.github/ISSUE_TEMPLATE/*.yml` (7 templates + config)  | the forms in the issue chooser           | GitHub                                      |
 | `.github/PULL_REQUEST_TEMPLATE/*.md` (12 + default)    | the form per pull request type           | GitHub                                      |
+| `.github/CODEOWNERS`                                   | who reviews a change                     | GitHub, via branch protection               |
 
 `ISSUE_STANDARD.md` is **prose and is not machine-readable**. It was
 `ISSUE_STANDARD.yml` and did not parse as YAML — the numbered list under Purpose
@@ -36,9 +38,10 @@ the *record* of the label set, not the labels on any remote.
   default `PULL_REQUEST_TEMPLATE.md`.
 - **30** labels: six prefixed families (`type` 5, `priority` 4, `status` 5,
   `scope` 8, `meta` 5, `release` 2) plus one unprefixed, `github_actions`.
-- **25** files total: 3 in `.github/` (`labels.yml`, `ISSUE_STANDARD.md`,
-  `CODEOWNERS`), 8 in `ISSUE_TEMPLATE/`, 13 in `PULL_REQUEST_TEMPLATE/`, and this
-  one. Do not quote these numbers loosely; if you change one of them, update this
+- **28** files total: 3 in `.github/` (`labels.yml`, `ISSUE_STANDARD.md`,
+  `CODEOWNERS`), 8 in `ISSUE_TEMPLATE/`, 13 in `PULL_REQUEST_TEMPLATE/`, and 4 in
+  the repository root (`AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `LICENSE`).
+  Do not quote these numbers loosely; if you change one of them, update this
   section.
 
 ## The invariant: one type, one template, one title prefix
@@ -123,12 +126,15 @@ this a decision rather than a mechanical change:
   defensible stretch.
 
 Adding `type/chore`, `type/test`, and `type/spike` would grow the family from 5
-to 8 and break a gate that consuming repositories already enforce — see
-`alpinejs-toolkit`'s `policy.yml`, which lists its five `type-labels` as an
-input. Fixing this properly is a cross-repository change: amend the seven
-templates, then mirror the decision into every consumer's manifest and into the
-`type-labels` input of its `policy.yml`. Nothing here should be changed in
-isolation.
+to 8. That is a real cost, but not for the reason previously recorded here:
+downstream does **not** enforce this family's size. Each consumer's `policy.yml`
+declares its own `type-labels`, and those lists name a different vocabulary
+entirely — bare, unprefixed labels such as `feat` and `fix` (12 entries in
+`alpinejs-toolkit`, 10 in `colander`), not `type/feature`. Widening this
+repository's family would not break them. Changing the label vocabulary at all is
+a cross-repository change: amend the seven templates, then mirror the decision
+into every consumer's manifest and into the `type-labels` input of its
+`policy.yml`. Nothing here should be changed in isolation.
 
 ## Sync model
 
@@ -138,44 +144,71 @@ own copy under its own `.github/`, and **edits here do not propagate**. There
 is no workflow, submodule, or sync bot in this repository. Synchronization is a
 manual copy, which means drift is expected and has to be checked for by hand.
 
-State of the one comparable consumer, `alpinejs-toolkit`:
+Two things drift apart here, and confusing them is how this section went wrong
+before. The **remote label set** has converged. The **manifest files** do not
+describe that remote at all.
 
-- Its `.github/labels.yml` declares the **same 30 labels with identical names and
-  colors** — verified, zero divergence.
-- Its file is structurally different, and richer: a top-level `labels:` mapping
-  key rather than a bare sequence; entries alphabetised within each family;
-  `# --- family ---` comments; a long header; and a `gh label create --force`
-  reconciliation recipe with a prune procedure at the bottom. The file here is a
-  bare top-level sequence, grouped `type`, `priority`, `status`, `scope`, `meta`,
-  `github_actions`, `release`, with a three-line header and no recipe.
-- Its header corrects a claim this file's line 3 leaves open: the labels *are*
-  applied on the remote, so the manifest records a set, not a plan to create one.
-- Its two templates already fix the gap above. They use
-  `labels: ["type/bug", "status/needs-review"]` — inline array form, manifest
-  members only, and the auto-applied triage label alongside the type.
-- It has **not** adopted the seven-type standard: only `bug_report.yml` and
-  `feature_request.yml` exist, and its `config.yml` sets
-  `blank_issues_enabled: true` where this repository sets `false`.
+Verified state of the two comparable consumers:
 
-So the label set has converged and the template set has not. Copying this
-repository's `labels.yml` over a consumer's manifest would be a downgrade. Prefer
-porting the consumer's header and reconciliation recipe back here, and treat the
-bare list as the portable subset.
+| | `alpinejs-toolkit` | `colander` |
+| --- | --- | --- |
+| Remote labels matching this manifest | 30 of 30, colors identical | 29 of 30, 2 colors differ |
+| Extra label on the remote | — | `type:feature`, a leftover |
+| Missing from the remote | — | `github_actions` |
+| Its own `.github/labels.yml` declares | 14 labels, **none** of them the 30 | 12 labels, **none** of them the 30 |
+| `policy.yml` `type-labels` | 12 bare names | 10 bare names |
+| Policy job a required status check | no — `master` has no protection | no — two other checks are required |
 
-Other divergences worth knowing before you copy anything either direction:
+The consumer *manifest files* are a different, older scheme: bare names (`feat`,
+`fix`) and a colon form (`status:approved`) instead of prefixed slash names. Both
+carry a `gh label create --force` reconciliation recipe, and running either today
+would try to create labels that do not exist on the remote.
+
+That vocabulary split is live in the gates too. `type-labels` feeds three checks
+at once — the label check, the Conventional Commit subject grammar, and pull
+request template resolution — and both consumers fill it with bare names. The
+check compares by exact, case-folded name, so `type/bug` can never satisfy a list
+containing `bug`, and its own error message says so: *"all bare, with no `type:`
+prefix"*. The same applies to `approved-label: status:approved`, which no remote
+carries; the remotes have `status/ready`.
+
+**None of this currently blocks anything, and that is the most important fact in
+this section.** Neither consumer requires the policy job as a status check:
+`alpinejs-toolkit`'s `master` has no branch protection at all, and `colander`'s
+requires `Branch name and PR title` plus `fmt-check, lint, check, test, build`,
+neither of which is the policy. Every gate in `pull-request@v1` therefore runs,
+annotates, and is ignored — which is why pull requests carrying no type label at
+all are merged. The twelve pull request templates in this repository are read by
+the gate, and the headings they declare are requirements that no merge is
+currently checked against.
+
+Treat the gates as advisory in both consumers until a required status check says
+otherwise. Do not describe them as enforced, and do not rely on them to keep a
+consumer's copy of this standard aligned — nothing is doing that.
+
+Structural divergences worth knowing before you copy anything either direction:
 
 - **Label form.** This repository uses a block sequence under a bare top level;
-  the consumer nests under `labels:`. Both parse as YAML; they are not the same
+  the consumers nest under `labels:`. Both parse as YAML; they are not the same
   schema, so a mechanical copy between them changes the document shape.
+- **Manifest content.** Copying this repository's `labels.yml` over a consumer's
+  current file would be an upgrade in content and a regression in form: it names
+  the labels the remote actually has, but drops the header and the reconciliation
+  recipe. Port the recipe back here instead, and reconcile the consumer's file
+  against its remote in the same change.
 - **Field id casing.** This repository uses kebab-case (`out-of-scope`,
-  `acceptance-criteria`); the consumer uses snake_case (`proposed_outcome`,
-  `additional_context`).
-- **Field types.** This repository uses only `textarea` and one `markdown`. The
-  consumer also uses `checkboxes` with per-option `required: true` for a
+  `acceptance-criteria`); `alpinejs-toolkit` uses snake_case
+  (`proposed_outcome`, `additional_context`).
+- **Field types.** This repository uses only `textarea` and one `markdown`.
+  `alpinejs-toolkit` also uses `checkboxes` with per-option `required: true` for a
   preflight block, `render: shell` for a log field, `type: input` for a version
   string, and explicit `validations: required: false` on optional fields.
-- **`blank_issues_enabled`.** `false` here, `true` there. Treat this as a
-  per-repository policy choice, not drift.
+- **`blank_issues_enabled`.** `false` here, `true` in `alpinejs-toolkit`. Treat
+  this as a per-repository policy choice, not drift.
+- **Default pull request form location.** `alpinejs-toolkit` and
+  `ailuracollective/actions` keep theirs at `.github/PULL_REQUEST_TEMPLATE.md`,
+  beside the directory; `colander` has none at all; this repository keeps it
+  inside the directory. Copying only the directory silently omits the fallback.
 
 ## Conventions when editing
 
@@ -191,9 +224,9 @@ YAML style as observed across all ten files:
   neither alphabetical nor the order the manifest header lists them in. Within
   `type`, the order is bug, feature, improvement, task, documentation — also not
   alphabetical. Match the file, do not re-sort it.
-- `labels.yml` is the only file in the repository with no trailing newline. Do
-  not fix that incidentally in an unrelated change, and do not propagate it into
-  a consumer.
+- Three files have no trailing newline: `labels.yml`, `CODEOWNERS`, and this
+  `AGENTS.md`. Do not fix that incidentally in an unrelated change, and do not
+  propagate it into a consumer. Everything else, `LICENSE` included, ends with one.
 
 Issue templates:
 
@@ -277,6 +310,15 @@ to `type/task`, the catch-all. **`breaking-change` has no label of its own**: th
 family has exactly five members and none marks a break, so the template says to
 apply the label of the underlying change instead.
 
+That mapping follows `labels.yml`, which is what both remotes actually carry. It
+does **not** follow what the gate checks: every consumer fills `type-labels` with
+bare names, and the check compares by exact name, so a pull request labelled
+`type/feature` would be reported as carrying no type label at all. Only one of
+the two can be right, and the manifest wins because it is what exists on the
+remotes — which makes `type-labels` the misconfigured half. Correcting it is a
+cross-repository change to each consumer's `policy.yml`, and it is the same change
+that has to happen before any of these templates can be enforced.
+
 ### Merges against the existing consumers
 
 `alpinejs-toolkit` (7 templates) and `colander` (10) both ran this gate with
@@ -315,9 +357,12 @@ describe one repository's test strategy, not the type.
 ## Ownership and enforcement
 
 `.github/CODEOWNERS` gives every path to `@SiddharthaGF`, the only collaborator
-with write access. The grouping is documentation, not enforcement: each block
-records which files carry which blast radius, so adding a second owner later is a
-one-line change per group rather than a redesign.
+with write access. Because all seven rules resolve to that same account, the
+grouping currently changes no outcome — but it is not decoration. GitHub
+applies the **last** matching pattern, so each group is a real rule that
+overrides the catch-all above it, and the file is written as though a second
+owner already existed: adding one is a one-line change per group rather than a
+redesign.
 
 **CODEOWNERS is advisory on its own.** It requests a review; it does not block
 anything. It only binds when the branch is protected, so `main` carries:
@@ -332,6 +377,14 @@ anything. It only binds when the branch is protected, so `main` carries:
 | `enforce_admins` | **false** | see below |
 | `allow_force_pushes` | false | this repository is the record; rewriting it loses the trail |
 | `allow_deletions` | false | as above |
+
+**Read `enforce_admins` as the setting that governs the other seven.**
+GitHub's default is that branch protection restrictions *do not apply* to people
+with admin permissions, so `enforce_admins: false` does not merely waive review
+— it is the single reason @SiddharthaGF can ignore every row above it, including
+the two that read as guarantees. `allow_force_pushes: false` protects the
+history of `main` against everyone except its one admin. The `Why` column states
+intent; only `enforce_admins` states what is enforced.
 
 Two of those field names are easy to get wrong, and both fail silently rather than
 loudly. The API spells it `require_code_owner_reviews`, **plural**; sending the
@@ -430,6 +483,13 @@ for h in 'Linked issue (required)' 'Type (required)' 'Test plan' 'Contributor ch
 done
 grep -rn 'vp check\|pnpm run\|cargo ' .github/PULL_REQUEST_TEMPLATE/ \
   | grep -v 'cannot run' || echo 'no hardcoded CI commands'
+
+# CODEOWNERS parses and every owner exists. An empty errors array is the whole
+# check: GitHub skips any line it cannot parse, silently, and an owner without
+# explicit write access is dropped without a warning either.
+gh api repos/ailuracollective/standards/codeowners/errors --jq '.errors'   # expect []
+gh api repos/ailuracollective/standards/collaborators \
+  --jq '.[] | select(.permissions.push) | .login'                          # owners must appear
 ```
 
 Count the typed templates with `find … ! -name 'PULL_REQUEST_TEMPLATE.md'`, not
@@ -479,7 +539,21 @@ gap above rather than a bug in your change.
   Conventional Commits and pull request titles; it is not an issue type here.
 - Do not treat `labels.yml` as configuration that applies itself. Editing it
   changes no remote and gates no CI.
-- Do not grow the `type/*` family in this repository alone. It is enforced
-  downstream at exactly five members.
+- Do not grow the `type/*` family in this repository alone. It is not enforced
+  downstream at five members or any other number — see the sync model section for
+  what the consumers actually declare and why the two vocabularies disagree.
+- Do not write "the gate requires" about anything in this repository until a
+  required status check confirms it. Every gate in `pull-request@v1` is advisory
+  in both consumers today.
 - Do not overwrite a consuming repository's `labels.yml` with this bare list
   without porting its header and reconciliation recipe back here first.
+- Do not drop the catch-all from `CODEOWNERS`. A pattern with no slash matches at
+  every depth, so `*` alone owns every file in the repository, present and future.
+  The groups below it document blast radius rather than close a coverage gap, and
+  the catch-all is currently the only thing owning the four files in the
+  repository root. An unowned file skips the code-owner gate entirely.
+- Do not add a second owner to a CODEOWNERS rule expecting it to be reviewed by
+  someone it does not already name. Rules are not cumulative: the **last** matching
+  pattern replaces the owners of the ones before it, so
+  `.github/labels.yml @alice` drops @SiddharthaGF from that path rather than adding
+  her alongside him.
