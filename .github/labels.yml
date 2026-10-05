@@ -1,6 +1,32 @@
 # Shared GitHub Labels
 # Reusable label standard for all repositories.
 # Keep this file synchronized across projects.
+#
+# This file is the ORIGIN of the label set, and it is a manifest rather than workflow
+# input: GitHub does not read it, no CI in this repository parses it, and editing it
+# changes no remote label. Each consuming repository holds its own copy under its own
+# `.github/`, and edits here do NOT propagate — there is no workflow, submodule or sync
+# bot anywhere in this organisation that fetches it. Synchronization is a manual copy,
+# so drift is expected and has to be checked for by hand.
+#
+# To apply this manifest to a repository, from that repository's root:
+#
+#   yq -r '.[] | "gh label create \"\(.name)\" --color \"\(.color)\" --description \"\(.description)\" --force"' \
+#     .github/labels.yml | sh
+#
+# Drop the `| sh` to print it first. To audit rather than apply, diff against the
+# remote and against this file; an empty diff means they agree. A label on the remote
+# that neither file declares is drift in the other direction, and `--force` will not
+# remove it: pruning is a separate, deliberate act.
+#
+# The quotes around each color are load bearing, not style. Unquoted, YAML reads
+# `008672` as the number 8672 and `5319E7` as 53190000000, because it takes the `E`
+# for an exponent — and `gh label create --color` would then be handed a number.
+#
+# The `type/*` family is five members and there is no `type/breaking-change`.
+# `breaking-change` is a Conventional Commit type, not a label and not an issue type;
+# the breaking signal lives in the commit, as `!` or a `BREAKING CHANGE:` footer,
+# which is what release tooling reads.
 
 - name: "type/bug"
   color: "D73A4A"
