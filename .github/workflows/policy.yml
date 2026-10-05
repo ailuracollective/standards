@@ -73,6 +73,14 @@ jobs:
           # release automation, so there is nothing to exempt. Leaving the list empty is a
           # decision; if release-please is ever added here, this is where the exemption
           # belongs, and skipping it would mean no release could merge.
+          #
+          # Declared rather than left absent, for the reason `enable-status-comment` below
+          # is declared: this file is the complete projection, so a reader sees the whole
+          # requirement rather than inferring it from what is missing. A comment describing
+          # an input that is not there is a comment about nothing, and it sits directly
+          # above whichever input comes next — which is how the two blocks in this file
+          # were once read as one.
+          skip-actors: ''
 
   pull-request-policy:
     name: Pull request policy
@@ -112,7 +120,8 @@ jobs:
           default-template: .github/PULL_REQUEST_TEMPLATE/PULL_REQUEST_TEMPLATE.md
           # Empty on purpose: no actor is exempt from any check here. `dependabot[bot]` is the
           # case that forces the list to exist in other repositories, and this repository has
-          # no `dependabot.yml`.
+          # no `dependabot.yml`. Declared rather than left absent, for the reason given above.
+          skip-actors: ''
           # The status comment is off. `v2` publishes it by default, which needs a token
           # that belongs to the organisation and a job granted `pull-requests: write`; this
           # repository has neither, so leaving the default would buy a warning on every pull
