@@ -20,6 +20,14 @@ what you need, that is a finding about the template: open it as a `docs:` or
 `improvement:` issue rather than falling back to a blank issue, which
 `config.yml` disables anyway.
 
+The same question runs in reverse, and that direction is the more common mistake: a
+need that belongs to **one** repository is not a change to the standard. An extra
+label, a house colour, a stricter title length, dropping a scope nobody uses — those
+go in that repository's own `standards.local.yml`, not into a pull request here.
+Promoting one of them into the core is a separate decision, taken when several
+repositories want the same thing, and it belongs in an issue rather than in the pull
+request that needed it first. See *Customizing the standard* in `AGENTS.md`.
+
 ## Branches
 
 - `main` is the record. It is the only branch, and it is protected.

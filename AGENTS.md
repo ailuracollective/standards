@@ -10,7 +10,7 @@ repositories. There is no application code here, no build and no test suite.
 Under `.github/` there are **11 YAML files, 14 Markdown files, and 1 CODEOWNERS
 file**; four more files sit in the repository root.
 
-Six artifacts, each with exactly one owner:
+Seven artifacts, each with exactly one owner:
 
 | File                                                   | Owns                                     | Read by                                     |
 | ------------------------------------------------------ | ---------------------------------------- | ------------------------------------------- |
@@ -20,6 +20,10 @@ Six artifacts, each with exactly one owner:
 | `.github/PULL_REQUEST_TEMPLATE/*.md` (12 + default)    | the form per pull request type           | GitHub                                      |
 | `.github/CODEOWNERS`                                   | who reviews a change                     | GitHub, via branch protection               |
 | `.github/workflows/policy.yml`                         | the projection of all of the above      | GitHub Actions, on every pull request       |
+| `.github/standards.local.example.yml`                  | the shape of a customization record      | a reader — or a checker, once one exists    |
+
+The last one is opt-in and is the only artifact nobody is required to copy; see
+§ Customizing the standard for what it is and, more importantly, what it is not.
 
 `ISSUE_STANDARD.md` is **prose and is not machine-readable**. It was
 `ISSUE_STANDARD.yml` and did not parse as YAML — the numbered list under Purpose
