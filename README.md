@@ -30,7 +30,7 @@ about a specific repository, read that repository.
 **It cannot require its own gate to pass.** `.github/workflows/policy.yml` runs the
 standard against this repository, but one account holds all write access and `main`
 requires a code-owner review, so making the policy job a required check would
-deadlock the repository. See *Ownership and enforcement* in `AGENTS.md`.
+deadlock the repository. See docs/enforcement.md.
 
 ## Adopting it
 
@@ -43,7 +43,7 @@ optional:
    CI, so the form never names a command the repository cannot run.
 2. **Reconcile the label vocabulary.** Do not copy `labels.yml` over an existing
    manifest without porting its reconciliation recipe — see *Sync model* in
-   `AGENTS.md`. If the repository runs `pull-request@v2`, fix `type-labels` in the
+   docs/architecture.md. If the repository runs `pull-request@v2`, fix `type-labels` in the
    same change, or the gate rejects the labels the templates ask for.
 3. **Create the labels on the remote.** GitHub does not read the manifest. Until a
    label exists, any template naming it has it silently discarded.
@@ -62,8 +62,8 @@ that difference was decided. Copy `.github/standards.local.example.yml` to
 `.github/standards.local.yml` and declare what you changed and why.
 
 It declares, it does not configure: **nothing reads it, not even the gate**. A value
-there changes nothing until you also edit your own `policy.yml`. `AGENTS.md`
-§ Customizing the standard has the four deviation levels and what each costs.
+there changes nothing until you also edit your own `policy.yml`. docs/customization.md
+has the four deviation levels and what each costs.
 
 A label in a new family such as `area/` needs no approval. A new `type/*` label
 does: it is the family the gate reads, and it is frozen at five.
@@ -87,7 +87,7 @@ yq -r '.extensions[]?.name' .github/standards.local.yml 2>/dev/null
 A gate that names a label the repository lacks is **unsatisfiable**, not strict: no
 pull request can pass it, and the failure looks like the contributor's mistake.
 
-Whether the gate is *enforced* is a separate question; `AGENTS.md` § Enforcement has
+Whether the gate is *enforced* is a separate question; docs/enforcement.md has
 the commands and the trap.
 
 ## Changing the standard
@@ -95,6 +95,24 @@ the commands and the trap.
 Read [`CONTRIBUTING.md`](CONTRIBUTING.md) first. In short: open an issue before a
 pull request. A change to `labels.yml` or a template is not finished when it lands
 here — it must also be mirrored, by hand, into every adopting repository.
+
+## Secrets
+
+Two tokens run this repository's automation. Only their names live here —
+the values are repository secrets:
+
+| Secret                         | Used by                       | For                                                    |
+| ------------------------------ | ----------------------------- | ------------------------------------------------------ |
+| `GITHUB_PR_COMPLIANCE_TOKEN`   | `policy.yml`, `comment-token` | the status comment on every pull request               |
+| `GITHUB_RELEASE_TOKEN`         | `release.yml`, `token`        | release-please: the release pull request, tag, release |
+
+The compliance token must be a PAT of `AiluraKitty`, because
+`comment-author: AiluraKitty` is verified before the action writes. The
+release token's holder becomes the author of release commits —
+release-please has no author setting — so it is issued to the same account.
+Splitting the two functions keeps a leak or a revocation to one function
+each. [`docs/releases.md`](docs/releases.md) carries the full reasoning
+and the operational detail.
 
 ## Licence
 

@@ -6,7 +6,7 @@
 #
 # `reason` is required on every override, drop and structural entry. Level 3 also needs
 # `issue:`. Reserved families: type/, status/, scope/, meta/, github_actions, release/.
-# `type/` is frozen at five members. Policy: AGENTS.md § Customizing the standard.
+# `type/` is frozen at five members. Policy: docs/customization.md.
 #
 # Keep only the sections you use:
 #

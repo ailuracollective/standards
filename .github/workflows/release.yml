@@ -21,9 +21,9 @@ jobs:
       pull-requests: write
     steps:
       # The PAT sets the commit author, since release-please has no author setting.
-      # See AGENTS.md § Releases.
+      # See docs/releases.md.
       - uses: googleapis/release-please-action@v5
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          token: ${{ secrets.AILURA_KITTY_TOKEN }}
+          token: ${{ secrets.GITHUB_RELEASE_TOKEN }}

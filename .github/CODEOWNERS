@@ -2,7 +2,7 @@
 #
 # The LAST matching pattern wins and replaces earlier owners, so put every owner on one
 # line. `*` matches at every depth. GitHub silently skips unparseable lines and owners
-# without write access. See AGENTS.md § Ownership and enforcement.
+# without write access. See docs/enforcement.md.
 
 *                       @SiddharthaGF
 

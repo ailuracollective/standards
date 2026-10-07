@@ -20,7 +20,7 @@ If none of the seven fits, that is a finding about the templates: open it as a
 label, a house colour, a stricter title length or a dropped scope goes in that
 repository's own `standards.local.yml`. Promoting it into the core is a separate
 decision, taken in an issue once several repositories want the same thing. See
-*Customizing the standard* in `AGENTS.md`.
+docs/customization.md.
 
 ## Branches
 
@@ -50,9 +50,8 @@ URL. Squash-merge, and use the pull request title as the commit message.
 ## Before opening a pull request
 
 `policy.yml` checks five things: the branch name, the linked issue, the type label,
-the title, and the body's sections. Nothing else is checked for you. Run the linters
-and the cross-file checks in `AGENTS.md` § Validation. Linters only look at one file
-at a time, so passing them does not mean the change is verified.
+the title, and the body's sections. Nothing else is checked for you. Run the linters. Linters only look at one file at a
+time, so passing them does not mean the change is verified.
 
 At minimum, confirm `CODEOWNERS` still works. GitHub skips any line it cannot parse,
 and silently drops any owner without write access:
@@ -75,10 +74,10 @@ Merging here is the midpoint. A change is finished when:
 2. Every `policy.yml` agrees, if labels or types changed.
 3. Every changed label has been applied to each remote with
    `gh label create --force`. Editing `labels.yml` changes no remote.
-4. The counts in `AGENTS.md` § Inventory still match.
 
 Steps 1–3 cannot be verified from here, because this repository does not track who
-adopted it (see *Sync model* in `AGENTS.md`). Finishing a change means asking.
+adopted it (see *Sync model* in docs/architecture.md). Finishing a change means
+asking.
 
 ## Review
 

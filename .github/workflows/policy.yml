@@ -16,7 +16,7 @@ jobs:
   branch-validation:
     name: Branch name
     # Release-please pull requests are exempt by head ref, not `skip-actors`: that branch
-    # name is fixed and cannot pass this gate. See AGENTS.md § Releases.
+    # name is fixed and cannot pass this gate. See docs/releases.md.
     if: >-
       github.event_name == 'pull_request' &&
       github.event.pull_request.state == 'open' &&
@@ -33,7 +33,7 @@ jobs:
           skip-actors: ''
           enable-status-comment: true
           # The PAT keeps the comment out of `github-actions[bot]`'s name, which nobody can edit.
-          comment-token: ${{ secrets.AILURA_KITTY_TOKEN }}
+          comment-token: ${{ secrets.GITHUB_PR_COMPLIANCE_TOKEN }}
           comment-author: AiluraKitty
 
   pull-request-policy:
@@ -64,7 +64,7 @@ jobs:
           default-template: .github/PULL_REQUEST_TEMPLATE/PULL_REQUEST_TEMPLATE.md
           skip-actors: ''
           enable-status-comment: true
-          comment-token: ${{ secrets.AILURA_KITTY_TOKEN }}
+          comment-token: ${{ secrets.GITHUB_PR_COMPLIANCE_TOKEN }}
           comment-author: AiluraKitty
 
   triage:
