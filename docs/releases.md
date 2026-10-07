@@ -61,10 +61,10 @@ lives in the repository; this file names them only.
 
 | Secret                       | Where                         | Function                                                    |
 | ---------------------------- | ----------------------------- | ----------------------------------------------------------- |
-| `GITHUB_PR_COMPLIANCE_TOKEN` | `policy.yml`, `comment-token` | posts and edits the status comment on every pull request    |
-| `GITHUB_RELEASE_TOKEN`       | `release.yml`, `token`        | opens the release PR; on merge, creates the tag and release |
+| `AILURA_PR_COMPLIANCE_TOKEN` | `policy.yml`, `comment-token` | posts and edits the status comment on every pull request    |
+| `AILURA_RELEASE_TOKEN`       | `release.yml`, `token`        | opens the release PR; on merge, creates the tag and release |
 
-### `GITHUB_PR_COMPLIANCE_TOKEN` — the status comment
+### `AILURA_PR_COMPLIANCE_TOKEN` — the status comment
 
 - **What it does:** posts and edits the sticky status comment that
   `ailuracollective/actions` keeps up to date on every pull request
@@ -82,7 +82,7 @@ lives in the repository; this file names them only.
 - **If revoked or leaked:** status comments stop being updated. Releases
   keep working.
 
-### `GITHUB_RELEASE_TOKEN` — the releases
+### `AILURA_RELEASE_TOKEN` — the releases
 
 - **What it does:** release-please's `token`. Opens the release pull
   request; merging it creates the tag and the release.
@@ -120,7 +120,7 @@ the release token posts no comments.
   which only read.
 - Do not go back to `GITHUB_TOKEN` for simplicity, or merge the two
   secrets into one: the split is what limits the damage.
-- If `GITHUB_PR_COMPLIANCE_TOKEN` changes account, `comment-author` must
+- If `AILURA_PR_COMPLIANCE_TOKEN` changes account, `comment-author` must
   change with it; otherwise the action refuses to write.
 - The names must exist in *Settings → Secrets and variables → Actions*;
   a missing secret fails the job without creating anything.

@@ -103,8 +103,8 @@ the values are repository secrets:
 
 | Secret                         | Used by                       | For                                                    |
 | ------------------------------ | ----------------------------- | ------------------------------------------------------ |
-| `GITHUB_PR_COMPLIANCE_TOKEN`   | `policy.yml`, `comment-token` | the status comment on every pull request               |
-| `GITHUB_RELEASE_TOKEN`         | `release.yml`, `token`        | release-please: the release pull request, tag, release |
+| `AILURA_PR_COMPLIANCE_TOKEN`   | `policy.yml`, `comment-token` | the status comment on every pull request               |
+| `AILURA_RELEASE_TOKEN`         | `release.yml`, `token`        | release-please: the release pull request, tag, release |
 
 The compliance token must be a PAT of `AiluraKitty`, because
 `comment-author: AiluraKitty` is verified before the action writes. The

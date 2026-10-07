@@ -108,8 +108,8 @@ See docs/releases.md.
 
 ### Automation tokens
 
-PR policy comments use `GITHUB_PR_COMPLIANCE_TOKEN`; release automation
-uses a separate `GITHUB_RELEASE_TOKEN`. Keep these identities separate
+PR policy comments use `AILURA_PR_COMPLIANCE_TOKEN`; release automation
+uses a separate `AILURA_RELEASE_TOKEN`. Keep these identities separate
 and grant each only the permissions it needs. Do not replace the PR
 comment token with a write permission on the workflow's `GITHUB_TOKEN`.
 See docs/releases.md.

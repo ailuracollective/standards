@@ -61,8 +61,8 @@ lives in the repository; this file names them only.
 
 | Secret                       | Where                         | Function                                         |
 | ---------------------------- | ----------------------------- | ------------------------------------------------ |
-| `GITHUB_PR_COMPLIANCE_TOKEN` | `policy.yml`, `comment-token` | the status comment on every pull request         |
-| `GITHUB_RELEASE_TOKEN`       | `release.yml`, `token`        | release-please: the release PR, tag, and release |
+| `AILURA_PR_COMPLIANCE_TOKEN` | `policy.yml`, `comment-token` | the status comment on every pull request         |
+| `AILURA_RELEASE_TOKEN`       | `release.yml`, `token`        | release-please: the release PR, tag, and release |
 
 The compliance token is a PAT of the **AiluraKitty** account,
 because `comment-author: AiluraKitty` is verified before the
