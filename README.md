@@ -10,7 +10,19 @@ Five artifacts, copied by hand into each repository:
 | `.github/PULL_REQUEST_TEMPLATE/`         | 12 forms, one per Conventional Commit type, plus a default  |
 | `.github/labels.yml`                     | the 30-label set                                            |
 | `.github/CODEOWNERS`                     | who reviews a change, per file                              |
-| `.github/standards.local.example.yml`    | the shape of a customization record — opt-in, see below     |
+
+Two more ship alongside them. **Neither is required, and both are opt-in**:
+
+| Artifact                                 | What it decides                                             |
+| ---------------------------------------- | ----------------------------------------------------------- |
+| `.github/standards.local.example.yml`    | the shape of a customization record — see below             |
+| `templates/AGENTS.md`                    | a starting point for a repository's agent instructions      |
+
+`templates/AGENTS.md` is the only artifact here that does not land in
+`.github/`. It is copied to the **repository root**, because that is where an
+agent looks for one, and it ships unfinished on purpose: a repository replaces
+its `TODO`s and deletes the banner. See *The repository AGENTS.md template* in
+`AGENTS.md` for why that is the only shape that works.
 
 `AGENTS.md` is the working reference: the invariants, the conventions, the known
 gaps, and the commands to check a change by hand. Read it before editing anything

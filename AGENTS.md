@@ -8,11 +8,11 @@ The source of truth for GitHub issue standards shared across an organisation's
 repositories. There is no application code here, no build and no test suite.
 `README.md` is the entry point for a human; this file is the working reference.
 Under `.github/` there are **12 YAML files, 14 Markdown files, and 1 CODEOWNERS
-file**; six more files sit in the repository root.
+file**; six more files sit in the repository root, and one in `templates/`.
 
-Seven artifacts, each with exactly one owner. The release files are the
-eighth and ninth, and they are the only two that a machine rewrites without a
-pull request — see § Releases.
+Eight artifacts, each with exactly one owner. The release files are the ninth
+and tenth, and they are the only two that a machine rewrites without a pull
+request — see § Releases.
 
 | File                                                              | Owns                                        | Read by                                            |
 | ----------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------- |
@@ -25,9 +25,13 @@ pull request — see § Releases.
 | `.github/workflows/release.yml`                                   | when a release is cut, and what it bumps    | GitHub Actions, on every push to `main`           |
 | `release-please-config.json` + `.release-please-manifest.json`    | the release type, and the current version   | release-please, and anyone reading the version    |
 | `.github/standards.local.example.yml`                             | the shape of a customization record         | a reader — or a checker, once one exists         |
+| `templates/AGENTS.md`                                             | the shape of a repository's `AGENTS.md`     | an adopting repository, before it is completed    |
 
-The last one is opt-in and is the only artifact nobody is required to copy; see
-§ Customizing the standard for what it is and, more importantly, what it is not.
+Two of the eight are opt-in, and nobody is required to copy either.
+`.github/standards.local.example.yml` is a customization record — see § Customizing
+the standard for what it is and, more importantly, what it is not.
+`templates/AGENTS.md` is a starting point rather than a requirement, and it
+ships unfinished on purpose — see § The repository AGENTS.md template.
 
 `ISSUE_STANDARD.md` is **prose and is not machine-readable**. It was
 `ISSUE_STANDARD.yml` and did not parse as YAML — the numbered list under Purpose
@@ -74,13 +78,13 @@ of which there may be none, one, or many.
   default `PULL_REQUEST_TEMPLATE.md`.
 - **30** labels: six prefixed families (`type` 5, `priority` 4, `status` 5,
   `scope` 8, `meta` 5, `release` 2) plus one unprefixed, `github_actions`.
-- **33** files total: 4 in `.github/` (`labels.yml`, `ISSUE_STANDARD.md`,
+- **34** files total: 4 in `.github/` (`labels.yml`, `ISSUE_STANDARD.md`,
   `standards.local.example.yml`, `CODEOWNERS`), 2 in `.github/workflows/`, 8 in `ISSUE_TEMPLATE/`, 13 in
-  `PULL_REQUEST_TEMPLATE/`, and 6 in the repository root (`AGENTS.md`,
+  `PULL_REQUEST_TEMPLATE/`, 1 in `templates/`, and 6 in the repository root (`AGENTS.md`,
   `README.md`, `CONTRIBUTING.md`, `LICENSE`, `release-please-config.json`,
   `.release-please-manifest.json`).
-  The root count excludes `.gitignore`, which is deliberately not part of the
-  standard anything copies.
+  The count excludes `.gitignore`, which is deliberately not part of the standard
+  anything copies, and `CHANGELOG.md`, which release-please rewrites.
   Do not quote these numbers loosely; if you change one of them, update this
   section.
 
@@ -569,6 +573,49 @@ an absent file; a checker that treats absence as an error trains every repositor
 create an empty one, and an empty file is indistinguishable from a customized one to
 anyone skimming.
 
+## The repository AGENTS.md template
+
+`templates/AGENTS.md` is the starting point for an adopting repository's own
+`AGENTS.md`. It is the one artifact here that ships **unfinished**, on purpose:
+nine sections of `TODO` and a banner saying so. An adopting repository copies it
+to its **repository root** — not into `.github/`, because a root `AGENTS.md` is
+where an agent looks for one — fills it in, and deletes the banner. The
+checklist that decides whether the result is valid is inside the file, in
+§ Completion requirements.
+
+**It is a template, not an instance.** This repository's own `AGENTS.md` is the
+working reference described at the top of this file and deliberately does not
+conform to it. That file is the verified record of one repository's invariants;
+reorganising it into nine placeholders would trade a fact for a demonstration of
+portability. The two are related and neither is generated from the other.
+
+Three properties of the design are worth knowing here rather than in the file.
+
+**The organisation conventions file does not exist yet.** The template links
+`.agents/organization-conventions.md`, and that path resolves in no repository
+today, because the contents were out of scope for the issue that created the
+template. So the template **fails its own completion criteria**, by design: it
+still carries `TODO`s and its one mandatory reference is unresolvable. An
+adopting repository cannot complete it until that file exists in its own
+repository. That is the sequencing the issue recorded rather than an oversight,
+and it is stated plainly because "the template points at a file that does not
+exist" otherwise reads as a broken link.
+
+**A file named `AGENTS.md` in any directory is live instructions for that
+directory.** That is how agents resolve them: the nearest one above the file
+being edited wins, for the paths it covers. So `templates/AGENTS.md` is handed
+to any agent working inside `templates/`, and its banner is not decoration — it
+is the only thing between that agent and a set of `TODO`s it might otherwise
+follow. No other filename avoids this, because the template has to be named
+`AGENTS.md` and every directory holding it has the property.
+
+**§ Organization standards is the part that does not move.** It is the same in
+every adopting repository, which is the point: organisation rules live in one
+linked file and are never restated, so a decision taken once is corrected in one
+place instead of N. Every recorded exception carries a `reason`, for the same
+reason `standards.local.example.yml` requires one — an override nobody explained
+is indistinguishable from a copy that rotted.
+
 ## Conventions when editing
 
 YAML style as observed across all eleven files:
@@ -725,7 +772,7 @@ without anyone having to read the section to find out.
 ## Ownership and enforcement
 
 `.github/CODEOWNERS` gives every path to `@SiddharthaGF`, the only collaborator
-with write access. Because all eight rules resolve to that same account, the
+with write access. Because all twelve rules resolve to that same account, the
 grouping currently changes no outcome — but it is not decoration. GitHub
 applies the **last** matching pattern, so each group is a real rule that
 overrides the catch-all above it, and the file is written as though a second
@@ -938,6 +985,23 @@ assert all(r.startswith(PREFIX) for r in exempt), 'a release PR would hit the ga
 assert not any(r.startswith(PREFIX) for r in runs),   'a human PR would be exempted'
 print(f'{len(exempt)} release refs exempt, {len(runs)} human refs still checked')
 PY
+
+# The template ships unfinished on purpose, so the assertion here is the INVERSE of the
+# usual one. Assert on the BANNER, not on the string "TODO": this file discusses
+# TODOs in prose — it has since before the template existed — so counting them
+# proves nothing. What must hold is that the template still declares itself one,
+# and that this file does not.
+sed -n '3p' templates/AGENTS.md | grep -q '^> ' \
+  || echo 'ERROR: template banner gone - it has been filled in'
+sed -n '3p' AGENTS.md | grep -q '^> ' \
+  && echo 'ERROR: the working reference opens with a banner, so it reads as a template'
+grep -c 'TODO' templates/AGENTS.md      # expect > 0: the placeholders are the point
+for h in 'Repository scope' 'Repository context' 'Repository-specific conventions' \
+         'Development instructions' 'Testing and validation' 'Git and pull requests' \
+         'Documentation' 'Additional references' 'Completion requirements'; do
+  grep -qF "## $h" templates/AGENTS.md || echo "MISSING SECTION: $h"
+done
+grep -qF '.agents/organization-conventions.md' templates/AGENTS.md || echo 'no org link'
 ```
 
 Count the typed templates with `find … ! -name 'PULL_REQUEST_TEMPLATE.md'`, not
@@ -1027,10 +1091,21 @@ gap above rather than a bug in your change.
 - Do not drop the catch-all from `CODEOWNERS`. A pattern with no slash matches at
   every depth, so `*` alone owns every file in the repository, present and future.
   The groups below it document blast radius rather than close a coverage gap, and
-  the catch-all is currently the only thing owning the four files in the
-  repository root. An unowned file skips the code-owner gate entirely.
+  the catch-all is currently the only thing owning the four files nothing else
+  names: three in the repository root and `.github/workflows/policy.yml`. An unowned file skips the code-owner gate entirely.
 - Do not add a second owner to a CODEOWNERS rule expecting it to be reviewed by
   someone it does not already name. Rules are not cumulative: the **last** matching
   pattern replaces the owners of the ones before it, so
   `.github/labels.yml @alice` drops @SiddharthaGF from that path rather than adding
   her alongside him.
+- Do not copy `templates/AGENTS.md` into an adopting repository with its banner
+  or its `TODO`s intact. An incomplete template is not a partial instruction set;
+  it is a file whose headings an agent trusts and whose contents are placeholders,
+  which is strictly worse than the absence of the file.
+- Do not paste organisation conventions into a repository's `AGENTS.md`, and do
+  not let an agent reconstruct one that is missing. Both produce a plausible
+  document that every later agent treats as authoritative and nothing corrects.
+  The template forbids reconstruction for the same reason it forbids copying: a
+  wrong organisation standard outlives everyone who could have noticed it.
+- Do not treat this repository's own `AGENTS.md` as an instance of the template it
+  ships. It is not one, on purpose, and conforming it would cost the record.

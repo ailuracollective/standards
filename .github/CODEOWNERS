@@ -76,3 +76,9 @@ release-please-config.json          @SiddharthaGF
 # customization record unreadable, and a wrong rule here teaches repositories to
 # record deviations in a shape nobody can check.
 .github/standards.local.example.yml   @SiddharthaGF
+# templates/AGENTS.md — the starting point for an adopting repository's agent
+# instructions. It ships UNFINISHED by design, so "it still has TODOs" is correct
+# and a completion requirement is deliberately unmet. Filling one in, or deleting
+# the banner that says it is a template, turns it into this repository's
+# instructions and leaves every future adopter copying a file about us.
+templates/AGENTS.md    @SiddharthaGF
