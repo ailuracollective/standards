@@ -8,17 +8,13 @@ symptom.
 
 ## Linked issue (required)
 
-<!-- The linked issue MUST carry the `status/ready` label. Apply exactly one of these
-closing keywords on its own line. `Refs #N` does NOT close the issue and does not satisfy
-this requirement. Bot pull requests are exempt; see `skip-actors` in `policy.yml`. -->
+<!-- The issue must carry `status/ready`. Use a closing keyword on its own line; `Refs #N` does not close it. -->
 
 Closes #
 
 ## Type (required)
 
-<!-- Check exactly ONE. This is the Conventional Commit type for your TITLE; the LABEL
-is separate and coarser: there are twelve title types and only five `type/*` labels.
-Apply exactly one `type/*` label. -->
+<!-- Check one. The title type and the label differ: twelve title types, five `type/*` labels. -->
 
 - [ ] `fix`
 
@@ -26,22 +22,15 @@ Apply exactly one `type/*` label. -->
 
 ## Symptom
 
-<!--
-What is wrong, and what does the user see as a result?
--->
+<!-- What is wrong, and what does the user see as a result? -->
 
 ## Root cause
 
-<!--
-Why it happens. A fix that does not name the cause is a patch, not a fix.
--->
+<!-- Why it happens. A fix that does not name the cause is a patch, not a fix. -->
 
 ## Minimal reproduction
 
-<!--
-The smallest reliable reproduction, starting from a clean checkout. If it is not reliably
-reproducible, say what makes it flaky.
--->
+<!-- Smallest reliable reproduction from a clean checkout; if flaky, say why. -->
 
 1. ...
 2. ...
@@ -49,27 +38,18 @@ reproducible, say what makes it flaky.
 
 ## Expected vs actual
 
-<!--
-What you expected, and what happened instead.
--->
+<!-- What you expected, and what happened instead. -->
 
 Expected: ...
 Actual: ...
 
 ## Regression test
 
-<!--
-The test that fails before this change and passes after it. This is what proves the fix holds.
-Also state how to verify the fix by hand if the automated check does not cover it.
--->
+<!-- The test that fails before and passes after. Add manual steps if it does not cover the fix. -->
 
 ## Test plan
 
-<!-- REPO OWNER: replace every line below with the checks CI actually runs in THIS
-     repository. The gate only requires that this heading exists, but a contributor
-     cannot verify a change from a template that lists commands this repository does
-     not have — a TypeScript repository cannot run `cargo test`. Keep this block in
-     sync with CI in the same pull request that changes CI. -->
+<!-- REPO OWNER: replace with the checks this repository's CI runs. -->
 
 - [ ] `TODO: lint and formatting`
 - [ ] `TODO: unit tests`

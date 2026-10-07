@@ -10,80 +10,49 @@ than the diff.
 
 ## Linked issue (required)
 
-<!-- The linked issue MUST carry the `status/ready` label. Apply exactly one of these
-closing keywords on its own line. `Refs #N` does NOT close the issue and does not satisfy
-this requirement. Bot pull requests are exempt; see `skip-actors` in `policy.yml`. -->
+<!-- The issue must carry `status/ready`. Use a closing keyword on its own line; `Refs #N` does not close it. -->
 
 Closes #
 
 ## Type (required)
 
-<!-- Check exactly ONE. This is the Conventional Commit type for your TITLE; the LABEL
-is separate and coarser: there are twelve title types and only five `type/*` labels.
-Apply exactly one `type/*` label. -->
+<!-- Check one. The title type and the label differ: twelve title types, five `type/*` labels. -->
 
 - [ ] `breaking-change`
 
-<!-- A breaking change has no `type/*` label of its own: the family has
-     exactly five members and none of them marks a break. Apply the label of the
-     underlying change instead — for example `type/bug` when reverting broken
-     behavior, or `type/task` when the break is incidental. -->
+<!-- No `type/*` label marks a break. Apply the label of the underlying change. -->
 
 ## What breaks and for whom
 
-<!--
-Name the API, option, or behavior that changes, and who is affected. Do not write "the API" —
-write the export, flag, or endpoint.
--->
+<!-- The API, option or behavior that changes, and who is affected. -->
 
 ## Before / after
 
-<!--
-Show the old contract and the new one side by side, concretely. This is what a consumer compares
-against their own code.
--->
+<!-- The old and new contract side by side. -->
 
 ## Migration
 
-<!--
-The exact steps a consumer takes. Include code. If the migration is mechanical, say so; if it
-needs judgement, say that too.
--->
+<!-- Exact steps a consumer takes, with code. -->
 
 ## Codemod feasibility
 
-<!--
-Whether this can be automated. If a codemod is viable, link or open the issue for it. "Not
-feasible" is a valid answer; silence is not.
--->
+<!-- Whether a codemod is viable. "Not feasible" is a valid answer. -->
 
 ## What was decided
 
-<!--
-Why this shape and not a compatible alternative. This is the section future maintainers read
-when someone asks why the API is shaped this way.
--->
+<!-- Why this shape and not a compatible alternative. -->
 
 ## Affected version range
 
-<!--
-Which versions carry the old behavior, and which release removes it.
--->
+<!-- Which versions carry the old behavior, and which release removes it. -->
 
 ## Deprecation plan
 
-<!--
-If the old behavior is retained behind a flag, give the timeline and the removal version. If it
-is removed outright, write "removed outright".
--->
+<!-- Timeline and removal version, or "removed outright". -->
 
 ## Test plan
 
-<!-- REPO OWNER: replace every line below with the checks CI actually runs in THIS
-     repository. The gate only requires that this heading exists, but a contributor
-     cannot verify a change from a template that lists commands this repository does
-     not have — a TypeScript repository cannot run `cargo test`. Keep this block in
-     sync with CI in the same pull request that changes CI. -->
+<!-- REPO OWNER: replace with the checks this repository's CI runs. -->
 
 - [ ] `TODO: lint and formatting`
 - [ ] `TODO: unit tests`
