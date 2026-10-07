@@ -7,70 +7,45 @@ here as a security change.
 
 ## Linked issue (required)
 
-<!-- The linked issue MUST carry the `status/ready` label. Apply exactly one of these
-closing keywords on its own line. `Refs #N` does NOT close the issue and does not satisfy
-this requirement. Bot pull requests are exempt; see `skip-actors` in `policy.yml`. -->
+<!-- The issue must carry `status/ready`. Use a closing keyword on its own line; `Refs #N` does not close it. -->
 
 Closes #
 
 ## Type (required)
 
-<!-- Check exactly ONE. This is the Conventional Commit type for your TITLE; the LABEL
-is separate and coarser: there are twelve title types and only five `type/*` labels.
-Apply exactly one `type/*` label. -->
+<!-- Check one. The title type and the label differ: twelve title types, five `type/*` labels. -->
 
 - [ ] `ci`
 
-<!-- `type/task` is the catch-all. The label family has five members and
-     none describes this work, so this is the intended home. The label is
-     deliberately coarser than the title type. -->
+<!-- `type/task` is the catch-all label for this type. -->
 
 ## What changes in CI
 
-<!--
-Which workflow or action changes, and what it will do differently.
--->
+<!-- Which workflow or action changes, and what it will do differently. -->
 
 ## Why
 
-<!--
-What failure this prevents or what capability it adds.
--->
+<!-- What failure this prevents or what capability it adds. -->
 
 ## Effect on pull requests
 
-<!--
-Runtime added, checks added or removed, and whether contributors will see new required checks.
--->
+<!-- Runtime added, checks added or removed, and whether contributors will see new required checks. -->
 
 ## Permissions and secrets
 
-<!--
-What `permissions:` and `secrets:` this grants. State the blast radius explicitly — a new
-`pull_request_target` or a widened `permissions` block is a security change wearing a CI
-change's clothes.
--->
+<!-- The `permissions:` and `secrets:` this grants, and the blast radius. -->
 
 ## Failure mode
 
-<!--
-What happens when this workflow itself is wrong or unavailable. Does it block merges, or
-silently pass?
--->
+<!-- What happens if this workflow is wrong or unavailable: does it block merges or silently pass? -->
 
 ## How to reproduce locally
 
-<!--
-How to exercise the change before it runs on someone else's pull request.
--->
+<!-- How to exercise the change before it runs on someone else's pull request. -->
 
 ## Test plan
 
-<!-- REPO OWNER: replace every line below with the checks CI actually runs in THIS
-     repository. The gate only requires that this heading exists, but a contributor
-     cannot verify a change from a template that lists commands this repository does
-     not have — a TypeScript repository cannot run `cargo test`. Keep this block in
-     sync with CI in the same pull request that changes CI. -->
+<!-- REPO OWNER: replace with the checks this repository's CI runs. -->
 
 - [ ] `TODO: lint and formatting`
 - [ ] `TODO: unit tests`

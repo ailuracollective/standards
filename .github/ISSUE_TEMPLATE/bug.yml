@@ -1,3 +1,4 @@
+---
 name: Bug Fix
 description: Correct behavior that does not match the expected behavior.
 title: "fix: "
@@ -15,7 +16,7 @@ body:
 
   - type: textarea
     id: expected
-    attributes: 
+    attributes:
       label: Expected behavior
       description: Describe what should happen instead.
     validations:

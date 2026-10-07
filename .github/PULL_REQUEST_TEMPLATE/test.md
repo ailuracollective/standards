@@ -8,64 +8,41 @@ guarantee is not worth the maintenance cost.
 
 ## Linked issue (required)
 
-<!-- The linked issue MUST carry the `status/ready` label. Apply exactly one of these
-closing keywords on its own line. `Refs #N` does NOT close the issue and does not satisfy
-this requirement. Bot pull requests are exempt; see `skip-actors` in `policy.yml`. -->
+<!-- The issue must carry `status/ready`. Use a closing keyword on its own line; `Refs #N` does not close it. -->
 
 Closes #
 
 ## Type (required)
 
-<!-- Check exactly ONE. This is the Conventional Commit type for your TITLE; the LABEL
-is separate and coarser: there are twelve title types and only five `type/*` labels.
-Apply exactly one `type/*` label. -->
+<!-- Check one. The title type and the label differ: twelve title types, five `type/*` labels. -->
 
 - [ ] `test`
 
-<!-- `type/task` is the catch-all. The label family has five members and
-     none describes this work, so this is the intended home. The label is
-     deliberately coarser than the title type. -->
+<!-- `type/task` is the catch-all label for this type. -->
 
 ## Scope of this change
 
-<!--
-Which behavior is under test here, and why it is separated from the change that introduced it.
--->
+<!-- Which behavior is under test here, and why it is separated from the change that introduced it. -->
 
 ## Now covered
 
-<!--
-The scenarios that are covered and were not before. Name the cases, not the files.
--->
+<!-- The scenarios that are covered and were not before. Name the cases, not the files. -->
 
 ## Existing coverage that moved
 
-<!--
-Any test you renamed, moved, merged, or deleted, and what happened to the coverage it carried.
-Silent deletion of a test is indistinguishable from silent loss of coverage.
--->
+<!-- Tests renamed, moved, merged or deleted, and where their coverage went. -->
 
 ## Deliberately uncovered
 
-<!--
-What you chose not to test, and why. This is the section that stops the next contributor from
-re-litigating it.
--->
+<!-- What you chose not to test, and why. -->
 
 ## Fixtures and mocks
 
-<!--
-How the test isolates its subject: fixtures, doubles, sandboxing, clock control. If a test
-depends on ordering or shared state, say so here.
--->
+<!-- How the test isolates its subject (fixtures, doubles, clock); note any ordering or shared state. -->
 
 ## Test plan
 
-<!-- REPO OWNER: replace every line below with the checks CI actually runs in THIS
-     repository. The gate only requires that this heading exists, but a contributor
-     cannot verify a change from a template that lists commands this repository does
-     not have — a TypeScript repository cannot run `cargo test`. Keep this block in
-     sync with CI in the same pull request that changes CI. -->
+<!-- REPO OWNER: replace with the checks this repository's CI runs. -->
 
 - [ ] `TODO: lint and formatting`
 - [ ] `TODO: unit tests`

@@ -7,63 +7,41 @@ A revert removes shipped behavior. State what is being lost, not only what is be
 
 ## Linked issue (required)
 
-<!-- The linked issue MUST carry the `status/ready` label. Apply exactly one of these
-closing keywords on its own line. `Refs #N` does NOT close the issue and does not satisfy
-this requirement. Bot pull requests are exempt; see `skip-actors` in `policy.yml`. -->
+<!-- The issue must carry `status/ready`. Use a closing keyword on its own line; `Refs #N` does not close it. -->
 
 Closes #
 
 ## Type (required)
 
-<!-- Check exactly ONE. This is the Conventional Commit type for your TITLE; the LABEL
-is separate and coarser: there are twelve title types and only five `type/*` labels.
-Apply exactly one `type/*` label. -->
+<!-- Check one. The title type and the label differ: twelve title types, five `type/*` labels. -->
 
 - [ ] `revert`
 
-<!-- `type/task` is the catch-all. The label family has five members and
-     none describes this work, so this is the intended home. The label is
-     deliberately coarser than the title type. -->
+<!-- `type/task` is the catch-all label for this type. -->
 
 ## What is being reverted
 
-<!--
-Link the pull request or commit being reverted, and its version.
--->
+<!-- Link the pull request or commit being reverted, and its version. -->
 
 ## Why revert rather than fix forward
 
-<!--
-Why the original change should not stand. If the intent was right and the implementation wrong,
-say why a fix forward is not better.
--->
+<!-- Why the original change should not stand, and why a fix forward is not better. -->
 
 ## Reason the original was wrong
 
-<!--
-The defect in the original change, with evidence.
--->
+<!-- The defect in the original change, with evidence. -->
 
 ## Impact of reverting
 
-<!--
-What capability or fix is being taken away, and who is affected. A revert that silently removes
-a fix needs this stated loudly.
--->
+<!-- What is being taken away and who is affected. -->
 
 ## Version impact
 
-<!--
-Whether this is a patch, minor, or major release, and why.
--->
+<!-- Whether this is a patch, minor, or major release, and why. -->
 
 ## Test plan
 
-<!-- REPO OWNER: replace every line below with the checks CI actually runs in THIS
-     repository. The gate only requires that this heading exists, but a contributor
-     cannot verify a change from a template that lists commands this repository does
-     not have — a TypeScript repository cannot run `cargo test`. Keep this block in
-     sync with CI in the same pull request that changes CI. -->
+<!-- REPO OWNER: replace with the checks this repository's CI runs. -->
 
 - [ ] `TODO: lint and formatting`
 - [ ] `TODO: unit tests`

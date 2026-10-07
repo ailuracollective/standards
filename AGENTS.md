@@ -1,831 +1,615 @@
 # AGENTS.md
 
-Guidance for AI agents and contributors working in this repository.
+Working reference for agents and contributors. `README.md` is the entry point for a
+human; this file holds the invariants, the conventions, and the checks. Most rules
+here exist because something went wrong the obvious way at least once.
 
 ## What this repository is
 
-The source of truth for GitHub issue standards shared across an organisation's
-repositories. There is no application code here, no build and no test suite.
-`README.md` is the entry point for a human; this file is the working reference.
-Under `.github/` there are **12 YAML files, 14 Markdown files, and 1 CODEOWNERS
-file**; six more files sit in the repository root.
+The origin of the GitHub issue and pull request standards shared across
+`ailuracollective`. There is no application code, no build and no test suite.
 
-Seven artifacts, each with exactly one owner. The release files are the
-eighth and ninth, and they are the only two that a machine rewrites without a
-pull request — see § Releases.
+| File                                                           | Owns                                      | Read by                                                   |
+| -------------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------- |
+| `.github/ISSUE_STANDARD.md`                                    | how an issue is written                   | humans and agents drafting issues                         |
+| `.github/labels.yml`                                           | the label set (26 labels)                 | anything that reads or applies labels                     |
+| `.github/ISSUE_TEMPLATE/*.yml` (7 templates + config)          | the forms in the issue chooser            | GitHub                                                    |
+| `.github/PULL_REQUEST_TEMPLATE/*.md` (12 + default)            | the form per pull request type            | GitHub                                                    |
+| `.github/CODEOWNERS`                                           | who reviews a change                      | GitHub, via branch protection                             |
+| `.github/standards.local.example.yml`                          | the shape of a customization record       | a reader — or a checker, once one exists                  |
+| `.github/workflows/policy.yml`                                 | the standard applied to this repository   | GitHub Actions, on every pull request that is not a draft |
+| `.github/workflows/ci.yml`                                     | lint and format checks                    | GitHub Actions, on every pull request that is not a draft |
+| `.github/workflows/release.yml`                                | when a release is cut                     | GitHub Actions, on every push to `main`                   |
+| `release-please-config.json` + `.release-please-manifest.json` | the release type, and the current version | release-please                                            |
 
-| File                                                              | Owns                                        | Read by                                            |
-| ----------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------- |
-| `.github/ISSUE_STANDARD.md`                                       | how an issue is written                     | humans and agents drafting issues                 |
-| `.github/labels.yml`                                              | the label set (30 labels)                   | anything that reads or applies labels             |
-| `.github/ISSUE_TEMPLATE/*.yml` (7 templates + config)             | the forms in the issue chooser              | GitHub                                            |
-| `.github/PULL_REQUEST_TEMPLATE/*.md` (12 + default)               | the form per pull request type              | GitHub                                            |
-| `.github/CODEOWNERS`                                              | who reviews a change                        | GitHub, via branch protection                     |
-| `.github/workflows/policy.yml`                                    | the projection of all of the above          | GitHub Actions, on every pull request             |
-| `.github/workflows/release.yml`                                   | when a release is cut, and what it bumps    | GitHub Actions, on every push to `main`           |
-| `release-please-config.json` + `.release-please-manifest.json`    | the release type, and the current version   | release-please, and anyone reading the version    |
-| `.github/standards.local.example.yml`                             | the shape of a customization record         | a reader — or a checker, once one exists         |
+The first five rows are **the standard**: what an adopting repository copies. The
+example file is opt-in (§ Customizing the standard). The last four serve this
+repository only and are not copied.
 
-The last one is opt-in and is the only artifact nobody is required to copy; see
-§ Customizing the standard for what it is and, more importantly, what it is not.
+Facts that are easy to get wrong:
 
-`ISSUE_STANDARD.md` is **prose and is not machine-readable**. It was
-`ISSUE_STANDARD.yml` and did not parse as YAML — the numbered list under Purpose
-reads as mapping keys, so the file failed to load from its first numbered line
-onward. It was renamed rather than repaired. Nothing should parse it, and no
-validator should be pointed at it.
-
-Nothing in this repository is application code. `labels.yml` is a reviewed
-manifest, not workflow input: GitHub does not read it and no CI parses it.
-Editing it changes the *record* of the label set, not the labels on any remote.
-
-`.github/workflows/policy.yml` is the exception to "nothing here runs", and it
-runs nothing of this repository either. It checks out the base branch, never the
-head, so no code under review reaches a runner holding a token. It is the
-standard projected onto its own repository, and it is what makes this repository's
-templates and labels load-bearing rather than decorative — see § Enforcement.
-
-`.github/workflows/release.yml` is a second exception, and a different kind of
-one: it runs on a push to `main`, so it acts on merged history rather than on a
-proposal, and it holds a write grant. It is the only workflow here that writes.
-Neither file is part of the standard an adopting repository copies.
+- **`ISSUE_STANDARD.md` is prose, not data.** It was `ISSUE_STANDARD.yml` and did not
+  parse — the numbered list under Purpose reads as mapping keys. Nothing should parse
+  it and no validator should be pointed at it.
+- **`labels.yml` is a reviewed record, not configuration.** GitHub does not read it
+  and no CI parses it. Editing it changes no remote.
+- **`policy.yml` never runs code under review.** It checks out the base branch, so
+  nothing from the head reaches a runner holding a token.
+- **`release.yml` is the only workflow that writes**, and the release files are the
+  only ones a machine rewrites without a human-authored pull request (§ Releases).
 
 ### What is named here, and what is not
 
-This file names `ailuracollective/actions`, because the gate is implemented
-there and every input it discusses — `type-labels`, `title-types`,
-`approved-label`, `auto-label-name`, `enable-body-structure`, `default-template`,
-and the `v1` tag workflows resolve — belongs to that action rather than to this
-standard. Stripping the name would leave the configuration unwriteable.
+This file names `ailuracollective/actions`, because the gate lives there and every
+input discussed below (`type-labels`, `title-types`, `approved-label`,
+`auto-label-name`, `enable-body-structure`, `default-template`, the `v2` tag)
+belongs to that action.
 
-It names **no adopting repository**, on purpose. § Sync model explains why, and
-§ Enforcement carries the method for checking any one of them instead.
+It names **no adopting repository**, on purpose: such a list is true when written
+and wrong a week later, and a stale list reads as authoritative. § Enforcement
+carries the method for checking any one repository instead.
 
-Where this file says "here", it means this repository: the origin manifest, these
-seven issue templates, these twelve pull request templates, these conventions.
-Where it says "an adopting repository", it means any repository that copied them,
-of which there may be none, one, or many.
+"Here" means this repository. "An adopting repository" means any repository that
+copied these files — there may be none, one, or many.
 
 ## Inventory
 
 - **7** issue types, declared once in `ISSUE_STANDARD.md` § Issue Types.
-- **7** templates — one per type — plus `config.yml`, which is not a template.
-- **12** pull request templates — one per Conventional Commit type — plus a
-  default `PULL_REQUEST_TEMPLATE.md`.
-- **30** labels: six prefixed families (`type` 5, `priority` 4, `status` 5,
-  `scope` 8, `meta` 5, `release` 2) plus one unprefixed, `github_actions`.
-- **33** files total: 4 in `.github/` (`labels.yml`, `ISSUE_STANDARD.md`,
-  `standards.local.example.yml`, `CODEOWNERS`), 2 in `.github/workflows/`, 8 in `ISSUE_TEMPLATE/`, 13 in
-  `PULL_REQUEST_TEMPLATE/`, and 6 in the repository root (`AGENTS.md`,
-  `README.md`, `CONTRIBUTING.md`, `LICENSE`, `release-please-config.json`,
-  `.release-please-manifest.json`).
-  The root count excludes `.gitignore`, which is deliberately not part of the
-  standard anything copies.
-  Do not quote these numbers loosely; if you change one of them, update this
-  section.
+- **7** issue templates — one per type — plus `config.yml`, which is not a template.
+- **12** pull request templates — one per Conventional Commit type — plus a default
+  `PULL_REQUEST_TEMPLATE.md`.
+- **26** labels: five prefixed families (`type` 5, `status` 5, `scope` 8, `meta` 5,
+  `release` 2) plus one unprefixed, `github_actions`.
+- **38** files total:
+  - 4 in `.github/`: `labels.yml`, `ISSUE_STANDARD.md`,
+    `standards.local.example.yml`, `CODEOWNERS`;
+  - 3 in `.github/workflows/`, 8 in `ISSUE_TEMPLATE/`, 13 in
+    `PULL_REQUEST_TEMPLATE/` — so 13 YAML and 14 Markdown files under `.github/`;
+  - 10 in the root: `AGENTS.md`, `CHANGELOG.md`, `README.md`, `CONTRIBUTING.md`,
+    `LICENSE`, `release-please-config.json`, `.release-please-manifest.json`, and
+    the lint configuration `.yamllint`, `pyproject.toml`, `uv.lock`.
+
+`.gitignore` is not counted: it is local-only (listed in `.git/info/exclude`) and not
+part of anything copied. `CHANGELOG.md` is written by release-please. The lint files
+sit outside `.github/` so that nothing an adopting repository copies carries this
+repository's lint settings.
+
+Do not quote these numbers loosely; if you change one, update this section.
 
 ## The invariant: one type, one template, one title prefix
 
-Every type in `ISSUE_STANDARD.md` has exactly one template, and that template's
-`title:` is exactly the type token plus a colon and one space. Seven types, seven
-templates, no gaps in either direction.
+Every type in `ISSUE_STANDARD.md` has exactly one template, whose `title:` is the
+type token plus a colon and one space.
 
-| Type         | Template               | `title:`          | Body's opening pair          |
-| ------------ | ---------------------- | ----------------- | ---------------------------- |
-| `feat`       | `feature.yml`          | `"feat: "`        | Context, Objective           |
-| `fix`        | `bug.yml`              | `"fix: "`         | What happens, Expected       |
-| `improvement`| `improvement.yml`      | `"improvement: "` | Context, Objective           |
-| `chore`      | `maintenance.yml`      | `"chore: "`       | Context, Objective           |
-| `test`       | `test.yml`             | `"test: "`        | Context, Objective           |
-| `docs`       | `docs.yml`             | `"docs: "`        | Context, Objective           |
-| `spike`      | `investigation.yml`    | `"spike: "`       | Context, Question            |
+| Type          | Template            | `title:`          | `labels:` (+ `status/needs-review`) | Opening pair           |
+| ------------- | ------------------- | ----------------- | ----------------------------------- | ---------------------- |
+| `feat`        | `feature.yml`       | `"feat: "`        | `type/feature`                      | Context, Objective     |
+| `fix`         | `bug.yml`           | `"fix: "`         | `type/bug`                          | What happens, Expected |
+| `improvement` | `improvement.yml`   | `"improvement: "` | `type/improvement`                  | Context, Objective     |
+| `chore`       | `maintenance.yml`   | `"chore: "`       | `type/task`                         | Context, Objective     |
+| `test`        | `test.yml`          | `"test: "`        | `type/task`                         | Context, Objective     |
+| `docs`        | `docs.yml`          | `"docs: "`        | `type/documentation`                | Context, Objective     |
+| `spike`       | `investigation.yml` | `"spike: "`       | `type/task`                         | Context, Question      |
 
-**Only 3 of the 7 filenames match their type token.** `feat`→`feature`,
-`fix`→`bug`, `chore`→`maintenance`, `spike`→`investigation`. The filename is not
-load-bearing for anything except the chooser's ordering, so do not assume you can
-derive a type from a filename, and do not "fix" the mismatch by renaming —
-`bug.yml` and `maintenance.yml` are understood names.
+- **Only 3 of 7 filenames match their type token.** The filename only drives chooser
+  ordering. Do not derive a type from it, and do not "fix" it by renaming.
+- `bug.yml` and `investigation.yml` replace Context/Objective with a pair that fits
+  them; `investigation.yml` also carries an Expected outcome block. Everything from
+  Scope onward is common to all seven.
+- Every template applies `status/needs-review` itself, so an issue is never briefly
+  unlabelled while waiting for the triage job.
 
-Two templates substitute their own opening pair for Context/Objective, because
-the standard's pair does not fit them: `bug.yml` asks what happens versus what
-was expected, and `investigation.yml` asks a Question and carries an Expected
-outcome block. Everything from Scope onward is common to all seven.
+### Why three templates map to `type/task`
+
+Every `labels:` value must be a member of `labels.yml`: GitHub drops an unknown label
+**without an error**. That used to be the case for every template — they applied
+`enhancement`, `bug`, `documentation`, `maintenance`, `testing` and `investigation`,
+none of which were declared, so every issue arrived with no type label.
+(`enhancement` was also shared by `feature.yml` and `improvement.yml`.)
+
+Three types have no label of their own, and the mapping is a judgement call:
+
+- `chore` → `type/task`. Unambiguous: `type/task` was declared and applied by
+  nothing, which marks it as `chore`'s intended home.
+- `test` → `type/task`. `scope/testing` exists but is a scope, and using a scope as a
+  type is a category error. A test-only change is "a defined piece of work that is
+  not a feature or bug" — the manifest's own description of `type/task`.
+- `spike` → `type/task`. The weakest of the three, and the first to revisit if the
+  family grows. It is the least-wrong available answer, not a claim that a spike is
+  a task.
 
 ## Three vocabularies
 
-Three type vocabularies coexist across the repositories this standard feeds.
-Keeping them apart is the single most common source of confusion here.
+Keeping these apart is the most common source of confusion here.
 
-| Vocabulary          | Members                                                                                                  | Where it applies                        |
-| ------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| Label family `type/*` | 5: `feature`, `bug`, `improvement`, `task`, `documentation`                                            | PR type-label gate in consuming repos   |
-| Issue title types   | 7: `feat`, `fix`, `improvement`, `chore`, `test`, `docs`, `spike`                                         | this standard and the issue chooser     |
-| Conventional Commit | 12                                                                                                        | PR titles and release tooling — **absent from this repository** |
+| Vocabulary            | Members                                                           | Where it applies                                                   |
+| --------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Label family `type/*` | 5: `bug`, `feature`, `improvement`, `task`, `documentation`       | the PR type-label gate                                             |
+| Issue title types     | 7: `feat`, `fix`, `improvement`, `chore`, `test`, `docs`, `spike` | this standard and the issue chooser                                |
+| Conventional Commit   | 12 (the pull request template filenames)                          | PR titles, release tooling; branch names (minus `breaking-change`) |
 
-The label family is the coarser of the two that matter here: 5 against 7. Two
-type tokens have no `type/*` label of their own.
+- `breaking-change` is a Conventional Commit type only. It is not an issue type, and
+  there is deliberately no `type/breaking-change`.
+- `type/` is **frozen at five** (§ Customizing the standard). Growing it is not
+  forbidden by any gate — each repository declares its own `type-labels` — but it is
+  a change to every adopting repository's manifest and `policy.yml`, all copies that
+  nothing synchronizes.
 
-- `chore` has no label. `type/task` is its intended home.
-- `spike` has no label, and no member of the family describes it.
+### `type-labels` and `title-types`
 
-`breaking-change` is a Conventional Commit type, not a label and not an issue
-type. It does not belong in `ISSUE_STANDARD.md`, and there is deliberately no
-`type/breaking-change`: adopting repositories enforce "exactly one of five
-`type/*` labels"
-on a pull request, so growing the family breaks a gate that is already deployed.
+`type-labels` once fed three checks: the label check, the title grammar, and pull
+request template resolution. No value could satisfy all three:
 
-## Every template applies a label that exists
+| Value of `type-labels` | Label check                                      | Title grammar                          | Template resolution                      |
+| ---------------------- | ------------------------------------------------ | -------------------------------------- | ---------------------------------------- |
+| `feat,fix,…` (bare)    | **unsatisfiable** — no such labels on any remote | works                                  | works                                    |
+| `type/feature,…`       | works                                            | **rejects every `feat:`/`fix:` title** | **hard error** — `/` is a path character |
 
-This was the one real inconsistency in the repository, and it is closed. It is
-recorded here because the reasoning behind the three judgement calls is not
-recoverable from the files.
+So `ailuracollective/actions` gained `title-types`, which feeds the grammar and
+template resolution; `type-labels` feeds the label check alone. `title-types`
+defaults to `type-labels`. An adopting repository declares both:
 
-**All seven templates now name labels that are members of `labels.yml`.**
+- `type-labels`: the five `type/*` labels;
+- `title-types`: the twelve Conventional Commit types;
+- `approved-label: status/ready` and `auto-label-name: status/needs-review` — slash
+  forms. The colon forms (`status:approved`) exist on no remote, and a gate
+  demanding them can never pass.
 
-| Template            | `labels:`             | Why                                                     |
-| ------------------- | --------------------- | ------------------------------------------------------- |
-| `feature.yml`       | `type/feature`        | exact match                                             |
-| `improvement.yml`   | `type/improvement`    | exact match                                             |
-| `bug.yml`           | `type/bug`            | exact match                                             |
-| `docs.yml`          | `type/documentation`  | exact match                                             |
-| `maintenance.yml`   | `type/task`           | no `chore` label exists; `type/task` is the catch-all    |
-| `test.yml`          | `type/task`           | no `test` label exists — see below                      |
-| `investigation.yml` | `type/task`           | no `spike` label exists — see below                     |
+Consequences in the action, both deliberate:
 
-Every template also applies `status/needs-review`, which is what the triage
-action would otherwise apply automatically on `issues` events. Declaring it
-means the label is present from the moment the form is submitted, so an issue is
-never briefly unlabelled.
+- **The body template resolves from the title, not the label.** Each check owns its
+  own failure, so a pull request missing both a label and a section hears about
+  both. When the title's type is not allowed, `pr-body-structure` reports `skip`
+  and names `pr-title-conventional` as the owner.
+- The `type-label` error message reads its example from the configured set rather
+  than claiming labels are "all bare".
 
-The old values were `enhancement`, `bug`, `documentation`, `maintenance`,
-`testing` and `investigation`. **None was a member of the manifest**, so GitHub
-dropped every one of them without an error and an issue opened through any of
-these forms arrived with no type label at all. `enhancement` was doubly wrong: it
-was undeclared, and `feature.yml` and `improvement.yml` both applied it, so even
-if it had existed it could not tell those two apart.
-
-Three of the seven were judgement calls rather than mechanical:
-
-- `chore` (`maintenance.yml`) → `type/task`. Unambiguous in substance:
-  `type/task` was declared in the manifest and applied by no template at all,
-  which is the strongest available signal that it was `chore`'s intended home.
-- `test` (`test.yml`) → `type/task`. `scope/testing` exists but is a scope, and
-  applying a scope as a type would be a category error. `type/task` is the
-  defensible reading: a test-only change is a defined piece of work that is not
-  itself a feature or a bug, which is the manifest's own description of
-  `type/task`. The alternative is a sixth family member, which is a larger
-  decision than this gap required.
-- `spike` (`investigation.yml`) → `type/task`. The weakest of the three, and the
-  one to revisit first if the family ever grows. A spike is exploratory work, and
-  `type/task` is the only label whose description admits that. Nothing in the
-  standard claims a spike is a task; this is the least-wrong available answer.
-
-**Adding `type/chore`, `type/test` and `type/spike` would grow the family from 5
-to 8.** That remains a real cost and a legitimate future decision, but note what
-it is *not*: no repository enforces this family's size. Each adopting
-repository declares its own `type-labels`, and that list names `type/*` labels
-because those are the names its remote has. Widening this repository's family
-would break nothing — but it would be a change to every adopting repository
-regardless, because their manifests are copies that nothing syncs
-automatically.
-
-## Sync model
-
-`labels.yml` opens with "Keep this file synchronized across projects."
-Concretely: this repository is the origin, each adopting repository holds its
-own copy under its own `.github/`, and **edits here do not propagate**. There
-is no workflow, submodule, or sync bot in this repository. Synchronization is
-a manual copy, which means drift is expected and has to be checked for by hand.
-
-**This file deliberately does not record who has adopted it.** A list of adopting
-repositories, their label counts and their gate configuration is the kind of fact
-that is true when written and wrong a week later, and a stale list is worse than
-none because it reads as authoritative. Someone checking a specific repository
-reads that repository. What belongs here is the rule and the command.
-
-Three layers drift apart independently, and conflating them is how a
-reconciliation goes wrong:
-
-| Layer | What it is | How it goes stale |
-| --- | --- | --- |
-| The remote label set | what GitHub actually has | a label renamed or deleted by hand |
-| The manifest file | a reviewed record of the intended set | edited here, never copied out |
-| The gate's `type-labels` | what the check compares against | a rename, or a scheme replaced wholesale |
-
-All three must agree for a gate to be satisfiable, and they fail differently. The
-first two drift silently. The third turns any disagreement into a gate no pull
-request can pass, which reads as though the contributor did something wrong.
-Reconcile all three in the same change, against the remote rather than against
-another copy of the manifest.
-
-Two traps in the copy itself:
-
-- **Copying a manifest over another manifest is an upgrade in content and a
-  regression in form.** This repository's `labels.yml` is a block sequence under a
-  bare top level; an adopting repository may nest under `labels:`. Both parse as
-  YAML, so a mechanical copy changes the document shape without failing anywhere.
-  Port the target's header and reconciliation recipe across instead of
-  overwriting it.
-- **Quote every color.** An unquoted six-digit hex string is not always a string:
-  `5319E7` parses as the integer `53190000000`, `008672` as `8672`, and `000000`
-  as `0`. It fails silently, and the recipe that reads the file then hands
-  `gh label create` a number rather than a hex value.
-
-### The two vocabularies, and the input that separated them
-
-`type-labels` used to feed three checks at once: the label check, the Conventional
-Commit subject grammar, and pull request template resolution. That made it
-impossible to configure, because the three want different sets.
-
-The label set is coarse — five `type/*` labels, because that is what a
-contributor picks from. The title set is the twelve Conventional Commit types,
-because release tooling parses the squashed subject and the template directory
-is named for them. One input cannot be both, and neither available value worked:
-
-| Value of `type-labels` | Label check | Title grammar | Template resolution |
-| ---------------------- | ----------- | ------------- | ------------------- |
-| `feat,fix,…` (bare)    | **unsatisfiable** — no such labels on any remote | works | works |
-| `type/feature,…`       | works | **rejects every `feat:`/`fix:` title** | **hard error** — `/` is a path character |
-
-So the fix was not a choice of vocabulary. `ailuracollective/actions` now has a
-second input, `title-types`, which feeds the grammar and the resolution, while
-`type-labels` feeds the label check alone. `title-types` defaults to
-`type-labels`, so a repository that uses one vocabulary for both declares nothing
-extra.
-
-Two consequences in the scripts, both deliberate:
-
-- **The template resolves from the pull request's title, not from its label.**
-  This is what lets the two sets differ, and it makes `pr-body-structure`
-  independent of `type-label`: each check owns its own failure, so a pull request
-  missing both a label and a section is told about both instead of one hiding the
-  other. When the title's type is not allowed, the check reports `skip` and
-  names `pr-title-conventional` as the owner rather than inventing a second
-  diagnosis for the same mistake.
-- **The `type-label` error message no longer claims the labels are "all bare,
-  with no `type:` prefix".** That was advice about the hub's own vocabulary
-  printed as if it were a rule, and it was actively wrong for anyone who had
-  moved to a prefixed family. The worked example is now read from the configured
-  set.
-
-An adopting repository must declare both lists: `type-labels` names the five
-`type/*` labels, `title-types` names the Conventional Commit types. And because
-the status family is slash-named everywhere, `approved-label` is `status/ready`
-and `auto-label-name` is `status/needs-review` — never the colon forms
-`status:approved` and `status:needs-review`, which no remote carries and which a
-gate demanding them can never see satisfied.
-
-**This was a fix in the gate's own repository, and it could not have been made
-in an adopting repository.** Editing `type-labels` alone would have replaced one
-broken check with two. **Nothing worked until a tag moved.** A tag points at a
-commit; a workflow writes `uses: ailuracollective/actions/pull-request@v2`,
-which resolves the tag, not `main`. Moving it is a separate, deliberate step
-from merging the pull request, and it changes every repository that resolves
-that tag at once. Verify before assuming:
+**A fix in the action only takes effect when a tag moves.** Workflows write
+`uses: ailuracollective/actions/pull-request@v2`, which resolves the tag, not
+`main`, and moving it changes every repository at once. Check before assuming:
 
 ```sh
-# which commit does the tag a workflow writes actually resolve to?
 gh api /repos/ailuracollective/actions/git/refs/tags/v2 --jq '.object.sha'
 gh api /repos/ailuracollective/actions/commits/main --jq .sha   # equal means the tag is current
 ```
 
-**Two majors exist, and picking one is a decision rather than a search.** `v2`
-adds the sticky status comment, which publishes into the pull request
-conversation and therefore needs a token that can write there. Note *which*
-token: `comment-token` is separate from `github-token` and carries its own
-scope, so a job can publish a comment while its own grant stays read-only —
-or, in the branch-name job here, stays empty. Widening `permissions` to
-`pull-requests: write` is the third way to make it work and the worst one:
-it hands a write grant on the pull request to the five check scripts, which
-only ever read. Three outcomes:
+### The status comment
 
-| Choice | Cost |
-| --- | --- |
-| `enable-status-comment: false` | nothing; the job summary carries the same table |
-| `comment-token` for an organisation account | a secret, but the comment can be edited by a person, and the job's grant stays read-only |
-| `comment-author` naming the identity your token actually has | no secret, but a `github-actions[bot]` comment can be edited or deleted by nobody |
+`v2` adds a sticky status comment, which needs a token that can write to the pull
+request conversation. `comment-token` is separate from `github-token`, so the job's
+own grant can stay read-only. Never widen `permissions` to `pull-requests: write`
+instead — that hands a write grant to five scripts that only read.
 
-The third is the tempting one and it is a trap worth naming: it works, the
-comment appears, and the reason the action refuses to post under an unheld
-identity by default is precisely that a bot comment outlives whoever would have
-fixed a wrong one. Prefer the second. The first is the honest answer for a
-repository with no opinion.
+| Choice                                      | Cost                                                                      |
+| ------------------------------------------- | ------------------------------------------------------------------------- |
+| `enable-status-comment: false`              | nothing; the job summary carries the same table                           |
+| `comment-token` for an organisation account | a secret, but a person can edit the comment and the grant stays read-only |
+| `comment-author` matching your own token    | no secret, but a `github-actions[bot]` comment can be edited by nobody    |
 
-**A comment is authored by the token that wrote it, so the identity is chosen
-by which token is passed, not by a field.** `comment-author` only says which
-identity the comment is *required* to have, and the action checks it against
-`gh api user` before writing anything. Setting it to match whatever token you
-already have is not configuring an author; it is agreeing to publish under that
-account. The default exists so the two cannot drift apart unnoticed.
+Prefer the second; this repository uses it (`AiluraKitty`). The third is a trap: it
+works, but a bot comment outlives whoever would have fixed a wrong one. The token
+decides the author; `comment-author` only states which identity is *required*, and
+the action checks it against `gh api user` before writing.
+
+## Sync model
+
+This repository is the origin; each adopting repository holds its own copy under its
+own `.github/`. **Edits here do not propagate.** There is no workflow, submodule or
+bot. Copies are manual and drift is expected.
+
+Three layers drift independently:
+
+| Layer                    | What it is                      | How it goes stale                        |
+| ------------------------ | ------------------------------- | ---------------------------------------- |
+| The remote label set     | what GitHub actually has        | a label renamed or deleted by hand       |
+| The manifest file        | the reviewed record             | edited here, never copied out            |
+| The gate's `type-labels` | what the check compares against | a rename, or a scheme replaced wholesale |
+
+All three must agree for a gate to be satisfiable. The first two drift silently;
+the third turns any disagreement into a gate nobody can pass, which looks like the
+contributor's mistake. Reconcile all three in one change, against the remote rather
+than another copy of the manifest.
+
+Divergences to know before copying in either direction:
+
+- **Manifest shape.** This `labels.yml` is a bare top-level sequence; another may
+  nest under `labels:`. Both parse, so a mechanical copy changes the schema without
+  failing. Copying this file over another is an upgrade in content and a regression
+  in form: port the target's header and reconciliation recipe instead.
+- **Quote every color.** Unquoted hex resolves differently per tool: `yq`
+  (`yaml.v3`) turns `000000` into `0`, `008672` into `8672` and `5319E7` into
+  `53190000000`; PyYAML converts only the all-digit ones. Either way
+  `gh label create` receives a number, silently.
+- **Field id casing.** Kebab-case here (`out-of-scope`), possibly snake_case
+  elsewhere. Only the id string differs, but it is a URL fragment.
+- **Field types.** Only `textarea` and one `markdown` here. `checkboxes`,
+  `render: shell`, `type: input` and explicit `required: false` are legitimate
+  style choices elsewhere.
+- **`blank_issues_enabled`.** `false` here; a per-repository policy choice.
+- **Default pull request form.** Here it is inside the directory; others keep it at
+  `.github/PULL_REQUEST_TEMPLATE.md`, or have none. The action's default is the
+  beside-the-directory path, so the inside layout must set `default-template`.
+  Copying only the directory omits the default silently.
 
 ### Enforcement: how to tell, for any repository
 
-A gate being **configured** and a gate being **enforced** are different questions,
-and the second one is per-repository, per-branch, and changes without anyone
-editing a file. So this section carries the method rather than a result. A result
-recorded here would be true when written and wrong later, in a document whose whole
-purpose is to be relied on.
-
-Both mechanisms exist and they do not answer the same request:
+Configured and enforced are different questions, and the second is per repository,
+per branch, and changes without a file being edited. So this section carries the
+method, never a result. Check **both** APIs:
 
 ```sh
-# classic branch protection — 404 means no protection, NOT "unprotected"
+# classic branch protection — 404 means "no classic protection", NOT "unprotected"
 gh api /repos/OWNER/REPO/branches/BRANCH/protection --jq '.required_status_checks'
 
-# rulesets — a separate API, and this is the one people forget
+# rulesets — a separate API, and the one people forget
 gh api /repos/OWNER/REPO/rulesets --jq '.[] | "\(.id) \(.name) \(.enforcement)"'
 for id in $(gh api /repos/OWNER/REPO/rulesets --jq '.[].id'); do
   gh api /repos/OWNER/REPO/rulesets/$id --jq \
     '.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context'
 done
-```
 
-**The trap is reading a 404 from the first as "this branch is unprotected" when it
-has moved to a ruleset.** That mistake has already been made once here, and it
-produced a confident, wrong claim that the gates enforced nothing anywhere. Check
-both APIs before concluding anything about enforcement.
-
-Then read the required contexts against what the workflows actually report:
-
-```sh
+# what the workflows actually report
 gh pr view N --repo OWNER/REPO --json statusCheckRollup \
   --jq '.statusCheckRollup[].name' | sort -u
 ```
 
-Three failure shapes to recognise, all of which look like a contributor's mistake
-and none of which are:
+Reading a 404 from the first as "unprotected" when the branch moved to a ruleset has
+already produced one confident, wrong claim here. Then compare required contexts
+with reported ones:
 
-| What the required context says | What it means |
-| --- | --- |
-| the policy job is **not** among them | it annotates and is ignored; a fix to it changes nothing about what merges |
-| it is there, under a **different name** | the branch is unmergeable for anyone who cannot bypass protection |
-| a required context **no workflow reports** | the same, and it is invisible until someone without admin rights tries |
+| Required contexts                      | Meaning                                                          |
+| -------------------------------------- | ---------------------------------------------------------------- |
+| the policy job is **not** among them   | it annotates and is ignored                                      |
+| it is there under a **different name** | unmergeable for anyone who cannot bypass protection              |
+| a context **no workflow reports**      | the same, and invisible until someone without admin rights tries |
 
-The second and third rows are the same defect wearing two hats: a required context
-is a literal string, so `Branch name and PR title` and a job actually named
-`Branch name` do not match, and neither does a required context that is one name
-containing commas where five were meant. Bypass permission is what keeps such a
-repository mergeable, and it hides the problem until bypass is removed.
-
-Do not describe a rule as binding without having read one of these for that
-repository and that branch. The same organisation will have one repository where
-the gate blocks and another where it does not.
-
-Structural divergences worth knowing before you copy anything either direction:
-
-- **Label form.** This repository uses a block sequence under a bare top level;
-  another repository may nest under `labels:`. Both parse as YAML; they are not
-  the same schema, so a mechanical copy between them changes the document shape.
-- **Manifest content.** Copying this repository's `labels.yml` over a repository's
-  current file would be an upgrade in content and a regression in form: it names
-  the labels the remote actually has, but drops the header and the reconciliation
-  recipe. Port the recipe across instead, and reconcile the target's file against
-  its remote in the same change.
-- **Field id casing.** This repository uses kebab-case (`out-of-scope`,
-  `acceptance-criteria`). An adopting repository may use snake_case
-  (`proposed_outcome`). Either parses; only the id string differs, and it becomes
-  a URL fragment.
-- **Field types.** This repository uses only `textarea` and one `markdown`. Others
-  are available and legitimate — `checkboxes` with per-option `required: true` for
-  a preflight block, `render: shell` for a log field, `type: input` for a version
-  string, and explicit `validations: required: false` on optional fields. The set is
-  a style choice, not a rule.
-- **`blank_issues_enabled`.** `false` here. Treat it as a per-repository policy
-  choice, not drift.
-- **Default pull request form location.** Two conventions are in use: inside the
-  directory, as here, or beside it at `.github/PULL_REQUEST_TEMPLATE.md`. A
-  repository may also have none, in which case every type falls back to whatever
-  the gate is told. Copying only the directory omits the fallback silently, and the
-  action's own default is the beside-the-directory path — so a repository using the
-  inside-the-directory layout must say so with `default-template`.
+A required context is a literal string: `Branch name and PR title` does not match a
+job named `Branch name`. Bypass permission hides both failures until it is removed.
+Never describe a rule as binding without having read these for that repository and
+branch.
 
 ## Releases
 
-Releases here are planned by `release-please`, not remembered by a person. On
-every push to `main` it reads the Conventional Commit subjects since the last
-tag, and when there is anything releasable it opens **a pull request** carrying
-the version bump and a generated changelog. Once that pull request merges, the
-tag and the GitHub release exist. Nothing is published directly from the
-workflow, so a release is a reviewed change like any other — which is the whole
-reason for choosing the pull-request mode over a direct release.
+`release-please` runs on every push to `main`. When there is anything releasable it
+opens **a pull request** with the version bump and a generated changelog; merging it
+creates the tag and the release. Nothing is published directly, so a release is a
+reviewed change like any other.
 
-**`release-type: simple`, and that is a consequence, not a preference.** This
-repository has no package, no build output and nothing to publish, so its version
-lives in exactly one place — `.release-please-manifest.json` — and a release type
-that edited a `package.json` would have nothing to edit. The manifest is the
-entire artifact.
+`release-please-config.json`, and why each key is there:
 
-**`initial-version: 0.1.0` is load-bearing.** With no previous release,
-release-please opens the first one at `1.0.0`. For a repository other
-repositories already copy from, that is a compatibility claim nobody made.
+- **`release-type: simple`** — there is no package; the version lives only in
+  `.release-please-manifest.json`.
+- **`initial-version: 0.1.0`** — without it the first release is `1.0.0`, a
+  compatibility claim nobody made.
+- **`packages: { ".": … }`** — looks redundant, is not. The schema requires it, and
+  `parseConfig` builds `repositoryConfig` from it, which `manifest.ts` dereferences
+  on exactly this repository's path. Omitting it crashes on the first push, not at
+  configuration time.
 
-**`packages` carries `"."` explicitly.** It looks redundant and is not: the
-upstream schema requires the key, `parseConfig` builds `repositoryConfig` by
-iterating it, and `manifest.ts` dereferences `repositoryConfig[path]` on exactly
-the path this repository takes — a manifest naming a version with no release yet.
-Omitting the key fails on the first push, not at configuration time.
+### The release pull request is exempt by head ref
 
-### The release pull request cannot pass this repository's own gates
-
-Its head ref is `release-please--branches--<branch>`, which carries no type
-segment where the branch gate requires one, and four of the five pull request
-checks are unsatisfiable by a generated changelog: no issue to close, a body
-that is not any type's template, and no `type/*` label.
-
-**The head ref is not configurable.** release-please hardcodes the prefix in
-`src/util/branch-name.ts` and reopens the same branch every run, so there is no
-setting that makes such a pull request pass. Something has to exempt it.
-
-`policy.yml` exempts it by **head ref**, in the `if:` condition on both jobs:
+Its head ref is `release-please--branches--<branch>` — hardcoded in
+`src/util/branch-name.ts`, not configurable — and it has no type segment, no linked
+issue, no template body and no `type/*` label. It cannot pass the gates, so
+`policy.yml` skips both pull request jobs with:
 
 ```yaml
 !startsWith(github.event.pull_request.head.ref, 'release-please--branches--')
 ```
 
-It does not use `skip-actors`, and that choice is the interesting part.
-`skip-actors` matches the **login** that opened the pull request, so exempting
-the release identity would also exempt anything else that account ever opens. In
-this repository that account is not exclusively a machine identity — it is the
-account behind `AILURA_KITTY_TOKEN`, which publishes the status comment on every
-pull request — so the usual justification for a whole-action identity exemption
-does not hold. The head ref is the property that actually makes these pull
-requests unrepresentable: a pull request a person wrote has a branch someone
-chose, and that branch has a type segment or the mistake was worth making.
+Not `skip-actors`, which matches the login: the release account is the one behind
+`AILURA_KITTY_TOKEN`, which also posts every status comment and is not exclusively a
+machine identity. Exempting it would exempt everything it ever opens. A head ref
+says what a pull request *is*; a human's branch has a type segment by choice.
 
-| | keyed on | scope of the exemption | leaves a record |
-| --- | --- | --- | --- |
-| `skip-actors` | who opened it | every pull request that account ever opens | yes — reported *skipped* |
-| head ref | what it is | only a release pull request | no — the job never runs |
+The cost: an exempt pull request has **no check and no status comment**, so nothing
+records that the exemption was deliberate.
 
-The cost is the last column. An exempt pull request leaves **no status comment
-and no check**, because the job does not run rather than running and reporting
-itself skipped. Nothing on the board records that the exemption was deliberate.
+Making release-please satisfy the checks (`extra-label`, a static
+`pull-request-footer` with a closing keyword and the headings) was rejected: it
+would name the same issue in every release and carry headings that exist only to be
+grepped — a green board without a review.
 
-The alternative was making release-please satisfy the checks: `extra-label`
-supplies a `type/*` label, and `pull-request-footer` could carry both a closing
-keyword and the template headings. Rejected because `pull-request-footer` is
-static text — it would name the same issue in every release forever, and carry
-heading lines that exist only to be found by a grep. That produces a green board
-and no review, which is worse than an absent one.
+### One token, two jobs
 
-### The token does two jobs
+`release.yml` uses `AILURA_KITTY_TOKEN`, the same token `policy.yml` passes as
+`comment-token`. release-please has no author setting and GitHub attributes API
+commits to the calling token, so **the token is the author setting**; with
+`GITHUB_TOKEN` every release commit is `github-actions[bot]`'s.
 
-`release.yml` uses `AILURA_KITTY_TOKEN`, the same personal access token
-`policy.yml` passes as `comment-token`. The reason is authorship, not
-permissions, and both grants would work either way: release-please creates its
-commit through the API, GitHub attributes the author and committer to whichever
-token made the call, and release-please exposes no author setting to override
-that. **The token is the author setting.** With `GITHUB_TOKEN` every release
-commit is attributed to `github-actions[bot]`.
+The trade, accepted deliberately: one credential posts comments **and** creates tags
+and releases. Revoking it stops releases; a leak reaches further. A separate token
+would carry the same scopes on the same account, so it would not be narrower.
 
-The trade, accepted deliberately: one credential now publishes status comments on
-every pull request **and** creates tags and releases. Revoking it stops releases
-at the tag rather than merely mis-labelling them, and a leak reaches further than
-it did before. A separate `RELEASE_PLEASE_TOKEN` would keep each blast radius to
-itself; the reason this reuses the existing one is that both tokens would carry
-the same scopes on the same account, so a second would be a second credential
-with the same authority rather than a narrower one.
-
-**Two prerequisites are not configuration and neither is in this repository:**
-`AiluraKitty` needs write access to create tags at all (opening a pull request
-works without it, because the repository is public — the tag does not), and the
-token needs `contents: write` and `issues: write` beyond the
-`pull-requests: write` it was scoped for. Until both hold, the first release
-pull request opens and then fails at merge.
+Two prerequisites live outside this repository: `AiluraKitty` needs write access to
+create tags, and the token needs `contents: write` and `issues: write` besides
+`pull-requests: write`. Without both, the release pull request opens and then fails
+at merge.
 
 ## Customizing the standard
 
-The structural divergences above are an observation taxonomy: they name what two
-copies may disagree about. They are not a policy, and nothing records which
-divergences an adopting repository actually has. So the question "is this difference
-intentional, or did the copy rot?" has no answer today, and four situations that need
-different responses are indistinguishable in the result:
+Nothing records which differences between copies are intentional, so these four
+cases look identical:
 
-| What a repository did | What it must also remember | What goes wrong |
-| --- | --- | --- |
-| added `area/auth` | nothing | looks like drift forever |
-| added `type/chore` | edit `type-labels` in its `policy.yml` | the second record is in no file anyone reads |
-| recolored a core label | the reason | invisible, and reverted by the next copy |
-| dropped `scope/security` | whether that was a decision | cannot be told from an incomplete copy |
+| What a repository did    | What it must also remember         | What goes wrong                              |
+| ------------------------ | ---------------------------------- | -------------------------------------------- |
+| added `area/auth`        | nothing                            | looks like drift forever                     |
+| added `type/chore`       | edit `type-labels` in `policy.yml` | the second record is in no file anyone reads |
+| recolored a core label   | the reason                         | invisible, and reverted by the next copy     |
+| dropped `scope/security` | whether that was a decision        | cannot be told from an incomplete copy       |
 
-The answer is an **opt-in delta file**, `.github/standards.local.yml`, whose schema
-ships as `.github/standards.local.example.yml`. It records what the repository
-changed and why. It is not a sixth artifact anyone is required to copy.
+The answer is an **opt-in** delta file, `.github/standards.local.yml`, whose schema
+ships as `.github/standards.local.example.yml`. It records what a repository changed
+and why.
 
-**It declares; it does not configure.** No workflow reads it, including the gate. The
-gate reads the repository's own `policy.yml`, because a workflow cannot read a file —
-the reason every input in `policy.yml` is duplicated rather than loaded. Writing a
-value here changes nothing at all. That sentence has to survive every future edit of
-this section, because the failure it prevents is silent: a repository that assumes
-the file configures the gate sees no error and no effect.
+**It declares; it does not configure. No workflow reads it, including the gate.** A
+value written there changes nothing; the gate reads the repository's own
+`policy.yml`. Keep this sentence through every future edit — the failure it prevents
+is silent.
 
-Deviations are costed in four levels, and the level decides the process, not the data
-shape:
+| Level | Deviation                                                                     | Process                                      |
+| ----- | ----------------------------------------------------------------------------- | -------------------------------------------- |
+| 0     | none — an exact copy                                                          | nothing to declare                           |
+| 1     | a label in a family the core does not use                                     | no approval                                  |
+| 2     | a core label's `color`/`description`, or a gate input's value                 | declare it with a reason                     |
+| 3     | dropping a core label, changing an input's set, changing the manifest's shape | issue here first; `issue:` records which one |
 
-| Level | Deviation | Process |
-| --- | --- | --- |
-| 0 | none — an exact copy | nothing to declare |
-| 1 | a label in a family the core does not use | no approval |
-| 2 | a core label's `color`/`description`, or a gate input's value | declare it with a reason |
-| 3 | dropping a core label, changing an input's set, changing the manifest's shape | issue here first; `issue:` records which one |
-
-Level 1 needs no approval **because level 2 does not need approval either, and a
-tiered policy with an approval step at the bottom is a policy nobody follows.** What
-is reserved is the list of core families — `type/`, `priority/`, `status/`, `scope/`,
-`meta/`, `github_actions`, `release/` — not a closed set of new ones. An open
-extension set costs little: two repositories inventing `area/ownership`
-independently is a smaller problem than one repository inventing `type/chore` and
-having to edit a second record in a second file to make it pass.
-
-`type/` is frozen at five members. It is the family the gate reads, and a sixth
-member is a change to every adopting repository's `policy.yml` and manifest — all
-copies that nothing synchronizes. A need for a sixth type is a `type/*` label plus an
-entry in `extensions`.
-
-`reason` is **required** wherever a deviation is recorded. That is the whole
-mechanism: an override with a reason is a decision someone can review and a verifier
-can recognise, and an override without one is precisely the thing the file exists to
-distinguish from rot.
+- Level 1 needs no approval because level 2 does not either; a policy with an
+  approval step at the bottom is one nobody follows.
+- Reserved are the core families — `type/`, `status/`, `scope/`, `meta/`,
+  `release/`, `github_actions` — not a closed list of new ones.
+- `type/` is frozen at five. A project-specific type is an existing `type/*` label
+  plus an entry in `extensions`.
+- `reason` is **required** wherever a deviation is recorded. It is what separates a
+  decision from rot.
 
 ### What a checker must be able to answer
 
-The schema is a public interface. The consistency checker belongs to another project,
-and it is the only thing that can turn this file from a note into a guarantee. Four
-questions it has to answer, and one it must not invent:
+The checker belongs to another project; the schema is its public interface. It must
+answer:
 
-- Does every label named in a field resolve against the manifest? (Already a manual
-  check here; the defect it caught was seven templates applying six undeclared
-  names.)
-- Is a difference from the core declared in this file?
-- Is a label on the remote missing from the manifest, or in the manifest missing from
-  the remote?
-- Does a level-3 deviation carry the issue that approved it?
-- **Absence of the file means "no deviations" by assumption, not by declaration.** It
-  must not report a missing file as a defect, and it must not report the absence of a
-  field it did not expect as one either.
+- Does every label named in a field resolve against the manifest?
+- Is every difference from the core declared in this file?
+- Is a remote label missing from the manifest, or a manifest label missing from the
+  remote?
+- Does every level-3 deviation carry the issue that approved it?
 
-The last one is the failure mode of this whole design. Opt-in means the common case is
-an absent file; a checker that treats absence as an error trains every repository to
-create an empty one, and an empty file is indistinguishable from a customized one to
-anyone skimming.
+And it must **not** report a missing file, or a missing optional field, as a defect.
+Absence means "no deviations" by assumption. A checker that flags absence trains
+every repository to create an empty file, which is indistinguishable from a
+customized one at a glance.
 
 ## Conventions when editing
 
-YAML style as observed across all eleven files:
+YAML (all thirteen files):
 
-- 2-space indent. No tabs, no CRLF anywhere in the repository.
-- Hex colors are quoted six-digit strings with no `#`: `"D73A4A"`. That is the
-  form `gh label create --color` expects and the form GitHub returns.
-- Every label entry has exactly three keys — `name`, `color`, `description` —
-  in that order. Descriptions are quoted and end with a period.
-- One blank line between label entries. Families appear in the order `type`,
-  `priority`, `status`, `scope`, `meta`, `github_actions`, `release`, which is
-  neither alphabetical nor the order the manifest header lists them in. Within
-  `type`, the order is bug, feature, improvement, task, documentation — also not
-  alphabetical. Match the file, do not re-sort it.
-- Three files have no trailing newline: `labels.yml`, `CODEOWNERS`, and this
-  `AGENTS.md`. Do not fix that incidentally in an unrelated change, and do not
-  propagate it into another repository. Everything else, `LICENSE` included, ends
-  with one. `policy.yml` also has none — the same rule applies to it, and the two
-  release JSON files end with one because release-please rewrites them wholesale
-  rather than appending to them.
+- 2-space indent; no tabs, no CRLF anywhere.
+- Every file opens with `---`; the workflow trigger key is quoted as `"on":`. This
+  keeps `.yamllint` on the `default` profile, changed only to a 120-column
+  `line-length`.
+- **Every** tracked text file ends with exactly one newline. There used to be a list
+  of exceptions; it grew unnoticed and was closed, so `.yamllint` and `mdlint`
+  (`MD047`) both enforce it.
+- `config.yml` has no `contact_links` key: the schema rejects an empty list.
+- Every workflow job sets `timeout-minutes: 10`, and `ci.yml` checks out with
+  `persist-credentials: false`. The release-please schema URL is pinned to a tag in
+  `ci.yml` and here; bump both together, because `main` changes without this
+  repository changing.
+
+`labels.yml`:
+
+- Each entry has exactly `name`, `color`, `description`, in that order. Colors are
+  quoted six-digit hex without `#` (`"D73A4A"`), the form `gh label create` expects.
+  Descriptions are quoted and end with a period.
+- One blank line between entries. Families in the order `type`,
+  `status`, `scope`, `meta`, `github_actions`, `release`; within `type`: bug,
+  feature, improvement, task, documentation. Neither is alphabetical — match the
+  file, do not re-sort.
 
 Issue templates:
 
-- Every template declares `name`, `description`, `title`, `labels`, `body`, in
-  that order.
-- `title` is the bare prefix with a trailing space and no description:
-  `title: "feat: "`.
-- Body field order is Context → Objective → Scope → Constraints → Scenarios →
-  Out of scope → Acceptance criteria → Dependencies → Notes, minus the fields a
-  type does not need, and with the two opening-pair exceptions noted above.
-- Field `id`s are kebab-case and unique within a file. They become URL fragments,
-  so renaming one breaks any bookmarked or prefilled link.
-- A required field carries `validations: required: true`. Optional fields carry
-  only `label`, plus `description` when the label is not self-explanatory.
-- `description` tells the reporter what to write, `placeholder` shows one worked
-  example, `value` pre-fills content. **Six** of the seven templates pre-fill
-  acceptance criteria as a `- [ ]` checklist through `value`;
-  `improvement.yml` is the sole exception, carrying only a `description`,
-  because "complete" means something different for an improvement than for a
-  feature or a fix. Use `value` for a checklist that is genuinely always true of
-  the type, and leave it empty where completion is type-specific.
-- Only **26 of 55** fields carry a `description`, so a bare `label` is the norm,
-  not the exception. Two rules hold across all seven templates: the **opening
-  pair is always described** (Context and Objective, or What happens and
-  Expected, or Context and Question), and `dependencies` and `notes` are bare in
-  **six of seven** — described only in `feature.yml`. Everything between is a
-  matter of whether the label speaks for itself, and the split is not even:
-  `scope`, `out-of-scope`, and `acceptance-criteria` are each described in
-  exactly two templates. `feature.yml` is the only template that describes all
-  seven of its fields, and is the best model for a new one; the six others are
-  closer to the minimum.
-- Only `feature.yml` uses a `type: markdown` block, to tell the reporter when to
-  pick that form. Reach for markdown only for guidance that must be read before
-  a field is filled, never to restate a field's own description.
+- Top-level keys in order: `name`, `description`, `title`, `labels`, `body`.
+- `title` is the bare prefix with a trailing space: `title: "feat: "`.
+- Body order: Context → Objective → Scope → Constraints → Scenarios → Out of scope →
+  Acceptance criteria → Dependencies → Notes, minus what a type does not need, with
+  the two opening-pair exceptions above.
+- Field `id`s are kebab-case and unique per file. They are URL fragments: renaming
+  one breaks bookmarked and prefilled links.
+- Required fields carry `validations: required: true`; optional fields carry only
+  `label`, plus `description` when the label is not self-explanatory.
+- `description` says what to write, `placeholder` shows an example, `value`
+  pre-fills. Six of seven templates pre-fill acceptance criteria as a `- [ ]`
+  checklist; `improvement.yml` does not, because "complete" is type-specific there.
+- Only **26 of 55** fields have a `description`. Always described: the opening pair.
+  `dependencies` and `notes` are bare everywhere but `feature.yml`, which describes
+  all its fields and is the best model for a new template.
+- Only `feature.yml` uses a `type: markdown` block. Use one only for guidance that
+  must be read before filling a field, never to restate a field's description.
 
 ## Pull request templates
 
-`.github/PULL_REQUEST_TEMPLATE/` holds **12 templates plus a default**, one per
-Conventional Commit type: `breaking-change`, `build`, `chore`, `ci`, `docs`,
-`feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`. That is the eleven
-types `policy.yml` accepts as a branch segment, plus `breaking-change`.
+`.github/PULL_REQUEST_TEMPLATE/` holds 12 templates plus a default: `breaking-change`,
+`build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`,
+`test` — the eleven branch types `policy.yml` accepts, plus `breaking-change`.
 
-This directory matters more than it looks. The `enable-body-structure` gate in
-`pull-request@v2` requires that **every `## ` heading in the template matching the
-pull request's title type appears in its body**, and it resolves that template from
-the repository under review, not from here. A repository that ships no template for
-a type falls back to whatever `default-template` names, so the twelve here are what
-makes that gate mean the same thing everywhere — and a repository that has not
-copied them has no headings to be checked against at all.
+With `enable-body-structure`, the gate requires **every `##` heading of the template
+matching the title's type to appear in the body**, resolving that template from the
+repository under review. These files are what make the gate mean the same thing
+everywhere; a repository without them has nothing to be checked against.
 
-### Structure is universal; commands are not
+- **Structure is universal; commands are not.** The `## Test plan` block is a `TODO`
+  placeholder. Each adopting repository replaces it in the pull request that changes
+  its CI. Never fill it in here: `cargo test` in a TypeScript repository is worse
+  than a `TODO`.
+- **Four headings appear in all thirteen files**: `## Linked issue (required)`,
+  `## Type (required)`, `## Test plan`, `## Contributor checklist`. They are
+  byte-identical except, inside `## Type (required)`, the `- [ ] \`type\`` checkbox
+  and the label note under it. Change one, change all thirteen — divergence here is
+  divergence in what the gate demands.
+- **Each template names one `type/*` label.** Nine of twelve map to `type/task`.
+  `breaking-change` has no label; the template says to apply the underlying change's
+  label. `labels.yml` wins over any `type-labels`: the check compares exact names, so
+  a mismatch is always the gate's misconfiguration, never the contributor's mistake.
 
-Every template splits into two kinds of content, and the split is the whole
-design:
+Reconciling with a repository's own templates:
 
-- **Structure** — which headings a type must have. Universal. Lives here.
-- **Commands** — the checks CI actually runs. Per repository. Does not.
+- Merge near-duplicate headings; demote the second one's real content to guidance
+  inside the merged one.
+- Adopt a unique section when it describes a *type* ("behaviour is unchanged",
+  "packaging and version changes"), not a project.
+- Leave out anything describing one project's strategy (frozen test vectors, a
+  benchmark rig).
+- Keep the four common headings byte-identical.
 
-The `## Test plan` block is therefore a `TODO` placeholder, never a real command.
-A TypeScript repository and a Rust repository cannot share a test plan:
-`vp check` / `pnpm run size` and `cargo clippy` / `cargo test` have nothing to do
-with each other. **Each adopting repository replaces that block**, in the same
-pull request that changes its CI. Do not "helpfully" fill it in here.
-
-### Four headings are common to all thirteen
-
-`## Linked issue (required)`, `## Type (required)`, `## Test plan`, and
-`## Contributor checklist` appear in every file. Three of the four are
-**byte-identical** across all thirteen. `## Type (required)` differs in exactly two
-lines — the `- [ ] \`type\`` checkbox and the label note beneath it — which is the
-point of the heading; the guidance above them is identical.
-
-If you change the guidance in one, change it in all thirteen. A divergence here is
-a divergence in what the gate demands per repository, which is precisely the
-failure this directory exists to prevent.
-
-### The label a template asks for
-
-Each template names the single `type/*` label to apply, because the two
-vocabularies differ and contributors conflate them. Nine of the twelve types map
-to `type/task`, the catch-all. **`breaking-change` has no label of its own**: the
-family has exactly five members and none marks a break, so the template says to
-apply the label of the underlying change instead.
-
-That mapping follows `labels.yml`, and it is the manifest that wins, because the
-manifest is a record of what the remote has while `type-labels` is only what some
-workflow claims to check. When they disagree, the gate is the misconfigured half:
-the check compares by exact name, so a pull request labelled `type/feature`
-against a `type-labels` of bare names is reported as carrying no type label at all,
-correctly labelled ones included. There is no failure mode in which the
-contributor was wrong.
-
-### Reconciling a divergent template set
-
-An adopting repository may arrive with its own templates whose headings share
-nothing beyond the first two. Reconciling them is a design decision, and the rule
-that settles almost all of it:
-
-- **Merge near-duplicates; do not carry both.** Two headings that ask the same
-  question are one heading. A second required section restating the first is a
-  form contributors fill in twice and reviewers read once. Where a second heading
-  carries real content, demote it to guidance *inside* the merged one — that is
-  where "how to verify" belongs once "regression test" exists.
-- **Adopt a section unique to one repository when it generalises.** "Behaviour is
-  unchanged", "existing coverage that moved", "packaging and version changes",
-  "why the previous text was wrong" each describe a *type*, not a project.
-- **Leave out anything that describes a project's strategy.** A heading about
-  frozen test vectors, a specific benchmark rig, or a particular fixture set
-  belongs to that repository and would be a lie in every other one.
-- **Keep the four common headings byte-identical.** If the guidance in one drifts,
-  the gate demands different things in different repositories, which is the exact
-  failure this directory exists to prevent.
-
-Two judgement calls worth keeping, because the reasoning is not recoverable from
-the files: the test-plan heading is `## Test plan` rather than `## Checks run`,
-because "test plan" is what a contributor looks for and "checks" invites a list of
-everything CI does; and perf carries `## Measurements (required)` with the
-qualifier in the heading, so an unmeasured perf change is visibly incomplete
-without anyone having to read the section to find out.
-
-## Adding an issue type
-
-1. Add the type to `## Issue Types` in `.github/ISSUE_STANDARD.md` and give it
-   an example line under `## Title Convention`.
-2. Add `<type>.yml` in `.github/ISSUE_TEMPLATE/` with `title: "<type>: "`. The
-   filename does not have to be the type token — `bug.yml` proves it — but it
-   should be a name a human would guess.
-3. Give it Context, Objective, Scope, Out of scope, Acceptance criteria,
-   Dependencies, Notes, plus any field the type genuinely needs and can justify.
-4. Decide its label before writing the file. If it has no home in `type/*`, say
-   so rather than inventing an undeclared label — see the known gap above.
-5. Update the counts in this file.
+Two decisions worth keeping: `## Test plan` rather than `## Checks run`, because
+"checks" invites a list of everything CI does; and perf's
+`## Measurements (required)` carries the qualifier in the heading so an unmeasured
+perf change looks incomplete at a glance.
 
 ## Ownership and enforcement
 
-`.github/CODEOWNERS` gives every path to `@SiddharthaGF`, the only collaborator
-with write access. Because all eight rules resolve to that same account, the
-grouping currently changes no outcome — but it is not decoration. GitHub
-applies the **last** matching pattern, so each group is a real rule that
-overrides the catch-all above it, and the file is written as though a second
-owner already existed: adding one is a one-line change per group rather than a
-redesign.
+`.github/CODEOWNERS` assigns every path to `@SiddharthaGF`, the only collaborator
+with write access. The eleven rules all resolve to that account, so the grouping
+changes no outcome today; it is written so a second owner is a one-line change per
+group. The **last** matching pattern wins and replaces earlier owners — rules are
+not cumulative.
 
-**CODEOWNERS is advisory on its own.** It requests a review; it does not block
-anything. It only binds when the branch is protected, so `main` carries:
+CODEOWNERS only binds through branch protection. `main` carries:
 
-| Setting | Value | Why |
-| --- | --- | --- |
-| `required_pull_request_reviews.require_code_owner_reviews` | true | this is what makes CODEOWNERS binding |
-| `required_pull_request_reviews.required_approving_review_count` | 1 | one human read |
-| `required_pull_request_reviews.dismiss_stale_reviews` | true | a new push invalidates the approval it was based on |
-| `required_pull_request_reviews.require_last_push_approval` | true | nobody may push on top of someone else's approval |
-| `required_conversation_resolution` | true | unresolved threads do not merge |
-| `enforce_admins` | **false** | see below |
-| `allow_force_pushes` | false | this repository is the record; rewriting it loses the trail |
-| `allow_deletions` | false | as above |
+| Setting                                    | Value     |
+| ------------------------------------------ | --------- |
+| `require_code_owner_reviews`               | true      |
+| `required_approving_review_count`          | 1         |
+| `dismiss_stale_reviews`                    | true      |
+| `require_last_push_approval`               | true      |
+| `required_conversation_resolution`         | true      |
+| `allow_force_pushes` / `allow_deletions`   | false     |
+| `enforce_admins`                           | **false** |
 
-**Read `enforce_admins` as the setting that governs the other seven.**
-GitHub's default is that branch protection restrictions *do not apply* to people
-with admin permissions, so `enforce_admins: false` does not merely waive review
-— it is the single reason @SiddharthaGF can ignore every row above it, including
-the two that read as guarantees. `allow_force_pushes: false` protects the
-history of `main` against everyone except its one admin. The `Why` column states
-intent; only `enforce_admins` states what is enforced.
+**`enforce_admins: false` governs every other row**: protection does not apply to
+admins, so the single admin can bypass all of it, force-push protection included.
+It is off because of a deadlock, not a preference — the only code owner is the only
+writer, and GitHub forbids approving your own pull request, so enforcing it would
+freeze the repository. For the same reason the policy job is not a required status
+check.
 
-Two of those field names are easy to get wrong, and both fail silently rather than
-loudly. The API spells it `require_code_owner_reviews`, **plural**; sending the
-singular form returns HTTP 200 and quietly leaves the flag `false`. And the `PUT`
-rejects a body that omits `required_status_checks` and `restrictions` — send them
-explicitly as `null` — so a partial payload never applies anything at all. Always
-read the settings back rather than trusting the 200:
+API traps, both silent: the field is `require_code_owner_reviews` (**plural**; the
+singular returns 200 and does nothing), and the `PUT` must send
+`required_status_checks` and `restrictions` explicitly as `null` or nothing applies.
+Always read back:
 
 ```sh
 gh api /repos/ailuracollective/standards/branches/main/protection \
   --jq '.required_pull_request_reviews.require_code_owner_reviews'   # must be true
 ```
 
-`enforce_admins` is deliberately off, and the reason is a deadlock rather than a
-preference. @SiddharthaGF is both the only code owner and the only account with
-write access. GitHub does not let an author approve their own pull request, so
-enforcing admin review would mean **no pull request could ever be merged** — the
-repository would be frozen after its first commit. As configured, every other
-contributor needs @SiddharthaGF's code-owner review, while @SiddharthaGF keeps a
-direct-push escape hatch, which is verified to work both as a plain `git push` and
-as `gh pr merge --admin`.
+**Enforcement is configured, not proven.** A test pull request shows
+`REVIEW_REQUIRED`/`BLOCKED`, which a plain one-approval rule would also show. Proving
+it, and making it a guarantee, takes one step: grant write access to a second person,
+then set `enforce_admins` to true.
 
-**The enforcement is not fully verified, and cannot be while one person holds all
-the access.** A test pull request reports `REVIEW_REQUIRED` and `BLOCKED`, which is
-what a binding code-owner rule looks like — but it looks identical to a plain
-one-approval rule, because the only account that could supply a second approval is
-the author. Distinguishing the two requires granting write access to a second
-person. Until then, treat the code-owner rule as configured rather than proven.
+Until then: CODEOWNERS owns itself, so a pull request cannot remove the review it
+needs; and nobody pushes straight to `main` even though they could — the review is
+the point.
 
-That is a bootstrap state, not a finished one. Turning it into a real guarantee
-takes one thing: **grant write access to a second person**, then flip
-`enforce_admins` to true. Do that before treating this repository as reviewed.
+## Recipes
 
-Two rules that must hold while there is a single owner. CODEOWNERS owns itself,
-so a pull request cannot delete the rule demanding the review it needs. And
-nobody with write access may push straight to `main` — open a pull request even
-though you could bypass the review, because the review is the point.
+### Adding an issue type
 
-## Adding a pull request type
+1. Add it to `## Issue Types` in `ISSUE_STANDARD.md`, with an example under
+   `## Title Convention`.
+2. Add a template in `.github/ISSUE_TEMPLATE/` with `title: "<type>: "`. The filename
+   need not be the token, but should be guessable.
+3. Give it Context, Objective, Scope, Out of scope, Acceptance criteria,
+   Dependencies, Notes, plus any field it can justify.
+4. Choose its label from `type/*` before writing the file; never invent an
+   undeclared one.
+5. Update § Inventory and the invariant table.
 
-1. Add `<type>.md` to `.github/PULL_REQUEST_TEMPLATE/`, named for the Conventional
-   Commit type exactly — the filename is the key the gate resolves against.
-2. Copy the four common headings from an existing template **verbatim**, except
-   the `- [ ] \`type\`` checkbox and the label note inside `## Type (required)`,
-   which are per-type by design.
-3. Name the one `type/*` label to apply. `type/task` is the catch-all; if the type
-   genuinely maps to none of the five, say so in the file rather than inventing a
-   sixth.
-4. Keep the `## Test plan` block as `TODO` placeholders.
-5. If the type is also a valid branch segment, mirror it into the `branch-types`
-   input of every consuming `policy.yml`.
+### Adding a pull request type
 
-## Adding or changing a label
+1. Add `<type>.md`, named exactly for the Conventional Commit type — the filename is
+   the key the gate resolves.
+2. Copy the four common headings verbatim, adjusting only the checkbox and label note
+   in `## Type (required)`.
+3. Name one `type/*` label (`type/task` is the catch-all).
+4. Keep `## Test plan` as `TODO`.
+5. If it is also a branch type, add it to `branch-types` in every consuming
+   `policy.yml`.
 
-1. Edit `.github/labels.yml`. Keep the three-key shape and the family grouping.
-2. If the name is a `type/*` label, mirror it into every adopting repository's
-   manifest **and** into the `type-labels` input of that repository's
-   `policy.yml`. A gate that names a label the remote does not have is
-   unsatisfiable, not merely strict.
-3. Reuse an existing family color where the meaning matches — `type/feature` and
-   `type/documentation` already share `0075CA`.
-4. Removing an entry does not remove the remote label, and a remote label absent
-   from this manifest is drift in the other direction. The reconciliation recipe
-   travels with the manifest rather than with this repository, so read the target's
-   copy before overwriting it; this repository has one of its own at the bottom of
-   `labels.yml`.
-5. If the change is for **one** repository rather than the standard, it is not an
-   edit here at all: declare it in that repository's `.github/standards.local.yml`
-   under `extensions`, per § Customizing the standard.
+### Adding or changing a label
+
+1. Edit `.github/labels.yml`, keeping the three-key shape and family order.
+2. Reuse a family color where the meaning matches (`type/feature` and
+   `type/documentation` share `0075CA`).
+3. For a `type/*` label, also update every adopting repository's manifest and its
+   `type-labels`. A gate naming a label the remote lacks is unsatisfiable.
+4. Removing an entry does not remove the remote label. The apply recipe is in the
+   header of `labels.yml`; read the target's own copy before overwriting it.
+5. A change for **one** repository is not an edit here: declare it in that
+   repository's `standards.local.yml` under `extensions`.
 
 ## Validation
 
-There is no test suite, so check by hand before proposing a change:
+`yamllint`, `check-jsonschema`, `mdlint`, `actionlint` (with `shellcheck` and `pyflakes`,
+which it runs on the embedded scripts) and `yamlfix` are pinned in the `lint` and
+`format` groups of `pyproject.toml`. There is no wrapper script: `uv` has no task
+runner, and each tool already reads its own configuration, so the commands are the
+tools themselves.
+
+`.github/workflows/ci.yml` runs the lint and format commands below on every pull request
+that is ready for review, as a single job: one runner, one checkout and one `uv sync`.
+Every lint and format step carries `if: ${{ !cancelled() }}`, so a failure does not hide
+the steps after it and one run reports everything. A draft is skipped
+(`github.event.pull_request.draft == false`), and the `ready_for_review` event starts
+the run when it stops being one; the pull request jobs
+of `policy.yml` follow the same rule. `release.yml` and the issue triage job do not.
+**The cross-file checks further down are not in CI yet**,
+nor are the two `gh api` checks, which need a token. The workflow holds `contents: read`
+and no secrets, so it is safe on a pull request from a fork. Like the policy job, it is
+**not a required status check**: that is a branch-protection setting, not a file.
+
+```sh
+# lint — each exits non-zero on any finding
+uv run yamllint .
+uv run mdlint check . .github
+uv run check-jsonschema --builtin-schema vendor.github-workflows .github/workflows/*.yml
+find .github/ISSUE_TEMPLATE -name '*.yml' ! -name config.yml \
+  -exec uv run check-jsonschema --builtin-schema vendor.github-issue-forms {} +
+uv run check-jsonschema --builtin-schema vendor.github-issue-config .github/ISSUE_TEMPLATE/config.yml
+uv run check-jsonschema --schemafile \
+  https://raw.githubusercontent.com/googleapis/release-please/v17.11.2/schemas/config.json \
+  release-please-config.json
+uv run actionlint .github/workflows/*.yml
+
+# format — add --check to change nothing
+uv run yamlfix -i '*.yml' -e '.cache/**' -e '.github/standards.local.example.yml' .
+uv run mdlint check --fix --select MD060 . .github
+```
+
+Where the strictness lives:
+
+- **`yamllint`** reads `.yamllint`: the `default` profile with its four warning-level
+  rules (`comments`, `comments-indentation`, `document-start`, `truthy`) raised to
+  errors, so a plain run fails on them and `--strict` is not needed. It also ignores
+  the tool caches, listed there because `.gitignore` is local-only.
+- **`mdlint`** reads `[tool.mdlint]`. **It skips hidden directories** unless named:
+  a bare `mdlint check` lints three files and silently misses all of `.github/`,
+  which is why `.github` is on every command above.
+- **`yamlfix`** reads `[tool.yamlfix]`, which keeps this repository's style; its
+  defaults turn `"on":` back into `on:` and expand every flow list. Its `--include`
+  defaults to `*.yaml`, so `-i '*.yml'` is required, and the exclude glob must be
+  `.cache/**` (`.cache/*` matches nothing). It skips `standards.local.example.yml`,
+  whose commented examples it would delete.
+- **`mdformat` is not used:** without a GFM plugin it flattens tables, escapes
+  `<type>`, breaks code spans containing a backtick, and renumbers ordered lists.
+
+**A green lint is not verification**: linters see
+one file at a time, while the checks below cover relationships *between* files —
+the defect they were written for (templates applying labels the manifest never
+declared) is invisible to every linter.
+
+There is no test suite. Before proposing a change, run (needs `pyyaml`):
 
 ```sh
 # every file must parse as YAML
@@ -837,29 +621,24 @@ import re
 txt = open('.github/labels.yml').read()
 names = re.findall(r'- name: "([^"]+)"', txt)
 assert len(names) == len(set(names)), 'duplicate label name'
-assert len(names) == 30, f'expected 30 labels, found {len(names)}'
+assert len(names) == 26, f'expected 26 labels, found {len(names)}'
 assert all(re.fullmatch(r'[0-9A-Fa-f]{6}', c) for c in re.findall(r'color: "([0-9A-Fa-f]{6})"', txt))
 print(len(names), 'labels ok')
 PY
 
-# every label NAMED IN A FIELD resolves against the manifest. This is the check that
-# caught the original defect: seven templates applying six undeclared names, which
-# GitHub discards without an error. It reads fields, not prose -- scanning the raw
-# text reports `type/breaking-change`, which appears here only in a comment saying
-# there deliberately is no such label.
+# every label NAMED IN A FIELD resolves against the manifest. Reads fields, not raw
+# text, so the comment saying there is no `type/breaking-change` is not reported.
 python3 - <<'PY'
-import re, glob, sys, yaml
+import glob, sys, yaml
 have = {e['name'] for e in yaml.safe_load(open('.github/labels.yml'))}
 bad = []
 for f in sorted(glob.glob('.github/**/*.yml', recursive=True)):
     doc = yaml.safe_load(open(f))
     if not isinstance(doc, dict):
         continue
-    # issue templates: the `labels:` list a chooser form applies on submit
     for l in (doc.get('labels') or []):
         if l not in have:
             bad.append(f'{f}: labels: {l}')
-    # workflows: the gate inputs that name one or more labels
     for job in (doc.get('jobs') or {}).values():
         for step in (job or {}).get('steps') or []:
             w = step.get('with') or {}
@@ -874,7 +653,7 @@ print('no dangling label references' if not bad else f'{len(bad)} dangling')
 sys.exit(1 if bad else 0)
 PY
 
-# the workflow declares two vocabularies, and they are disjoint sets
+# the workflow's two vocabularies are as documented, and disjoint
 python3 - <<'PY'
 import re
 txt = open('.github/workflows/policy.yml').read()
@@ -886,12 +665,12 @@ assert not set(labels) & set(titles), 'the two sets must not overlap'
 print(len(labels), 'labels,', len(titles), 'title types, disjoint')
 PY
 
-# one template per type, prefixes matching the standard
-sed -n '/^## Issue Types/,/^## Title/p' .github/ISSUE_STANDARD.md | grep -c '^- `'
-ls .github/ISSUE_TEMPLATE/*.yml | grep -vc config       # 7 templates
-grep -h '^title: ' .github/ISSUE_TEMPLATE/*.yml | sort   # 7 prefixes
+# one issue template per type (scope the grep to the section: the whole file gives 14)
+sed -n '/^## Issue Types/,/^## Title/p' .github/ISSUE_STANDARD.md | grep -c '^- `'   # 7
+ls .github/ISSUE_TEMPLATE/*.yml | grep -vc config                                    # 7
+grep -h '^title: ' .github/ISSUE_TEMPLATE/*.yml | sort                               # 7 prefixes
 
-# one pull request template per type, common headings intact
+# pull request templates and their common headings
 find .github/PULL_REQUEST_TEMPLATE -name '*.md' ! -name 'PULL_REQUEST_TEMPLATE.md' | wc -l  # 12
 find .github/PULL_REQUEST_TEMPLATE -name '*.md' | wc -l                                   # 13
 for h in 'Linked issue (required)' 'Type (required)' 'Test plan' 'Contributor checklist'; do
@@ -900,21 +679,14 @@ done
 grep -rn 'vp check\|pnpm run\|cargo ' .github/PULL_REQUEST_TEMPLATE/ \
   | grep -v 'cannot run' || echo 'no hardcoded CI commands'
 
-# CODEOWNERS parses and every owner exists. An empty errors array is the whole
-# check: GitHub skips any line it cannot parse, silently, and an owner without
-# explicit write access is dropped without a warning either.
+# CODEOWNERS parses (GitHub skips bad lines silently) and every owner can push
 gh api repos/ailuracollective/standards/codeowners/errors --jq '.errors'   # expect []
 gh api repos/ailuracollective/standards/collaborators \
   --jq '.[] | select(.permissions.push) | .login'                          # owners must appear
 
-# The release files. Both JSON documents validate against the upstream schemas, and the
-# keys of `packages` must match the paths of the manifest: `parseConfig` builds
-# `repositoryConfig` by iterating `packages`, and manifest.ts dereferences
-# `repositoryConfig[path]` on exactly the path this repository takes — a manifest naming
-# a version with no release yet. A mismatch is not a configuration error the tool reports;
-# it is a crash on the first push to main.
+# release files validate, and `packages` keys match the manifest paths
 curl -sSL -o /tmp/rp-schema.json \
-  https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json
+  https://raw.githubusercontent.com/googleapis/release-please/v17.11.2/schemas/config.json
 python3 -m venv /tmp/yamlenv && /tmp/yamlenv/bin/pip -q install pyyaml jsonschema
 /tmp/yamlenv/bin/python - <<'PY'
 import json, jsonschema
@@ -926,8 +698,7 @@ assert cfg['initial-version'] == '0.1.0', 'the first release must not claim 1.0.
 print(len(man), 'release path(s), config and manifest agree')
 PY
 
-# The release exemption is keyed on the head ref, so it is worth asserting that the
-# three shapes release-please produces exempt and that a human branch does not.
+# the head-ref exemption covers release branches and nothing else
 python3 - <<'PY'
 PREFIX = 'release-please--branches--'
 exempt = ['release-please--branches--main',
@@ -940,97 +711,58 @@ print(f'{len(exempt)} release refs exempt, {len(runs)} human refs still checked'
 PY
 ```
 
-Count the typed templates with `find … ! -name 'PULL_REQUEST_TEMPLATE.md'`, not
-`grep -v PULL_REQUEST_TEMPLATE`: every path contains the *directory's* name, so
-that filter matches all thirteen and returns zero.
+Notes on the block:
 
-The last check is the one that matters most: a repository-specific command in
-these files makes the gate demand a check that repository cannot run.
+- Count typed templates with `! -name 'PULL_REQUEST_TEMPLATE.md'`, not
+  `grep -v PULL_REQUEST_TEMPLATE` — every path contains the directory name, so that
+  returns zero.
+- The issue-type count is a text check on prose: a declaration has the colon outside
+  the backticks (`feat`:), an example inside (`feat: ...`).
+- The hardcoded-command grep matters most: a repository-specific command in these
+  files makes the gate demand a check other repositories cannot run.
 
-The first and third checks need `pyyaml`, which is not vendored. Both glob
-`*.yml`, so neither ever touches `ISSUE_STANDARD.md` — there is nothing to parse
-there. The label-reference check reads fields rather than raw text on purpose:
-grepping the files for label-shaped tokens reports `type/breaking-change`, which
-appears only in a comment recording that there deliberately is no such label.
-
-The type count is a **text** check against a prose file, which is a weaker
-guarantee than the others: nothing checks that the list is well-formed, only
-that it has seven lines shaped a particular way. Scope it to the `## Issue
-Types` section with `sed` first. A bare `grep -c '^- \`'` over the whole file
-returns **14**, because the seven example titles under `## Title Convention` are
-formatted the same way. The distinguishing feature is that a declaration puts the
-colon *outside* the backticks (`` `feat`: ``) while an example puts it *inside*
-(`` `feat: ...` ``).
-
-Functional verification is manual. Open the issue chooser on a test repository
-that has copied these files and confirm each of the seven forms renders, that
-`blank_issues_enabled: false` hides the blank option, and that the applied labels
-are the ones you expect — remembering that a label the repository lacks is
-dropped without an error, so "no label appeared" is the expected symptom of the
-gap above rather than a bug in your change.
+Functional verification is manual: on a test repository with these files, confirm
+the seven forms render, the blank option is hidden, and the expected labels apply. A
+label the repository lacks is dropped without an error, so "no label appeared"
+usually means a missing remote label, not a broken change.
 
 ## Do not
 
-- Do not use `skip-actors` to exempt a release pull request. Exempt it by head
-  ref, as `policy.yml` does. `skip-actors` is keyed on the login, and the account
-  behind `AILURA_KITTY_TOKEN` is not exclusively a machine identity here.
-- Do not make release-please satisfy the pull request gates. `pull-request-footer`
-  is static text, so the closing keyword and the template headings it would carry
-  are fabricated rather than written, and a green board over fabricated content
-  is the outcome this repository exists to avoid.
-- Do not drop `initial-version` from `release-please-config.json`, and do not
-  raise it above `0.1.0` without a release that earns it. With no previous
-  release the default is `1.0.0`, which is a compatibility claim nobody made.
-- Do not omit `packages` from that file. It is required by the schema and by
-  `parseConfig`, and the failure lands on the first push rather than at
-  configuration time.
+Standard and templates:
 
-- Do not fill in the `## Test plan` commands here. They are per repository by
-  necessity, and a hardcoded `cargo test` in a TypeScript repository is worse
-  than a `TODO`.
-- Do not let the guidance in one of the four common headings drift. It is
-  identical across all thirteen files on purpose; only the checkbox and label
-  note inside `## Type (required)` are per-type.
-- Do not add a template without adding its type to `ISSUE_STANDARD.md`. The
-  standard and the chooser must not disagree about what kinds of issue exist.
-- Do not convert `ISSUE_STANDARD.md` back to YAML or point a parser at it. It is
-  prose on purpose; as `.yml` it did not parse at all.
-- Do not rename a template file without checking that nothing references it.
-  Filenames are what GitHub keys on for chooser ordering, and they are not
-  required to match the type token.
-- Do not change or remove a body field `id` in a template. It breaks existing
-  links and prefilled drafts.
-- Do not introduce a second title vocabulary. `breaking-change` belongs to
-  Conventional Commits and pull request titles; it is not an issue type here.
-- Do not treat `labels.yml` as configuration that applies itself. Editing it
-  changes no remote and gates no CI.
-- Do not treat `.github/standards.local.yml` as configuration either. Nothing
-  reads it, not even the gate; it records a deviation so that a human or a checker
-  can recognise one. The failure is silent — a repository that believes it
-  configures something sees no error and no effect.
-- Do not record a deviation without a `reason`. That is the one field the whole
-  file exists for: an unexplained difference from the core is exactly what the
-  record was supposed to make recognisable.
-- Do not express a repository's own concern as a new `type/*` member. Use the
-  existing five plus an `extensions` entry; `type/` is frozen for the reason in
-  § Customizing the standard, which is not "the gate forbids it".
-- Do not grow the `type/*` family in this repository alone. It is not enforced
-  downstream at five members or any other number — see the sync model section for
-  why the two vocabularies have to be declared separately.
-- Do not write "the gate requires" about **this** repository. Its policy job is
-  not a required status check and cannot become one while one person holds all the
-  write access. Enforcement is a per-repository fact, and the same organisation
-  will have repositories on both sides of it — check, per § Enforcement, before
-  describing a rule as binding.
-- Do not overwrite an adopting repository's `labels.yml` with this bare list
-  without porting its header and reconciliation recipe across first.
-- Do not drop the catch-all from `CODEOWNERS`. A pattern with no slash matches at
-  every depth, so `*` alone owns every file in the repository, present and future.
-  The groups below it document blast radius rather than close a coverage gap, and
-  the catch-all is currently the only thing owning the four files in the
-  repository root. An unowned file skips the code-owner gate entirely.
-- Do not add a second owner to a CODEOWNERS rule expecting it to be reviewed by
-  someone it does not already name. Rules are not cumulative: the **last** matching
-  pattern replaces the owners of the ones before it, so
-  `.github/labels.yml @alice` drops @SiddharthaGF from that path rather than adding
-  her alongside him.
+- Do not add an issue template without adding its type to `ISSUE_STANDARD.md`.
+- Do not convert `ISSUE_STANDARD.md` back to YAML, point a parser or `.yamllint` at
+  it, or add a `*.md` file to a YAML glob.
+- Do not rename a template file without checking references, and never change or
+  remove a body field `id`.
+- Do not introduce a second title vocabulary; `breaking-change` is not an issue type.
+- Do not fill in `## Test plan` commands, and do not let the four common pull
+  request headings drift.
+
+Labels and customization:
+
+- Do not treat `labels.yml` or `standards.local.yml` as configuration. Neither is
+  read by anything; the failure is silent.
+- Do not record a deviation without a `reason`.
+- Do not grow `type/*`, here or for one repository's concern. Use the five plus an
+  `extensions` entry.
+- Do not overwrite an adopting repository's `labels.yml` without porting its header
+  and reconciliation recipe.
+
+Releases:
+
+- Do not exempt the release pull request with `skip-actors`, and do not make
+  release-please fake its way through the gates with a static footer.
+- Do not drop `initial-version`, raise it above `0.1.0` without a release that earns
+  it, or omit `packages`.
+
+Verification and ownership:
+
+- Do not treat a green lint as verification.
+- Do not write "the gate requires" about this repository, or call a rule binding
+  anywhere without checking per § Enforcement.
+- Do not drop the `*` catch-all from `CODEOWNERS`. It is the only owner of
+  `README.md`, `CONTRIBUTING.md`, `LICENSE`, `CHANGELOG.md`, `policy.yml`
+  and the lint files; an unowned file skips the code-owner gate.
+- Do not add an owner to one rule expecting it to be additive:
+  `.github/labels.yml @alice` *replaces* @SiddharthaGF on that path.
