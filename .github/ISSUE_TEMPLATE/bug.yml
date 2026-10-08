@@ -7,50 +7,28 @@ labels:
   - status/needs-review
 body:
   - type: textarea
-    id: what-happens
+    id: context
     attributes:
-      label: What happens
-      description: Describe the incorrect behavior.
+      label: Context
+      description: Why this matters. Include evidence or current behavior when it materially affects the task.
     validations:
       required: true
 
   - type: textarea
-    id: expected
+    id: goal
     attributes:
-      label: Expected behavior
-      description: Describe what should happen instead.
+      label: Goal
+      description: The observable outcome required.
     validations:
       required: true
-
-  - type: textarea
-    id: impact
-    attributes:
-      label: Impact
-      description: Who or what is affected?
-
-  - type: textarea
-    id: reproduction
-    attributes:
-      label: How to reproduce
-      description: Provide the smallest reliable reproduction.
-      placeholder: |
-        1. ...
-        2. ...
-        3. ...
 
   - type: textarea
     id: scope
     attributes:
       label: Scope
-      description: What work belongs to this fix?
+      description: What this issue includes.
     validations:
       required: true
-
-  - type: textarea
-    id: out-of-scope
-    attributes:
-      label: Out of scope
-      description: What related work is excluded?
 
   - type: textarea
     id: acceptance-criteria
@@ -64,11 +42,43 @@ body:
       required: true
 
   - type: textarea
-    id: dependencies
+    id: non-goals
     attributes:
-      label: Dependencies
+      label: Non-goals
+      description: Only include when an explicit boundary prevents ambiguity.
 
   - type: textarea
-    id: notes
+    id: constraints
     attributes:
-      label: Notes
+      label: Constraints
+      description: Only constraints that materially limit valid solutions.
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: >-
+        Links or paths to authoritative context. A path is a navigation hint
+        unless the issue explicitly states that modifying that file is required.
+
+  - type: textarea
+    id: observed-behavior
+    attributes:
+      label: Observed behavior
+      description: What currently happens.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: What should happen instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: The smallest reliable reproduction.

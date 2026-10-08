@@ -1,16 +1,16 @@
 ---
-name: Testing
-description: Add or improve automated test coverage.
-title: "test: "
+name: Feature
+description: Add a new capability or behavior.
+title: "feat: "
 labels:
-  - type/task
+  - type/feature
   - status/needs-review
 body:
   - type: textarea
     id: context
     attributes:
       label: Context
-      description: Why this work exists. What behavior or risk is the added coverage intended to establish?
+      description: Why this work exists. Include evidence or current behavior when it materially affects the task.
     validations:
       required: true
 
@@ -35,10 +35,10 @@ body:
     attributes:
       label: Acceptance criteria
       value: |
-        - [ ] Relevant behavior is covered by automated tests.
-        - [ ] Important success scenarios are covered.
-        - [ ] Important failure or boundary scenarios are covered.
-        - [ ] Tests are deterministic and maintainable.
+        - [ ] The new behavior is available as described.
+        - [ ] Existing behavior that must remain unchanged is preserved.
+        - [ ] Relevant tests cover the new behavior.
+        - [ ] Documentation is updated when public behavior or configuration changes.
     validations:
       required: true
 

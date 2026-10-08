@@ -1,11 +1,13 @@
 # GitHub standards
 
 The origin for how issues and pull requests are written across `ailuracollective`.
-Five artifacts make up the standard, and each repository copies them by hand:
+The canonical contract is [CONTRACT.yml](.github/CONTRACT.yml), and each repository
+copies the artifacts by hand:
 
 | Artifact                         | What it decides                                            |
 | -------------------------------- | ---------------------------------------------------------- |
-| `.github/ISSUE_STANDARD.md`      | how an issue is written — prose, not data                  |
+| `.github/CONTRACT.yml`           | the canonical issue and PR contract — the source of truth  |
+| `.github/ISSUE_STANDARD.md`      | how an issue is written — documentation of the contract    |
 | `.github/ISSUE_TEMPLATE/*.yml`   | the 7 forms in the issue chooser, plus `config.yml`        |
 | `.github/PULL_REQUEST_TEMPLATE/` | 12 forms, one per Conventional Commit type, plus a default |
 | `.github/labels.yml`             | the 26-label set                                           |
@@ -34,14 +36,14 @@ deadlock the repository. See docs/enforcement.md.
 
 ## Adopting it
 
-Copy the five artifacts and `policy.yml` verbatim into the repository's own
+Copy the artifacts and `policy.yml` verbatim into the repository's own
 `.github/`; the skeletons it completes itself live in [`templates/`](templates/).
-Four steps are not optional:
+Five steps are not optional:
 
-1. **Replace the `## Test plan` block in all 12 pull request templates.** Here they
-   are `TODO` placeholders: structure is universal, commands are not (`vp check` and
-   `cargo clippy` have nothing in common). Do it in the pull request that wires up
-   CI, so the form never names a command the repository cannot run.
+1. **Replace the `## Verification` block in all pull request templates.** Here they
+   are generic evidence prompts: structure is universal, commands are not. Do it in
+   the pull request that wires up CI, so the form never names a command the
+   repository cannot run.
 2. **Reconcile the label vocabulary.** Do not copy `labels.yml` over an existing
    manifest without porting its reconciliation recipe — see *Sync model* in
    docs/architecture.md. If the repository runs `pull-request@v2`, fix `type-labels` in the
@@ -53,10 +55,15 @@ Four steps are not optional:
    keep it at `.github/PULL_REQUEST_TEMPLATE.md`. The gate defaults to the second, so
    set `default-template` if you use the first — otherwise the body-structure check
    resolves to nothing.
+5. **Wire the contract validator into CI.** Copy `scripts/validate_contract.py` into
+   the repository and run it with PyYAML available:
+   `uv run --with PyYAML python scripts/validate_contract.py`. The check fails when
+   templates drift from `.github/CONTRACT.yml` — see *Contract validation* in
+   docs/architecture.md.
 
 ## If the repository deviates from the standard
 
-A repository that changes nothing copies the five artifacts and is done.
+A repository that changes nothing copies the artifacts and is done.
 
 Once you add a label, change a color, or tune a gate input, nothing records whether
 that difference was decided. Copy `.github/standards.local.example.yml` to
@@ -96,6 +103,19 @@ the commands and the trap.
 Read [`CONTRIBUTING.md`](CONTRIBUTING.md) first. In short: open an issue before a
 pull request. A change to `labels.yml` or a template is not finished when it lands
 here — it must also be mirrored, by hand, into every adopting repository.
+
+## Drift prevention
+
+The canonical contract ([CONTRACT.yml](.github/CONTRACT.yml)) is the source of
+truth. CI validates that templates match the contract:
+
+```sh
+uv run python scripts/validate_contract.py
+```
+
+This checks that issue templates have the correct sections, PR templates have the
+correct headings, and labels are consistent. A change that makes the contract and
+templates drift fails the build.
 
 ## Secrets
 
