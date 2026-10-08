@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/ailuracollective/standards/compare/v0.2.0...v0.3.0) (2026-10-08)
+
+
+### Features
+
+* add the repository AGENTS.md template ([#19](https://github.com/ailuracollective/standards/issues/19)) ([ff1d0bc](https://github.com/ailuracollective/standards/commit/ff1d0bcd37eee88d78a6e3d8b647ca7b91ae485c))
+
 ## [0.2.0](https://github.com/ailuracollective/standards/compare/v0.1.0...v0.2.0) (2026-10-05)
 
 
