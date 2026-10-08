@@ -26,6 +26,12 @@ push must wait for a release in flight, not interrupt it halfway.
   requires it, and `parseConfig` builds `repositoryConfig` from it,
   which `manifest.ts` dereferences on exactly this repository's path.
   Omitting it crashes on the first push, not at configuration time.
+- **`label: release/pending`** and **`release-label: release/tagged`** —
+  override release-please's defaults (`autorelease: pending`,
+  `autorelease: tagged`). Those defaults are not in
+  `.github/labels.yml`, and GitHub drops an unknown label silently; the
+  release pull request and the tagged release carry the manifest's
+  `release/*` labels instead.
 
 ## The release pull request is exempt by head ref
 
