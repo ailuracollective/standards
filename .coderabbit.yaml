@@ -24,7 +24,7 @@ reviews:
     # release-please pull requests: the gate exempts them by head ref, which CodeRabbit
     # cannot match, so skip them by the label release-please applies.
     labels:
-      - "!autorelease: pending"
+      - "!release/pending"
 
   # Generated and machine-owned files.
   path_filters:
