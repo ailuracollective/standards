@@ -22,9 +22,9 @@ code, build, or test suite.
 
 It owns the shared standard — the five `.github/` artifacts listed in the
 organisation conventions — and the infrastructure that serves them:
-`.github/workflows/`, the release files, and
-`.github/standards.local.example.yml`. The file map, the sync model, and the copy
-divergences are in docs/architecture.md.
+`.github/workflows/`, the release files, `templates/` (the skeletons an adopting
+repository completes), and `.github/standards.local.example.yml`. The file map, the
+sync model, and the copy divergences are in docs/architecture.md.
 
 Root documents: `README.md` (human entry point), `CONTRIBUTING.md` (how to
 contribute), `CHANGELOG.md` (written by release-please).

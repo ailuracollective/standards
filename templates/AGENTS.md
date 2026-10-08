@@ -77,6 +77,22 @@ are working against the standard.
 
 ---
 
+## Defaults
+
+The repository ships with the standard and its gate. Link them, do not restate
+them:
+
+- [.agents/organization-conventions.md](.agents/organization-conventions.md) — mandatory.
+- [.github/workflows/policy.yml](.github/workflows/policy.yml) — the gate; complete and intact.
+- [.github/workflows/ci.yml](.github/workflows/ci.yml) — skeleton; no checks until the stack fills it.
+- [.github/workflows/release.yml](.github/workflows/release.yml) — skeleton; a placeholder step until replaced.
+- [.github/ISSUE_STANDARD.md](.github/ISSUE_STANDARD.md),
+  [.github/labels.yml](.github/labels.yml),
+  [.github/CODEOWNERS](.github/CODEOWNERS) — the standard artifacts.
+
+No language or toolchain is fixed: the stack that completes `ci.yml` and
+`release.yml` is this repository's choice, not the template's.
+
 ## Repository scope
 
 TODO: what this file covers. Name the directories that are part of the repository
@@ -89,9 +105,9 @@ they overlap: the deeper file, for the paths it covers.
 
 ## Repository context
 
-TODO: what this project is for, in a paragraph. Then its shape: the language and
-framework, the entry points, which directory holds which part, and anything an
-agent would otherwise have to infer by reading the tree.
+TODO: what this project is for, in a paragraph. Then its shape: the stack it
+chose (or that none is fixed), the entry points, which directory holds which
+part, and anything else an agent would otherwise have to infer from the tree.
 
 ## Repository-specific conventions
 

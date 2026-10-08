@@ -29,5 +29,8 @@ release-please-config.json          @SiddharthaGF
 # Read by every agent and contributor.
 /AGENTS.md               @SiddharthaGF
 
+# The adoption templates: AGENTS.md and the workflow skeletons.
+/templates/              @SiddharthaGF
+
 # A schema that adopting repositories copy and checkers read.
 .github/standards.local.example.yml   @SiddharthaGF
