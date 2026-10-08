@@ -12,6 +12,7 @@ no test suite.
 
 | File                                                           | Owns                                      | Read by                                                                |
 | -------------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------- |
+| `.github/CONTRACT.yml`                                         | the canonical issue and PR contract       | humans, agents, and CI (`scripts/validate_contract.py`)                |
 | `.github/ISSUE_STANDARD.md`                                    | how an issue is written                   | humans and agents drafting issues                                      |
 | `.github/labels.yml`                                           | the label set                             | anything that reads or applies labels                                  |
 | `.github/ISSUE_TEMPLATE/*.yml` (7 templates + config)          | the forms in the issue chooser            | GitHub                                                                 |
@@ -21,23 +22,26 @@ no test suite.
 | `.github/workflows/policy.yml`                                 | the standard applied to this repository   | GitHub Actions, on every non-draft pull request and every opened issue |
 | `.github/workflows/ci.yml`                                     | lint and format checks                    | GitHub Actions, on every pull request that is not a draft              |
 | `.github/workflows/release.yml`                                | when a release is cut                     | GitHub Actions, on every push to `main`                                |
+| `scripts/validate_contract.py`                                 | contract drift detection                  | GitHub Actions, on every pull request                                  |
 | `release-please-config.json` + `.release-please-manifest.json` | the release type, and the current version | release-please                                                         |
 
-The first five rows are **the standard**: what an adopting repository
+The first six rows are **the standard**: what an adopting repository
 copies. The example file is opt-in (docs/customization.md). The last
-four serve this repository only and are not copied.
+five serve this repository only and are not copied.
 
 `templates/` holds the parts of an adoption that are **skeletons**, not
 copies of a working file: `AGENTS.md`, and the `ci.yml` / `release.yml`
-workflows. Everything else — `policy.yml` and the five standard artifacts —
+workflows. Everything else — `policy.yml` and the standard artifacts —
 is copied verbatim from the real files at the repository root. Nothing is
 duplicated, so nothing can drift.
 
 Facts that are easy to get wrong:
 
-- **`ISSUE_STANDARD.md` is prose, not data.** It was `ISSUE_STANDARD.yml` and did not
-  parse — the numbered list under Purpose reads as mapping keys. Nothing should parse
-  it and no validator should be pointed at it.
+- **`CONTRACT.yml` is the source of truth.** It defines the canonical
+  issue and PR contract. CI validates that templates match it. If
+  CONTRACT.yml and a template disagree, the template is wrong.
+- **`ISSUE_STANDARD.md` is documentation, not data.** It describes the
+  contract for humans. It is not parsed by any tool.
 - **`labels.yml` is a reviewed record, not configuration.** GitHub does not read it
   and no CI parses it. Editing it changes no remote.
 - **`policy.yml` never runs code under review.** The action checks out the base
@@ -79,28 +83,45 @@ comment cannot be edited by anyone, and release commits would be
 attributed to the bot. Each token's scope, revocation, and the
 rules that keep the split meaningful are in docs/releases.md.
 
-## The invariant: one type, one template, one title prefix
+## The canonical contract
 
-Every type in `ISSUE_STANDARD.md` has exactly one template, whose
+[CONTRACT.yml](../.github/CONTRACT.yml) is the source of truth for the
+issue and PR contract. It defines:
+
+- **Issue common sections**: Context, Goal, Scope, Acceptance criteria,
+  Non-goals (optional), Constraints (optional), References (optional)
+- **Issue type-specific deltas**: only Bug and Spike add sections
+- **PR common sections**: Linked issue, Summary, Changes, Verification,
+  Risk / compatibility (optional), Migration (optional)
+- **PR type-specific deltas**: only breaking-change, perf, ci, and build
+  add sections
+- **Taxonomy mappings**: the relationship between issue types, PR title
+  types, branch types, and labels
+- **AI-agent contract**: rules for agents consuming issues and PRs
+
+CI validates that templates match the contract:
+
+```sh
+uv run python scripts/validate_contract.py
+```
+
+### The invariant: one type, one template, one title prefix
+
+Every type in CONTRACT.yml has exactly one template, whose
 `title:` is the type token plus a colon and one space.
 
-| Type          | Template            | `title:`          | `labels:` (+ `status/needs-review`) | Opening pair                    |
-| ------------- | ------------------- | ----------------- | ----------------------------------- | ------------------------------- |
-| `feat`        | `feature.yml`       | `"feat: "`        | `type/feature`                      | Context, Objective              |
-| `fix`         | `bug.yml`           | `"fix: "`         | `type/bug`                          | What happens, Expected behavior |
-| `improvement` | `improvement.yml`   | `"improvement: "` | `type/improvement`                  | Context, Objective              |
-| `chore`       | `maintenance.yml`   | `"chore: "`       | `type/task`                         | Context, Objective              |
-| `test`        | `test.yml`          | `"test: "`        | `type/task`                         | Context, Objective              |
-| `docs`        | `docs.yml`          | `"docs: "`        | `type/documentation`                | Context, Objective              |
-| `spike`       | `investigation.yml` | `"spike: "`       | `type/task`                         | Context, Question               |
+| Type          | Template            | `title:`          | `labels:` (+ `status/needs-review`) | Extra sections                                     |
+| ------------- | ------------------- | ----------------- | ----------------------------------- | -------------------------------------------------- |
+| `feat`        | `feat.yml`          | `"feat: "`        | `type/feature`                      | —                                                  |
+| `fix`         | `bug.yml`           | `"fix: "`         | `type/bug`                          | Observed behavior, Expected behavior, Reproduction |
+| `improvement` | `improvement.yml`   | `"improvement: "` | `type/improvement`                  | —                                                  |
+| `chore`       | `maintenance.yml`   | `"chore: "`       | `type/task`                         | —                                                  |
+| `test`        | `test.yml`          | `"test: "`        | `type/task`                         | —                                                  |
+| `docs`        | `docs.yml`          | `"docs: "`        | `type/documentation`                | —                                                  |
+| `spike`       | `investigation.yml` | `"spike: "`       | `type/task`                         | Question, Deliverable                              |
 
 - **Only 3 of 7 filenames match their type token.** The filename only drives chooser
   ordering. Do not derive a type from it, and do not "fix" it by renaming.
-- `bug.yml` and `investigation.yml` replace Context/Objective with a pair that fits
-  them; `investigation.yml` also carries an Expected outcome block. Scope, Out of
-  scope, Acceptance criteria, Dependencies and Notes appear in all seven, in that
-  order; each type's extra fields sit around that spine (the exact order is in
-  *Issue templates* below).
 - Every template applies `status/needs-review` itself, so an issue is never briefly
   unlabelled while waiting for the triage job.
 
@@ -111,7 +132,7 @@ unknown label **without an error**. That used to be the case for every
 template — they applied `enhancement`, `bug`, `documentation`,
 `maintenance`, `testing` and `investigation`, none of which were declared,
 so every issue arrived with no type label. (`enhancement` was also shared
-by `feature.yml` and `improvement.yml`.)
+by `feat.yml` and `improvement.yml`.)
 
 Three types have no label of their own, and the mapping is a judgement call:
 
@@ -207,9 +228,9 @@ Divergences to know before copying in either direction:
   (`yaml.v3`) turns `000000` into `0`, `008672` into `8672` and `5319E7` into
   `53190000000`; PyYAML converts only the all-digit ones. Either way
   `gh label create` receives a number, silently.
-- **Field id casing.** Kebab-case here (`out-of-scope`), possibly snake_case
+- **Field id casing.** Kebab-case here (`non-goals`), possibly snake_case
   elsewhere. Only the id string differs, but it is a URL fragment.
-- **Field types.** Only `textarea` and one `markdown` here. `checkboxes`,
+- **Field types.** Only `textarea` here. `checkboxes`,
   `render: shell`, `type: input` and explicit `required: false` are legitimate
   style choices elsewhere.
 - **`blank_issues_enabled`.** `false` here; a per-repository policy choice.
@@ -222,26 +243,26 @@ Divergences to know before copying in either direction:
 
 ### Adding an issue type
 
-1. Add it to `## Issue Types` in `ISSUE_STANDARD.md`, with an example under
-   `## Title Convention`.
+1. Add it to CONTRACT.yml under `issue.types`, with its `title_prefix`, `label`,
+   and `extra` sections.
 2. Add a template in `.github/ISSUE_TEMPLATE/` with `title: "<type>: "`. The filename
    need not be the token, but should be guessable.
-3. Give it Context, Objective, Scope, Out of scope, Acceptance criteria,
-   Dependencies, Notes, plus any field it can justify.
+3. Give it the common sections from CONTRACT.yml, plus any type-specific sections.
 4. Choose its label from `type/*` before writing the file; never invent an
    undeclared one.
 5. Update the invariant table above.
+6. Run `uv run python scripts/validate_contract.py` to verify.
 
 ### Adding a pull request type
 
-1. Add `<type>.md`, named exactly for the Conventional Commit type — the filename is
+1. Add it to CONTRACT.yml under `pr.types`, with its `extra` sections.
+2. Add `<type>.md`, named exactly for the Conventional Commit type — the filename is
    the key the gate resolves.
-2. Copy the four common headings verbatim, adjusting only the checkbox and label note
-   in `## Type (required)`.
-3. Name one `type/*` label (`type/task` is the catch-all).
-4. Keep `## Test plan` as `TODO`.
+3. Copy the common headings verbatim, adjusting only the type-specific sections.
+4. Name one `type/*` label (`type/task` is the catch-all).
 5. If it is also a branch type, add it to `branch-types` in every consuming
    `policy.yml`.
+6. Run `uv run python scripts/validate_contract.py` to verify.
 
 ### Adding or changing a label
 
@@ -268,19 +289,13 @@ Divergences to know before copying in either direction:
 
 - Top-level keys in order: `name`, `description`, `title`, `labels`, `body`.
 - `title` is the bare prefix with a trailing space: `title: "feat: "`.
-- Body order: the opening pair, then Scope → Out of scope → Acceptance criteria →
-  Dependencies → Notes — the spine common to all seven. A type's extra fields slot
-  in around it: `bug.yml` adds Impact and How to reproduce before Scope;
-  `improvement.yml` and `maintenance.yml` add Constraints after Scope; `test.yml`
-  adds Scenarios after Scope; `investigation.yml` adds Expected outcome after
-  Out of scope.
+- Body order: the common sections from CONTRACT.yml, then the type-specific
+  sections. The common sections are Context, Goal, Scope, Acceptance criteria,
+  Non-goals, Constraints, References.
 - Field `id`s are kebab-case and unique per file. They are URL fragments: renaming
   one breaks bookmarked and prefilled links.
 - `description` says what to write, `placeholder` shows an example, `value`
-  pre-fills. Six of seven templates pre-fill acceptance criteria as a `- [ ]`
-  checklist; `improvement.yml` does not, because "complete" is type-specific there.
-- Only `feature.yml` uses a `type: markdown` block. Use one only for guidance that
-  must be read before filling a field, never to restate a field's description.
+  pre-fills. Most templates pre-fill acceptance criteria as a `- [ ]` checklist.
 - `config.yml` has no `contact_links` key: the schema rejects an empty list.
 
 ### Pull request templates
@@ -295,16 +310,14 @@ matching the title's type to appear in the body**, resolving that template from 
 repository under review. These files are what make the gate mean the same thing
 everywhere; a repository without them has nothing to be checked against.
 
-- **Structure is universal; commands are not.** The `## Test plan` block is a `TODO`
-  placeholder. Each adopting repository replaces it in the pull request that changes
-  its CI. Never fill it in here: `cargo test` in a TypeScript repository is worse
-  than a `TODO`.
-- **Four headings appear in all thirteen files**: `## Linked issue (required)`,
-  `## Type (required)`, `## Test plan`, `## Contributor checklist`. They are
-  byte-identical except, inside `## Type (required)`, the checkbox naming
-  the type and the label note under it; the default file carries the
-  `<type>` placeholder and the allowed-type list instead. Change one, change
-  all thirteen — divergence here is divergence in what the gate demands.
+- **Structure is universal; commands are not.** The `## Verification` block asks
+  for evidence, not commands. Each adopting repository replaces it in the pull
+  request that changes its CI. Never fill it in here: `cargo test` in a TypeScript
+  repository is worse than a TODO.
+- **Common headings appear in all files**: `## Linked issue`, `## Summary`,
+  `## Changes`, `## Verification`, `## Risk / compatibility`, `## Migration`.
+  They are identical across all files. Change one, change all — divergence here is
+  divergence in what the gate demands.
 - **Each of the twelve names at most one `type/*` label.** Eight of the twelve map
   to `type/task`; `feat`, `fix` and `docs` map to their own label. `breaking-change`
   names none; the template says to apply the underlying change's label. `labels.yml`
@@ -319,9 +332,9 @@ Reconciling with a repository's own templates:
   "packaging and version changes"), not a project.
 - Leave out anything describing one project's strategy (frozen test vectors, a
   benchmark rig).
-- Keep the four common headings byte-identical.
+- Keep the common headings identical.
 
-Two decisions worth keeping: `## Test plan` rather than `## Checks run`, because
-"checks" invites a list of everything CI does; and perf's
-`## Measurements (required)` carries the qualifier in the heading so an unmeasured
+Two decisions worth keeping: `## Verification` rather than `## Test plan`, because
+"test plan" invites a list of commands CI already runs; and perf's
+`## Measurements` carries the qualifier in the heading so an unmeasured
 perf change looks incomplete at a glance.

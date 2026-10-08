@@ -45,6 +45,7 @@ them:
 - [.github/workflows/policy.yml](.github/workflows/policy.yml) — the gate; complete and intact.
 - [.github/workflows/ci.yml](.github/workflows/ci.yml) — skeleton; no checks until the stack fills it.
 - [.github/workflows/release.yml](.github/workflows/release.yml) — skeleton; a placeholder step until replaced.
+- [.github/CONTRACT.yml](.github/CONTRACT.yml) — the canonical issue and PR contract; the source of truth.
 - [.github/ISSUE_STANDARD.md](.github/ISSUE_STANDARD.md),
   [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/),
   [.github/PULL_REQUEST_TEMPLATE/](.github/PULL_REQUEST_TEMPLATE/),

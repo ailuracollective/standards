@@ -20,7 +20,7 @@ This repository is the source of the GitHub issue and pull-request
 standards shared across `ailuracollective`. There is no application
 code, build, or test suite.
 
-It owns the shared standard — the five `.github/` artifacts listed in the
+It owns the shared standard — the `.github/` artifacts listed in the
 organisation conventions — and the infrastructure that serves them:
 `.github/workflows/`, the release files, `templates/` (the skeletons an adopting
 repository completes), and `.github/standards.local.example.yml`. The file map, the
@@ -31,19 +31,34 @@ contribute), `CHANGELOG.md` (written by release-please).
 
 ## Critical invariants
 
+### Canonical contract
+
+[CONTRACT.yml](.github/CONTRACT.yml) is the source of truth for the issue and PR
+contract. It defines the canonical sections, type-specific deltas, and taxonomy
+mappings. CI validates that templates match the contract.
+
+The architecture is:
+
+```text
+CONTRACT.yml → issue/PR templates → policy/validation → GitHub workflow
+```
+
+Not:
+
+```text
+Prose standard → manually duplicated templates → separately duplicated policy → possible drift
+```
+
 ### Issues
 
-Each of the seven issue types in `.github/ISSUE_STANDARD.md` has exactly one
-template and one `title:` prefix.
-
+Each of the seven issue types has exactly one template and one `title:` prefix.
 Do not derive an issue type from the template filename: some filenames are
 historical (`bug.yml`, `maintenance.yml`, `investigation.yml`).
 
-Every issue template preserves existing field IDs and follows the common field
-structure unless the type genuinely needs an exception. What a template must
-apply, and which labels it may name, is in the organisation conventions.
-
-`ISSUE_STANDARD.md` is prose. Do not parse it as YAML.
+Every issue template follows the canonical contract in
+[CONTRACT.yml](.github/CONTRACT.yml): Context, Goal, Scope, Acceptance criteria,
+Non-goals (optional), Constraints (optional), References (optional). Type-specific
+sections are limited to what the contract defines.
 
 ### Pull requests
 
@@ -58,12 +73,9 @@ issue type and not a `type/breaking-change` label.
 
 The PR policy resolves the body template from the title, not from the label.
 
-The four common PR headings listed in the organisation conventions must remain
-identical across all thirteen PR templates; change one, change all thirteen.
-
-`## Test plan` remains a TODO in this repository; adopting repositories replace it
-with their own commands. Do not put repository-specific commands into the shared
-PR templates.
+The common PR headings are: Linked issue, Summary, Changes, Verification,
+Risk / compatibility (optional), Migration (optional). They are identical across
+all PR templates; change one, change all.
 
 ### Labels
 
@@ -118,14 +130,13 @@ rewrite `.github/standards.local.example.yml`.
 
 Issue templates: preserve top-level key order, unique kebab-case field
 IDs, existing field IDs, required/optional validation semantics, and the
-common field order. A field ID is part of the public interface: changing
-it can break bookmarked or prefilled issue URLs.
+canonical section order from CONTRACT.yml. A field ID is part of the public
+interface: changing it can break bookmarked or prefilled issue URLs.
 
-PR templates: preserve the four common headings exactly. When adding a
+PR templates: preserve the common headings exactly. When adding a
 PR type, add the template, add its title/branch vocabulary where
-required, assign an existing `type/*` label, keep `## Test plan` as
-TODO, and update every consuming policy configuration if the new type is
-a branch type.
+required, assign an existing `type/*` label, and update every consuming
+policy configuration if the new type is a branch type.
 
 CODEOWNERS: keep the catch-all rule, which owns every path nothing else names.
 The matching and enforcement rules are in the organisation conventions; see
@@ -139,7 +150,7 @@ uv run mdlint check --fix --select MD060 . .github
 ```
 
 A green linter is not sufficient verification. Several important
-invariants cross file boundaries — issue type ↔ issue template,
+invariants cross file boundaries — contract ↔ templates,
 template labels ↔ labels.yml, PR title types ↔ PR templates,
 type-labels ↔ remote labels, release configuration ↔ release manifest,
 CODEOWNERS ↔ repository permissions, required status checks ↔ actual
@@ -166,7 +177,7 @@ API. See docs/enforcement.md.
 
 ## Do not
 
-- Do not parse `ISSUE_STANDARD.md` as YAML.
+- Do not edit CONTRACT.yml without updating the templates and documentation.
 - Do not introduce a second issue-title vocabulary.
 - Do not change PR template field IDs casually.
 - Do not let the common PR headings drift.

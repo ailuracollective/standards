@@ -1,0 +1,242 @@
+#!/usr/bin/env python3
+"""Validate that issue and PR templates match the canonical contract.
+
+This script checks:
+1. Issue templates have the correct sections (matching CONTRACT.yml)
+2. PR templates have the correct headings (matching CONTRACT.yml)
+3. Labels named in templates exist in labels.yml
+4. Taxonomy mappings are consistent
+
+Exit code 0 means all validations passed. Exit code 1 means at least one validation failed.
+"""
+
+import re
+import sys
+from pathlib import Path
+
+import yaml
+
+REPO_ROOT = Path(__file__).parent.parent
+
+
+def load_yaml(path: Path):
+    with open(path) as f:
+        return yaml.safe_load(f)
+
+
+def load_contract():
+    return load_yaml(REPO_ROOT / ".github" / "CONTRACT.yml")
+
+
+def load_issue_templates():
+    templates = {}
+    template_dir = REPO_ROOT / ".github" / "ISSUE_TEMPLATE"
+    for path in template_dir.glob("*.yml"):
+        if path.name == "config.yml":
+            continue
+        template = load_yaml(path)
+        templates[path.stem] = template
+    return templates
+
+
+def load_pr_templates():
+    templates = {}
+    template_dir = REPO_ROOT / ".github" / "PULL_REQUEST_TEMPLATE"
+    for path in template_dir.glob("*.md"):
+        template = path.read_text()
+        templates[path.stem] = template
+    return templates
+
+
+def load_labels():
+    labels = load_yaml(REPO_ROOT / ".github" / "labels.yml")
+    return {label["name"] for label in labels}
+
+
+def validate_issue_templates(contract, templates, labels):
+    errors = []
+    issue_contract = contract["issue"]
+    common_ids = [s["id"] for s in issue_contract["common"]]
+
+    for type_name, type_contract in issue_contract["types"].items():
+        # Find the template for this type by matching the title prefix
+        template = None
+        for stem, t in templates.items():
+            if t.get("title") == type_contract["title_prefix"]:
+                template = t
+                break
+
+        if template is None:
+            errors.append(
+                f"Issue type '{type_name}': no template found with title '{type_contract['title_prefix']}'"
+            )
+            continue
+
+        # Check labels
+        template_labels = set(template.get("labels", []))
+        expected_labels = {type_contract["label"], "status/needs-review"}
+        if template_labels != expected_labels:
+            errors.append(
+                f"Issue type '{type_name}': labels {sorted(template_labels)} != expected {sorted(expected_labels)}"
+            )
+
+        # Check that all labels exist in labels.yml
+        for label in template_labels:
+            if label not in labels:
+                errors.append(
+                    f"Issue type '{type_name}': label '{label}' not found in labels.yml"
+                )
+
+        # Check sections
+        extra_ids = [s["id"] for s in type_contract.get("extra", [])]
+        expected_sections = common_ids + extra_ids
+        actual_sections = [field["id"] for field in template.get("body", [])]
+
+        # Check that all expected sections are present
+        missing = set(expected_sections) - set(actual_sections)
+        if missing:
+            errors.append(
+                f"Issue type '{type_name}': missing sections {sorted(missing)}"
+            )
+
+        # Check that there are no extra sections
+        extra = set(actual_sections) - set(expected_sections)
+        if extra:
+            errors.append(
+                f"Issue type '{type_name}': unexpected sections {sorted(extra)}"
+            )
+
+        # Check that common sections appear in the correct relative order
+        common_in_template = [s for s in actual_sections if s in common_ids]
+        if common_in_template != common_ids:
+            errors.append(
+                f"Issue type '{type_name}': common sections {common_in_template} != expected {common_ids}"
+            )
+
+        # Check that type-specific sections appear in the correct relative order
+        extra_in_template = [s for s in actual_sections if s in extra_ids]
+        if extra_in_template != extra_ids:
+            errors.append(
+                f"Issue type '{type_name}': type-specific sections {extra_in_template} != expected {extra_ids}"
+            )
+
+        # Check required/optional validation
+        for field in template.get("body", []):
+            field_id = field["id"]
+            is_required = field.get("validations", {}).get("required", False)
+
+            # Find the section in the contract
+            section_contract = None
+            for section in issue_contract["common"]:
+                if section["id"] == field_id:
+                    section_contract = section
+                    break
+            if section_contract is None:
+                for section in type_contract.get("extra", []):
+                    if section["id"] == field_id:
+                        section_contract = section
+                        break
+
+            if section_contract:
+                expected_required = section_contract["required"]
+                if is_required != expected_required:
+                    errors.append(
+                        f"Issue type '{type_name}' field '{field_id}': required={is_required} != expected {expected_required}"
+                    )
+
+    return errors
+
+
+def validate_pr_templates(contract, templates):
+    errors = []
+    pr_contract = contract["pr"]
+    common_sections = pr_contract["common"]
+    common_labels = [s["label"] for s in common_sections]
+    required_labels = [s["label"] for s in common_sections if s["required"]]
+
+    for type_name, type_contract in pr_contract["types"].items():
+        template = templates.get(type_name)
+        if template is None:
+            errors.append(f"PR type '{type_name}': no template found")
+            continue
+
+        # Check headings
+        extra_labels = [s["label"] for s in type_contract.get("extra", [])]
+
+        actual_headings = []
+        for line in template.split("\n"):
+            if line.startswith("## "):
+                heading = line[3:].strip()
+                # Strip "(required)" suffix for comparison
+                heading = re.sub(r"\s*\(required\)\s*$", "", heading)
+                actual_headings.append(heading)
+
+        # Check that all required headings are present
+        missing = set(required_labels) - set(actual_headings)
+        if missing:
+            errors.append(
+                f"PR type '{type_name}': missing required headings {sorted(missing)}"
+            )
+
+        # Check that all headings are in the contract
+        all_expected = set(common_labels + extra_labels)
+        extra = set(actual_headings) - all_expected
+        if extra:
+            errors.append(
+                f"PR type '{type_name}': unexpected headings {sorted(extra)}"
+            )
+
+        # Check that required common headings appear in the correct relative order
+        required_in_template = [h for h in actual_headings if h in required_labels]
+        if required_in_template != required_labels:
+            errors.append(
+                f"PR type '{type_name}': required headings {required_in_template} != expected {required_labels}"
+            )
+
+        # Check that type-specific headings appear in the correct relative order
+        extra_in_template = [h for h in actual_headings if h in extra_labels]
+        if extra_in_template != extra_labels:
+            errors.append(
+                f"PR type '{type_name}': type-specific headings {extra_in_template} != expected {extra_labels}"
+            )
+
+    return errors
+
+
+def validate_taxonomy(contract, templates, labels):
+    errors = []
+    taxonomy = contract.get("taxonomy", {})
+
+    # Check that all labels in taxonomy mappings exist in labels.yml
+    pr_title_to_label = taxonomy.get("pr_title_to_label", {})
+    for pr_type, label in pr_title_to_label.items():
+        if label is not None and label not in labels:
+            errors.append(
+                f"Taxonomy: label '{label}' for PR type '{pr_type}' not found in labels.yml"
+            )
+
+    return errors
+
+
+def main():
+    contract = load_contract()
+    issue_templates = load_issue_templates()
+    pr_templates = load_pr_templates()
+    labels = load_labels()
+
+    errors = []
+    errors.extend(validate_issue_templates(contract, issue_templates, labels))
+    errors.extend(validate_pr_templates(contract, pr_templates))
+    errors.extend(validate_taxonomy(contract, issue_templates, labels))
+
+    if errors:
+        print("Contract validation failed:")
+        for error in errors:
+            print(f"  - {error}")
+        sys.exit(1)
+    else:
+        print("Contract validation passed.")
+
+
+if __name__ == "__main__":
+    main()

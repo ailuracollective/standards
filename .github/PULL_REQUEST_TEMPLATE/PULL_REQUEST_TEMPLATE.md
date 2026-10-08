@@ -1,38 +1,27 @@
 # Pull Request
 
-<!-- Fallback for a title type with no template. Prefer that type's own template. -->
-
 ## Linked issue (required)
 
 <!-- The issue must carry `status/ready`. Use a closing keyword on its own line; `Refs #N` does not close it. -->
 
 Closes #
 
-## Type (required)
+## Summary
 
-<!-- Check one. The title type and the label differ: twelve title types, five `type/*` labels. -->
+<!-- What changed and why, in concise terms. -->
 
-- [ ] `<type>`
+## Changes
 
-<!-- Allowed: breaking-change, build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test. -->
+<!-- The relevant implementation changes. Implementation-oriented; the issue defines the desired outcome. -->
 
-## Test plan
+## Verification
 
-<!-- REPO OWNER: replace with the checks this repository's CI runs. -->
+<!-- Concrete evidence that the acceptance criteria are satisfied. -->
 
-- [ ] `TODO: lint and formatting`
-- [ ] `TODO: unit tests`
-- [ ] `TODO: build`
-- [ ] `TODO: type check, if the repository has one`
-- [ ] Manually exercised the change end to end
+## Risk / compatibility
 
-## Contributor checklist
+<!-- Only when there is material risk, compatibility impact, or behavior that reviewers need to know. -->
 
-- [ ] Linked an approved issue with `Closes #N`, `Fixes #N` or `Resolves #N`
-- [ ] The linked issue carries the `status/ready` label
-- [ ] Branch is named `<github-username>/<type>/<description>`, all lowercase
-- [ ] Applied exactly one `type/*` label
-- [ ] Commit messages follow Conventional Commits
-- [ ] No `Co-Authored-By` trailers
-- [ ] Documentation updated where public behavior or configuration changed
-- [ ] All CI checks pass
+## Migration
+
+<!-- Only when migration is required. -->

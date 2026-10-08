@@ -46,17 +46,15 @@ in `.github/ISSUE_TEMPLATE/`. The standard's `config.yml` disables blank issues.
 - Branches are `<github-username>/<type>/<description>`, all lowercase. The type
   is the title type, except `breaking-change`, which is a commit marker and not a
   branch type.
-- The body follows the template for the title's type. Four headings are common to
-  every template and must appear in the body: `## Linked issue (required)`,
-  `## Type (required)`, `## Test plan`, `## Contributor checklist`.
+- The body follows the template for the title's type. Common headings are:
+  `## Linked issue`, `## Summary`, `## Changes`, `## Verification`,
+  `## Risk / compatibility` (optional), `## Migration` (optional).
 - Link the issue with a closing keyword (`Closes #N`); the issue must carry
   `status/ready`.
 - Apply exactly one `type/*` label. The title type and the label differ: several
   title types share a label.
-- `## Test plan` is the repository's own. Replace its `TODO` placeholders with the
-  commands that repository's CI actually runs, and never name a command it cannot
-  run.
-- No `Co-Authored-By` trailers.
+- `## Verification` asks for evidence, not commands. Do not name commands CI
+  already runs.
 - Update documentation where public behavior or configuration changed.
 - All CI checks pass.
 

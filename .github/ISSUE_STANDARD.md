@@ -1,76 +1,69 @@
 # GitHub Issue Standard
 
-> **This file is prose, not data.** It was previously `ISSUE_STANDARD.yml` and it
-> did not parse as YAML: the numbered list under Purpose reads as mapping keys, so
-> the file failed to load from its first numbered line onward. It was renamed
-> rather than repaired, because it is a document meant to be read. Do not convert
-> it back to YAML and do not point a parser at it.
+> **The canonical contract is [CONTRACT.yml](CONTRACT.yml).** This file is
+> human-readable documentation of that contract. If this file and CONTRACT.yml
+> disagree, CONTRACT.yml wins and this file is wrong.
 >
-> The consequence is accepted deliberately: the type list and the section
-> vocabulary below are **not** machine-checked against the templates, so they can
-> drift. They already have — `bug.yml` and `investigation.yml` ask for four
-> sections this document does not define. Closing that gap needs a real schema
-> and a CI check, not a better indent.
+> The contract is machine-checked against the templates by CI
+> (`scripts/validate_contract.py`). Drift fails the build.
 
 ## Purpose
 
-Every issue must communicate:
+Every issue is the **task contract**. It answers:
 
 1. Why the work exists.
-2. What outcome is expected.
+2. What observable outcome is required.
 3. What work is included.
-4. How completion will be verified.
+4. How completion will be objectively recognized.
 
-## Issue Types
+An issue describes the desired result, not the implementation, unless the
+implementation itself is a requirement.
 
-- `feat`: New capability or behavior.
-- `fix`: Correction of incorrect behavior.
-- `improvement`: Improvement to existing behavior without being a bug fix.
-- `chore`: Technical maintenance with no intended functional change.
-- `test`: Work whose primary purpose is test coverage.
-- `docs`: Documentation work.
-- `spike`: Investigation or research required before implementation.
+## Canonical contract
 
-## Title Convention
+The canonical issue contract is defined in [CONTRACT.yml](CONTRACT.yml). In
+summary:
 
-Use:
+### Common sections (all types)
 
-`<type>: <short imperative description>`
+| Section             | Required | Purpose                                                                |
+| ------------------- | -------- | ---------------------------------------------------------------------- |
+| Context             | yes      | Why the work exists, with evidence when it materially affects the task |
+| Goal                | yes      | The observable outcome required                                        |
+| Scope               | yes      | What this issue includes                                               |
+| Acceptance criteria | yes      | Observable conditions that establish completion                        |
+| Non-goals           | no       | Only when an explicit boundary prevents ambiguity                      |
+| Constraints         | no       | Only constraints that materially limit valid solutions                 |
+| References          | no       | Links or paths to authoritative context                                |
 
-Examples:
+Optional sections are conditional: an irrelevant section should be absent (left
+empty), not populated with "N/A".
 
-- `feat: expose incoming sponsor letters through the admin API`
-- `fix: make receiving a sponsor letter atomic`
-- `improvement: simplify configuration loading`
-- `chore: remove redundant controller abstractions`
-- `test: cover incoming correspondence flows`
-- `docs: document public API identifier handling`
-- `spike: evaluate distributed translation caching`
+### Type-specific deltas
 
-Prefer describing the outcome or problem rather than the implementation.
+Only two types add sections beyond the common contract:
 
-## Core Sections
+- **Bug** (`fix:`): Observed behavior, Expected behavior, Reproduction
+- **Spike** (`spike:`): Question, Deliverable
 
-Issues should use these sections when relevant:
+All other types use the common contract alone.
 
-- Context
-- Objective
-- Scope
-- Out of scope
-- Acceptance criteria
+## Issue types
 
-Optional sections:
+| Type          | Template            | `title:`          | Label                |
+| ------------- | ------------------- | ----------------- | -------------------- |
+| `feat`        | `feat.yml`          | `"feat: "`        | `type/feature`       |
+| `fix`         | `bug.yml`           | `"fix: "`         | `type/bug`           |
+| `improvement` | `improvement.yml`   | `"improvement: "` | `type/improvement`   |
+| `chore`       | `maintenance.yml`   | `"chore: "`       | `type/task`          |
+| `test`        | `test.yml`          | `"test: "`        | `type/task`          |
+| `docs`        | `docs.yml`          | `"docs: "`        | `type/documentation` |
+| `spike`       | `investigation.yml` | `"spike: "`       | `type/task`          |
 
-- Dependencies
-- Constraints
-- How to reproduce
-- Impact
-- Scenarios
-- Notes
+Do not derive an issue type from the template filename: some filenames are
+historical (`bug.yml`, `maintenance.yml`, `investigation.yml`).
 
-Not every issue needs every optional section.
-
-## Writing Principles
+## Writing principles
 
 - Prefer outcomes over implementation steps.
 - Keep issues understandable without a separate conversation.
@@ -80,19 +73,32 @@ Not every issue needs every optional section.
 - Avoid unnecessary detail.
 - Split unrelated work into separate issues.
 - Link dependencies instead of duplicating their content.
-- Explicitly preserve existing behavior when a change must be non-breaking.
-- For defects and architectural problems, use evidence when available.
-- An implementation detail that belongs inside another issue should not become a separate issue.
+- A path listed under References is a navigation hint unless the issue explicitly
+  states that modifying that file is required.
 
-## Issue Quality Check
+## AI-agent contract
 
-Before creating an issue, verify:
+> Do not invent repository-specific facts. Inspect authoritative repository
+> instructions and referenced files before implementation. If required
+> information is still unavailable, state the uncertainty instead of guessing.
 
-- [ ] The title clearly describes the work.
-- [ ] The reason for the work is understandable.
-- [ ] The expected outcome is explicit.
-- [ ] The scope is bounded.
-- [ ] Related work that is excluded is identified when necessary.
-- [ ] Completion can be objectively verified.
-- [ ] Dependencies are linked.
-- [ ] The issue is not duplicating existing work.
+The contract distinguishes:
+
+- **Facts** supplied by the issue.
+- **Requirements** (Goal, Acceptance criteria).
+- **Constraints** (Constraints).
+- **References** to authoritative sources (References).
+- **Unresolved questions** (omitted optional sections).
+- **Implementation choices** (not prescribed by the issue).
+
+Agents must not infer that:
+
+- Every referenced file must be changed.
+- Every omitted section has a value of "none".
+- An implementation approach is required merely because it is mentioned as an example.
+- Missing repository facts can be reconstructed from conventions.
+
+## Migration
+
+Existing issues are not rewritten. Only newly created issues use the new
+contract. Old template filenames remain as compatibility aliases.

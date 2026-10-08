@@ -48,6 +48,10 @@ jobs:
       - name: Issue chooser schema
         run: uv run check-jsonschema --builtin-schema vendor.github-issue-config .github/ISSUE_TEMPLATE/config.yml
         if: ${{ !cancelled() }}
+      - name: Contract validation
+        # Validates that issue and PR templates match the canonical contract (CONTRACT.yml).
+        run: uv run python scripts/validate_contract.py
+        if: ${{ !cancelled() }}
       - name: release-please schema
         # Pinned to a tag: `main` changes under the repository and fails it for no change of its own.
         run: |

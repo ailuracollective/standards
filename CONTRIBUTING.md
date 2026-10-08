@@ -62,8 +62,14 @@ gh api /repos/ailuracollective/standards/collaborators --jq '.[] | select(.permi
 ```
 
 If you edit a pull request template, say which ones in the pull request, and confirm
-the four common headings are unchanged. They are identical across all thirteen files,
+the common headings are unchanged. They are identical across all files,
 so any difference makes the gate demand different bodies in different repositories.
+
+If you edit an issue template or the canonical contract, run the drift check:
+
+```sh
+uv run python scripts/validate_contract.py
+```
 
 ## What a finished change looks like
 
