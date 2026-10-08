@@ -1,0 +1,122 @@
+---
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# CodeRabbit is advisory here. The contribution gate is `ailuracollective/actions`
+# (`.github/workflows/policy.yml`); this file reviews content and cross-file invariants only.
+
+# Cite the invariant a change would break, with evidence.
+tone_instructions: >-
+  Be precise and evidence based. Cite the repository invariant or rule a change would
+  break, and prefer a concrete counter-example over praise or speculation.
+
+reviews:
+  # No diagrams on a standards repository.
+  sequence_diagrams: false
+
+  # CODEOWNERS assigns reviewers; the label set is `.github/labels.yml`.
+  suggested_reviewers: false
+  suggested_labels: false
+
+  auto_review:
+    # Dependency updates are reviewed by CI, not by CodeRabbit.
+    ignore_usernames:
+      - "dependabot[bot]"
+    # release-please pull requests: the gate exempts them by head ref, which CodeRabbit
+    # cannot match, so skip them by the label release-please applies.
+    labels:
+      - "!autorelease: pending"
+
+  # Generated and machine-owned files.
+  path_filters:
+    - "!.atl/**"
+    - "!.cache/**"
+    - "!.codegraph/**"
+    - "!.odd/**"
+    - "!.venv/**"
+    - "!CHANGELOG.md"
+    - "!.release-please-manifest.json"
+    - "!uv.lock"
+
+  path_instructions:
+    - path: ".github/labels.yml"
+      instructions: |
+        Each entry has exactly `name`, `color`, `description`, in that order. Colors are
+        quoted six-digit hex without `#`. Families follow the order type, status, scope,
+        meta, github_actions, release; `type/` is frozen at five members. Flag an invented
+        or renamed label, an unquoted color, or a re-sorted family.
+    - path: ".github/workflows/**"
+      instructions: |
+        Every job sets `timeout-minutes: 10` and declares only the permissions it needs.
+        Checkout sets `persist-credentials: false` unless credentials are required. A job
+        that runs code from a pull-request head must never receive secrets, and `policy.yml`
+        must keep checking out the base branch. Do not replace the release-PR exemption by
+        head ref with `skip-actors`, and keep `AILURA_PR_COMPLIANCE_TOKEN` and
+        `AILURA_RELEASE_TOKEN` separate.
+    - path: "templates/**"
+      instructions: |
+        These are adoption skeletons, not copies of a working file. A repository-specific CI
+        command, path or secret must not leak into them, and each skeleton must stay in sync
+        with the real file it mirrors at the repository root.
+    - path: "docs/**"
+      instructions: |
+        A change to public behavior, configuration or a rule updates the documentation in the
+        same change. Check that an edited invariant in AGENTS.md is reflected here.
+    - path: "*.md"
+      instructions: |
+        `AGENTS.md` holds invariants and never restates the organisation conventions;
+        `README.md` is the human entry point. Prefer a link to the existing rule over a
+        duplicated paragraph.
+
+  # The gate owns the pull-request contract; only cross-file invariants are advisory here.
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    title:
+      mode: "off"
+    description:
+      mode: "off"
+    issue_assessment:
+      mode: "off"
+    custom_checks:
+      - name: "Cross-file invariants"
+        mode: "warning"
+        instructions: |
+          Warn when a change edits one side of a documented cross-file invariant without the
+          other. The invariants are: CONTRACT.yml <-> the issue and pull-request templates;
+          template labels <-> labels.yml; pull-request title types <-> PULL_REQUEST_TEMPLATE
+          files; release-please-config.json <-> .release-please-manifest.json; CODEOWNERS <->
+          repository permissions; required status checks <-> workflow job names. A green
+          linter is not verification.
+
+  # Read-only: no edits to a pull request, and no follow-up ones.
+  finishing_touches:
+    autofix:
+      enabled: false
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+    fix_ci:
+      enabled: false
+    resolve_merge_conflict:
+      enabled: false
+
+  # Security scanners CI does not run stay enabled by default: zizmor, gitleaks, trufflehog.
+  tools:
+    # CI owns these linters; one failure, one owner.
+    yamllint:
+      enabled: false
+    markdownlint:
+      enabled: false
+    actionlint:
+      enabled: false
+    shellcheck:
+      enabled: false
+    hadolint:
+      enabled: false
+    checkov:
+      enabled: false
+    ruff:
+      enabled: false
+    flake8:
+      enabled: false

@@ -24,10 +24,11 @@ no test suite.
 | `.github/workflows/ci.yml`                                     | lint and format checks                    | GitHub Actions, on every pull request that is not a draft              |
 | `.github/workflows/release.yml`                                | when a release is cut                     | GitHub Actions, on every push to `main`                                |
 | `release-please-config.json` + `.release-please-manifest.json` | the release type, and the current version | release-please                                                         |
+| `.coderabbit.yaml`                                             | the advisory review bot                   | CodeRabbit                                                             |
 
 The first seven rows are **the standard**: what an adopting repository
 copies. The example file is opt-in (docs/customization.md). The last
-four serve this repository only and are not copied.
+five serve this repository only and are not copied.
 
 `templates/` holds the parts of an adoption that are **skeletons**, not
 copies of a working file: `AGENTS.md`, and the `ci.yml` / `release.yml`
