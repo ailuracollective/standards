@@ -59,18 +59,28 @@ def validate_issue_templates(contract, templates, labels):
     common_ids = [s["id"] for s in issue_contract["common"]]
 
     for type_name, type_contract in issue_contract["types"].items():
-        # Find the template for this type by matching the title prefix
-        template = None
-        for stem, t in templates.items():
-            if t.get("title") == type_contract["title_prefix"]:
-                template = t
-                break
+        # Find all templates matching this type's title prefix
+        matching = [
+            (stem, t) for stem, t in templates.items()
+            if t.get("title") == type_contract["title_prefix"]
+        ]
 
-        if template is None:
+        if len(matching) == 0:
             errors.append(
-                f"Issue type '{type_name}': no template found with title '{type_contract['title_prefix']}'"
+                f"Issue type '{type_name}': no template found with title "
+                f"'{type_contract['title_prefix']}'"
             )
             continue
+
+        if len(matching) > 1:
+            stems = [stem for stem, _ in matching]
+            errors.append(
+                f"Issue type '{type_name}': multiple templates match title "
+                f"'{type_contract['title_prefix']}': {stems}"
+            )
+            continue
+
+        template = matching[0][1]
 
         # Check labels
         template_labels = set(template.get("labels", []))
@@ -87,10 +97,13 @@ def validate_issue_templates(contract, templates, labels):
                     f"Issue type '{type_name}': label '{label}' not found in labels.yml"
                 )
 
-        # Check sections
+        # Check sections (skip markdown blocks — they have no id)
         extra_ids = [s["id"] for s in type_contract.get("extra", [])]
         expected_sections = common_ids + extra_ids
-        actual_sections = [field["id"] for field in template.get("body", [])]
+        actual_sections = [
+            field["id"] for field in template.get("body", [])
+            if field.get("type") != "markdown" and "id" in field
+        ]
 
         # Check that all expected sections are present
         missing = set(expected_sections) - set(actual_sections)
@@ -120,8 +133,10 @@ def validate_issue_templates(contract, templates, labels):
                 f"Issue type '{type_name}': type-specific sections {extra_in_template} != expected {extra_ids}"
             )
 
-        # Check required/optional validation
+        # Check required/optional validation (skip markdown blocks)
         for field in template.get("body", []):
+            if field.get("type") == "markdown" or "id" not in field:
+                continue
             field_id = field["id"]
             is_required = field.get("validations", {}).get("required", False)
 
@@ -206,6 +221,8 @@ def validate_pr_templates(contract, templates):
 def validate_taxonomy(contract, templates, labels):
     errors = []
     taxonomy = contract.get("taxonomy", {})
+    issue_contract = contract.get("issue", {})
+    pr_contract = contract.get("pr", {})
 
     # Check that all labels in taxonomy mappings exist in labels.yml
     pr_title_to_label = taxonomy.get("pr_title_to_label", {})
@@ -214,6 +231,41 @@ def validate_taxonomy(contract, templates, labels):
             errors.append(
                 f"Taxonomy: label '{label}' for PR type '{pr_type}' not found in labels.yml"
             )
+
+    # Check that pr_title_to_label covers all PR types in the contract
+    pr_types_in_contract = set(pr_contract.get("types", {}).keys())
+    pr_types_in_mapping = set(pr_title_to_label.keys())
+    missing_pr_types = pr_types_in_contract - pr_types_in_mapping
+    if missing_pr_types:
+        errors.append(
+            f"Taxonomy: pr_title_to_label missing PR types: {sorted(missing_pr_types)}"
+        )
+
+    # Check that issue_to_pr_title covers all issue types in the contract
+    issue_to_pr_title = taxonomy.get("issue_to_pr_title", {})
+    issue_types_in_contract = set(issue_contract.get("types", {}).keys())
+    issue_types_in_mapping = set(issue_to_pr_title.keys())
+    missing_issue_types = issue_types_in_contract - issue_types_in_mapping
+    if missing_issue_types:
+        errors.append(
+            f"Taxonomy: issue_to_pr_title missing issue types: {sorted(missing_issue_types)}"
+        )
+
+    # Check that issue_to_pr_title values are valid PR types or None
+    for issue_type, pr_type in issue_to_pr_title.items():
+        if pr_type is not None and pr_type not in pr_types_in_contract:
+            errors.append(
+                f"Taxonomy: issue_to_pr_title['{issue_type}'] = '{pr_type}' "
+                f"is not a valid PR type"
+            )
+
+    # Check that pr_title_to_branch covers all PR types
+    pr_title_to_branch = taxonomy.get("pr_title_to_branch", {})
+    missing_branch_types = pr_types_in_contract - set(pr_title_to_branch.keys())
+    if missing_branch_types:
+        errors.append(
+            f"Taxonomy: pr_title_to_branch missing PR types: {sorted(missing_branch_types)}"
+        )
 
     return errors
 

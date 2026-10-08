@@ -55,6 +55,10 @@ Four steps are not optional:
    keep it at `.github/PULL_REQUEST_TEMPLATE.md`. The gate defaults to the second, so
    set `default-template` if you use the first — otherwise the body-structure check
    resolves to nothing.
+5. **Wire the contract validator into CI.** Copy `scripts/validate_contract.py` into
+   the repository and add a CI step that runs it. The check fails when templates
+   drift from `.github/CONTRACT.yml` — see *Contract validation* in
+   docs/architecture.md.
 
 ## If the repository deviates from the standard
 

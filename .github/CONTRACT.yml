@@ -264,8 +264,8 @@ taxonomy:
   #   type/documentation
 
   issue_to_pr_title:
-    feat: feat
-    fix: fix
+    feature: feat
+    bug: fix
     improvement: feat
     chore: chore
     test: test
