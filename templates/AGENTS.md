@@ -23,57 +23,16 @@ TODO: one line saying what this repository is and who reads this file.
 The organisation's conventions live in
 [.agents/organization-conventions.md](.agents/organization-conventions.md), not
 in this file. The link is mandatory and applies to every repository in the
-organisation.
+organisation. Do not paste them here or restate them from memory — if a rule is
+not in that file, it is not an organisation rule.
 
-It is a link rather than a copy on purpose: a copy is N repositories to fix when
-the organisation decides something, and nothing detects the N; a link is one line
-to change. Do not paste organisation conventions here, and do not restate them
-from memory — if a rule is not in that file, it is not an organisation rule.
-
-### Locating it
-
-The path above is **relative to the repository root**, not to wherever you happen
-to be working.
-
-1. Read `.agents/organization-conventions.md`.
-2. **If it is not there, search the whole repository.** Do not conclude it is
-   absent because your directory lacks it. An agent scoped to `packages/api/`
-   still has to find a file that lives at `docs/organization-conventions.md`.
-
-   ```sh
-   # from any directory inside the repository; --full-name makes the paths
-   # root-relative, which is the entire point
-   git ls-files --full-name | grep -E '(^|/)organization-conventions\.md$'
-
-   # same, and it also finds the file if it is untracked
-   find "$(git rev-parse --show-toplevel)" -name 'organization-conventions.md' \
-     -not -path '*/.git/*'
-   ```
-
-   `find .` and a bare `cat .agents/...` are wrong for the same reason: they
-   resolve against the current working directory. An agent that has drifted into
-   a subdirectory reports "this repository has no organisation standards" about a
-   repository that has them, and that report leads to step 4.
-3. **If you find it somewhere else, use it**, and record the path in
-   § Additional references so the next agent does not repeat the search.
-4. **If it is not in the repository at all, stop and say so.** Do not infer it,
-   reconstruct it, proceed on a plausible guess, or create the file.
-
-   A reconstructed organisation standard is worse than a missing one: it is
-   indistinguishable from a real one, every later agent treats it as
-   authoritative, and nothing will ever correct it. Reporting the missing
-   reference is a short, honest conversation; inventing the file is a quiet lie
-   that outlives the session.
-
-### Exceptions
+If it is not there, search the whole repository before concluding it is absent;
+use it where you find it and record the path in § Additional references. If it
+is not in the repository at all, stop and say so — do not reconstruct it.
 
 Organisation standards apply here unless this repository documents a specific
 exception, in § Repository-specific conventions, carrying the reason it was
-taken.
-
-An exception nobody wrote down is not an exception. If you are about to work
-against an organisation standard and this file says nothing permitting it, you
-are working against the standard.
+taken. An exception nobody wrote down is not an exception.
 
 ---
 
@@ -87,21 +46,19 @@ them:
 - [.github/workflows/ci.yml](.github/workflows/ci.yml) — skeleton; no checks until the stack fills it.
 - [.github/workflows/release.yml](.github/workflows/release.yml) — skeleton; a placeholder step until replaced.
 - [.github/ISSUE_STANDARD.md](.github/ISSUE_STANDARD.md),
+  [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/),
+  [.github/PULL_REQUEST_TEMPLATE/](.github/PULL_REQUEST_TEMPLATE/),
   [.github/labels.yml](.github/labels.yml),
   [.github/CODEOWNERS](.github/CODEOWNERS) — the standard artifacts.
 
-No language or toolchain is fixed: the stack that completes `ci.yml` and
-`release.yml` is this repository's choice, not the template's.
+No language or toolchain is fixed; the stack that completes `ci.yml` and
+`release.yml` is this repository's choice.
 
 ## Repository scope
 
-TODO: what this file covers. Name the directories that are part of the repository
-and any an agent must not touch — vendored trees, generated output, fixtures,
-submodules.
-
-Agents read the nearest `AGENTS.md` above the file they are editing, so a
-subdirectory may carry its own. Say so if it does, and say which one wins where
-they overlap: the deeper file, for the paths it covers.
+TODO: what this file covers — the directories that are part of the repository and
+any an agent must not touch. Agents read the nearest `AGENTS.md` above the file
+they are editing; say so if a subdirectory has one.
 
 ## Repository context
 
@@ -111,34 +68,21 @@ part, and anything else an agent would otherwise have to infer from the tree.
 
 ## Repository-specific conventions
 
-TODO: the house rules for this repository — naming, file layout, error handling,
-style — where they differ from the organisation standards. A rule that matches
-the organisation standards does not belong here; it is already in the linked
-file, and repeating it here is the copy this template exists to prevent.
-
-**Every departure from the organisation standards is recorded in this section**,
-in this shape:
-
-> - `<the rule>` — we do `<what we do instead>` because `<reason>`.
-
-An exception without a reason is indistinguishable from drift, and telling the
-two apart is the only reason this section exists. If you cannot write the reason,
-that is the answer.
+TODO: the house rules for this repository, where they differ from the organisation
+standards. Record every departure as `<the rule>` — we do `<what we do instead>`
+because `<reason>`; a rule that matches the organisation standards does not belong
+here.
 
 ## Development instructions
 
-TODO: how to get from a fresh clone to a running project. Install, generate,
-build, run. Name the commands exactly, including the package manager and the
-runtime version, and say what has to be running before anything else works.
+TODO: how to get from a fresh clone to a running project — install, generate,
+build, run, with the exact commands. Until a stack is chosen there is nothing to
+install or run.
 
 ## Testing and validation
 
 TODO: the checks this repository actually runs, as copy-pasteable commands, and
-what a failure looks like.
-
-These must be this repository's real commands. A `TODO` here is not a harmless
-placeholder: it is the section an agent trusts most, and a plausible command that
-does not exist is how an agent reports a verification it never ran.
+what a failure looks like. They must be this repository's real commands.
 
 ## Git and pull requests
 
@@ -149,16 +93,13 @@ who reviews.
 ## Documentation
 
 TODO: where the documentation lives, which parts are expected to change with the
-code, and what "documented" means here: a comment, a docstring, a page, a
-changelog entry.
+code, and what "documented" means here.
 
 ## Additional references
 
-TODO: files an agent should read before working, and why each one matters.
-
-The organisation conventions are linked from § Organization standards. If you
-found that file somewhere other than `.agents/`, record the real path here, and
-correct the link above to match — the link must resolve.
+TODO: files an agent should read before working, and why each one matters. If the
+organisation conventions were found somewhere other than `.agents/`, record the
+path here and correct the link in § Organization standards.
 
 ## Completion requirements
 
@@ -189,13 +130,9 @@ grep -n 'TODO' AGENTS.md                                    # expect no output
 git ls-files --full-name | grep -E '(^|/)organization-conventions\.md$'
 
 # 3. every linked path exists
-python3 - <<'PY'
-import os, re, sys
-missing = [t for t in re.findall(r'\]\(([^)#\s]+)', open('AGENTS.md').read())
-           if '://' not in t and not os.path.exists(t.split('#')[0])]
-print('\n'.join(f'MISSING: {m}' for m in missing) or 'every referenced file exists')
-sys.exit(1 if missing else 0)
-PY
+grep -oE '\]\([^)]+\)' AGENTS.md | tr -d ']()' | while read -r p; do
+  [ -e "${p%%#*}" ] || echo "MISSING: $p"
+done
 ```
 
 TODO: add this repository's own definition of done here, if it has one that

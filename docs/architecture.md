@@ -28,17 +28,10 @@ copies. The example file is opt-in (docs/customization.md). The last
 four serve this repository only and are not copied.
 
 `templates/` holds the parts of an adoption that are **skeletons**, not
-copies of a working file:
-
-| Template                                  | What it is                                                           |
-| ----------------------------------------- | -------------------------------------------------------------------- |
-| `templates/AGENTS.md`                     | the adopting repository's `AGENTS.md`                                |
-| `templates/.github/workflows/ci.yml`      | the technology-agnostic CI skeleton; the adopter adds its own checks |
-| `templates/.github/workflows/release.yml` | the release-aware skeleton with a placeholder step to replace        |
-
-Everything else — `policy.yml` and the five standard artifacts — is copied
-verbatim from the real files at the repository root. Nothing is duplicated,
-so nothing can drift.
+copies of a working file: `AGENTS.md`, and the `ci.yml` / `release.yml`
+workflows. Everything else — `policy.yml` and the five standard artifacts —
+is copied verbatim from the real files at the repository root. Nothing is
+duplicated, so nothing can drift.
 
 Facts that are easy to get wrong:
 
