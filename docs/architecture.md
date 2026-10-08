@@ -175,9 +175,8 @@ gh api /repos/ailuracollective/actions/commits/main --jq .sha   # equal means th
 
 ## Sync model
 
-This repository is the origin; each adopting repository holds its own copy under its
-own `.github/`. **Edits here do not propagate.** There is no workflow, submodule or
-bot. Copies are manual and drift is expected.
+The rule is in the organisation conventions: the standard is copied by hand, and
+nothing propagates. What follows is this repository's detail behind that rule.
 
 Three layers drift independently:
 
