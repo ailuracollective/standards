@@ -6,17 +6,13 @@ Documentation is read by someone who cannot see the implementation. Write for th
 
 ## Linked issue (required)
 
-<!-- The linked issue MUST carry the `status/ready` label. Apply exactly one of these
-closing keywords on its own line. `Refs #N` does NOT close the issue and does not satisfy
-this requirement. Bot pull requests are exempt; see `skip-actors` in `policy.yml`. -->
+<!-- The issue must carry `status/ready`. Use a closing keyword on its own line; `Refs #N` does not close it. -->
 
 Closes #
 
 ## Type (required)
 
-<!-- Check exactly ONE. This is the Conventional Commit type for your TITLE; the LABEL
-is separate and coarser: there are twelve title types and only five `type/*` labels.
-Apply exactly one `type/*` label. -->
+<!-- Check one. The title type and the label differ: twelve title types, five `type/*` labels. -->
 
 - [ ] `docs`
 
@@ -24,58 +20,35 @@ Apply exactly one `type/*` label. -->
 
 ## Documentation changed
 
-<!--
-Which documents, and what changed in each.
--->
+<!-- Which documents, and what changed in each. -->
 
 ## Preview links
 
-<!--
-If the documentation is rendered somewhere — a docs site, a preview deployment, a notebook —
-link the rendered result. If it is not rendered anywhere, say so.
--->
+<!-- Link the rendered result, or say it is not rendered. -->
 
 ## Why the previous text was wrong
 
-<!--
-If this corrects existing documentation, say what was wrong. If it is genuinely new, say "new
-documentation".
--->
+<!-- What was wrong, or "new documentation". -->
 
 ## Anything else that referenced the old text
 
-<!--
-Links, indexes, READMEs, or code comments that pointed at what you changed. Search for them; do
-not assume there are none.
--->
+<!-- Links, indexes or READMEs that pointed at what you changed. -->
 
 ## Read-through check
 
-<!--
-Confirm the result reads correctly end to end, not only in the diff.
--->
+<!-- Confirm the result reads correctly end to end, not only in the diff. -->
 
 ## Link and anchor verification
 
-<!--
-Verify every link and heading anchor you touched resolves. Broken anchors are the most common
-defect in a documentation-only change.
--->
+<!-- Check that every link and anchor you touched resolves. -->
 
 ## Runtime code untouched
 
-<!--
-Confirm no runtime code changed. A documentation pull request that ships code cannot be reviewed
-as documentation.
--->
+<!-- Confirm no runtime code changed. -->
 
 ## Test plan
 
-<!-- REPO OWNER: replace every line below with the checks CI actually runs in THIS
-     repository. The gate only requires that this heading exists, but a contributor
-     cannot verify a change from a template that lists commands this repository does
-     not have — a TypeScript repository cannot run `cargo test`. Keep this block in
-     sync with CI in the same pull request that changes CI. -->
+<!-- REPO OWNER: replace with the checks this repository's CI runs. -->
 
 - [ ] `TODO: lint and formatting`
 - [ ] `TODO: unit tests`

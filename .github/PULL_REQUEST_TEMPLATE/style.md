@@ -8,58 +8,37 @@ was produced and how it was verified.
 
 ## Linked issue (required)
 
-<!-- The linked issue MUST carry the `status/ready` label. Apply exactly one of these
-closing keywords on its own line. `Refs #N` does NOT close the issue and does not satisfy
-this requirement. Bot pull requests are exempt; see `skip-actors` in `policy.yml`. -->
+<!-- The issue must carry `status/ready`. Use a closing keyword on its own line; `Refs #N` does not close it. -->
 
 Closes #
 
 ## Type (required)
 
-<!-- Check exactly ONE. This is the Conventional Commit type for your TITLE; the LABEL
-is separate and coarser: there are twelve title types and only five `type/*` labels.
-Apply exactly one `type/*` label. -->
+<!-- Check one. The title type and the label differ: twelve title types, five `type/*` labels. -->
 
 - [ ] `style`
 
-<!-- `type/task` is the catch-all. The label family has five members and
-     none describes this work, so this is the intended home. The label is
-     deliberately coarser than the title type. -->
+<!-- `type/task` is the catch-all label for this type. -->
 
 ## Scope of reformatting
 
-<!--
-Which files or directories were reformatted, and the approximate size of the diff.
--->
+<!-- Which files or directories were reformatted, and the approximate size of the diff. -->
 
 ## Tool and configuration
 
-<!--
-The formatter, its version, and the configuration that produced this. A formatting change with
-no recorded tool cannot be reproduced.
--->
+<!-- The formatter, its version and its configuration. -->
 
 ## Proof of no behavior change
 
-<!--
-How you established the reformatting is inert. For most languages this is the type checker plus
-the test suite; name them.
--->
+<!-- How you know the reformatting is inert, e.g. type checker and tests. -->
 
 ## Diff size and review strategy
 
-<!--
-The line count, and how a reviewer should read it — by config change or by trusting the
-formatter.
--->
+<!-- The line count, and how a reviewer should read it — by config change or by trusting the formatter. -->
 
 ## Test plan
 
-<!-- REPO OWNER: replace every line below with the checks CI actually runs in THIS
-     repository. The gate only requires that this heading exists, but a contributor
-     cannot verify a change from a template that lists commands this repository does
-     not have — a TypeScript repository cannot run `cargo test`. Keep this block in
-     sync with CI in the same pull request that changes CI. -->
+<!-- REPO OWNER: replace with the checks this repository's CI runs. -->
 
 - [ ] `TODO: lint and formatting`
 - [ ] `TODO: unit tests`

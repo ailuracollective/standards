@@ -1,48 +1,11 @@
+---
 name: Contribution policy
 
-# The full projection of this repository's own standard onto itself. Every artifact
-# defined in `.github/` is enforced here by the actions that enforce it anywhere, so
-# the standard is checked against itself rather than merely described.
-#
-# What "projection" means, precisely: this workflow reads no file in this repository.
-# Every rule is an input, which means every rule is duplicated — `type-labels` restates
-# `.github/labels.yml`, `title-types` restates the twelve files in
-# `.github/PULL_REQUEST_TEMPLATE/`, and `branch-types` restates eleven of those twelve.
-# Four records of one vocabulary is a cost, and it is paid deliberately: a workflow
-# cannot read a file, so a gate that parsed the manifest would be a gate that trusted
-# a file nobody reviews. Change one and mirror the others; `.github/labels.yml` carries
-# the diff commands.
-#
-# Two vocabularies, and they are different sets of different sizes:
-#
-#   - `type-labels`   five `type/*` labels, matched against the pull request
-#   - `title-types`   twelve Conventional Commit types, matched against the title
-#
-# A `ci` pull request therefore carries the label `type/task` while its title reads
-# `ci(scope): …`. Nothing about the gate objects, and this is the arrangement that
-# makes it possible: before `title-types` existed, one input had to be both sets, and
-# neither value worked. See `AGENTS.md` and `ailuracollective/actions`.
-on:
+"on":
   pull_request:
-    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled, ready_for_review]
   issues:
     types: [opened]
-
-# `labeled` and `unlabeled` are load-bearing rather than tidiness. The type-label
-# check and the `status/ready` check are both label-driven, so a pull request that
-# gains or loses its type label has to be re-checked, and no later event would notice
-# it had changed.
-#
-# GitHub also sends `pull_request` label events for CLOSED pull requests, and their head
-# ref no longer exists by the time the event arrives. Nothing about a closed pull
-# request is still true and its checks are final, so both pull request jobs are guarded
-# on `state` below rather than the label events being dropped from the trigger — which
-# would leave an open pull request permanently green against a label set it no longer
-# satisfies.
-#
-# Workflow-level `permissions: {}` is the default posture. Each job widens it exactly as
-# far as it needs: nothing for the branch name, read for the policy, `issues: write` for
-# triage alone.
 permissions: {}
 
 concurrency:
@@ -52,147 +15,67 @@ concurrency:
 jobs:
   branch-validation:
     name: Branch name
-    # Two conditions, and the second is about the release automation rather than the event.
-    #
-    # `state == 'open'`, because `labeled` on a merged pull request is still an event and
-    # the head ref it names no longer exists.
-    #
-    # The head-ref guard exempts release-please's own pull requests, which cannot pass this
-    # gate by any configuration. Their head ref is `release-please--branches--<branch>`, which
-    # carries no type segment, and that name is not configurable: release-please hardcodes the
-    # prefix in `src/util/branch-name.ts` and reopens the same branch on every run. The gate
-    # requires three segments with the first being the author's own login, so the only way for
-    # such a pull request to match is for the author to be a login called `release-please`.
-    #
-    # `skip-actors` below would exempt the same pull requests and is left empty on purpose.
-    # It is keyed on WHO opened the pull request, so it would also exempt anything else that
-    # account ever opens, by hand or by a future workflow. This guard is keyed on WHAT the
-    # pull request is, which is the property that actually makes it unrepresentable: a
-    # hand-written pull request has a branch someone chose, and that branch has a type segment
-    # or the mistake was worth making. The trade is that an exempt pull request leaves no
-    # status comment and no check on the board — the job never runs, rather than running and
-    # reporting itself skipped — so nothing here records that the exemption was deliberate.
+    # Release-please pull requests are exempt by head ref, not `skip-actors`: that branch
+    # name is fixed and cannot pass this gate. See docs/releases.md.
     if: >-
       github.event_name == 'pull_request' &&
       github.event.pull_request.state == 'open' &&
+      github.event.pull_request.draft == false &&
       !startsWith(github.event.pull_request.head.ref, 'release-please--branches--')
     runs-on: ubuntu-latest
-    # Reads the pull request's head ref and nothing else, so an empty permission set is
-    # correct here rather than a shortcut.
+    timeout-minutes: 10
     permissions: {}
     steps:
       - uses: ailuracollective/actions/branch-validation@v2
         with:
-          # Eleven, not twelve. `breaking-change` is the twelfth Conventional Commit type
-          # but it is not a branch segment: it describes the commit, not the shape of the
-          # work, and the commit already carries it as `!` or a `BREAKING CHANGE:` footer.
-          # This is the same list `title-types` below, minus that one type.
+          # `title-types` minus `breaking-change`, which is a commit marker, not a branch type.
           branch-types: feat,fix,chore,docs,style,refactor,perf,test,build,ci,revert
-          # Empty on purpose, and not because there is nothing to exempt. Release-please's pull
-          # requests ARE exempted — by the `if:` condition on this job's head ref above, not by
-          # this input. `skip-actors` is keyed on the login that opened the pull request, so
-          # listing a release identity here would also exempt anything else that account ever
-          # opens. Nothing about a release pull request is decided by who opened it; the head
-          # ref is what makes it unrepresentable, so that is what the exemption is keyed on.
-          #
-          # Declared rather than left absent, for the reason given in this file's header: a
-          # reader should see the whole requirement rather than infer it from what is
-          # missing.
           skip-actors: ''
-          # `false` is this action's default. Declared, like every input here.
           enable-status-comment: true
-          # A comment is authored by whoever owns the token that writes it, so this account's
-          # PAT is what keeps the board out of `github-actions[bot]`'s name — one nobody can
-          # edit or delete. A separate input is also what keeps `permissions: {}` above
-          # honest.
-          comment-token: ${{ secrets.AILURA_KITTY_TOKEN }}
+          # The PAT keeps the comment out of `github-actions[bot]`'s name, which nobody can edit.
+          comment-token: ${{ secrets.AILURA_PR_COMPLIANCE_TOKEN }}
           comment-author: AiluraKitty
 
   pull-request-policy:
     name: Pull request policy
-    # Same guard as the branch-name job above, for the same reason, and the same release-please
-    # exemption with the same reasoning.
-    #
-    # Worth being explicit about what this costs, because four of the five checks here are not
-    # merely inconvenient for a release pull request but unsatisfiable: there is no issue to
-    # close, the body is a generated changelog rather than any type's template, and the one
-    # label release-please applies is its own `autorelease: pending` rather than a `type/*`
-    # one. Its title does satisfy `pr-title-conventional` and `pr-title-length`, so two of the
-    # five would pass on their own. The exemption covers all five because the action has no
-    # per-check escape hatch — `skip-actors` is the only one it has, and it is whole-action —
-    # so there is no way to exempt four checks and keep the fifth running.
-    #
-    # The alternative was to make release-please satisfy them: `extra-label` would have
-    # supplied a `type/*` label and `pull-request-footer` could have carried a closing keyword
-    # and the template headings. Rejected because `pull-request-footer` is static text, so it
-    # would name the same issue in every release forever and carry heading lines that exist
-    # only to be found by a grep. That produces a green board and no review, which is worse
-    # than an absent one.
+    # Same exemption: the checks cannot be satisfied by a generated changelog.
     if: >-
       github.event_name == 'pull_request' &&
       github.event.pull_request.state == 'open' &&
+      github.event.pull_request.draft == false &&
       !startsWith(github.event.pull_request.head.ref, 'release-please--branches--')
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
-      # Read-only, and it stays that way even though this job publishes a comment: the action
-      # writes with `comment-token`, which carries its own scope, so widening this would
-      # hand a write grant on the pull request to five checks that only read.
+      # Stays read-only: the comment is written with `comment-token`.
       pull-requests: read
       contents: read
     steps:
       - uses: ailuracollective/actions/pull-request@v2
         with:
-          # All five checks are left at their defaults, which are `true`. That is the point
-          # of this file: it is the complete projection, so a reader can see the full
-          # requirement in one place rather than inferring it from what is absent.
-          #
-          # `type-labels` mirrors the `type/*` family in `.github/labels.yml`. That file is a
-          # manifest and is read by no workflow, so this input and the manifest are two
-          # records of the same set: change one, mirror the other.
           type-labels: type/feature,type/bug,type/documentation,type/improvement,type/task
-          # `title-types` mirrors the twelve files in `.github/PULL_REQUEST_TEMPLATE/`. Those
-          # filenames are the keys the body-structure check resolves against, and they are
-          # the twelve Conventional Commit types.
+          # Also the filenames of the body-structure templates.
           title-types: feat,fix,chore,docs,style,refactor,perf,test,build,ci,revert,breaking-change
           title-min: 15
           title-max: 72
-          # The label a maintainer applies to an issue once it is triaged. A pull request may
-          # only link an issue that carries it, which is what makes `Closes #N` a decision
-          # rather than a formality.
           approved-label: status/ready
-          # The templates live one file per type inside the directory, and the fallback
-          # lives there too, so both are passed explicitly rather than inherited. The default
-          # for `default-template` is `.github/PULL_REQUEST_TEMPLATE.md` — outside the
-          # directory — which this repository does not have; leaving it to the default would
-          # silently resolve to a file that does not exist and report a configuration defect.
+          # The action's default template path is beside the directory, which does not exist here.
           template-dir: .github/PULL_REQUEST_TEMPLATE
           default-template: .github/PULL_REQUEST_TEMPLATE/PULL_REQUEST_TEMPLATE.md
-          # Empty on purpose, and for the same reason as in the branch job above: this job's
-          # own `if:` condition exempts the release-please pull requests by head ref, rather
-          # than an identity exemption that would follow them everywhere else too.
-          # `dependabot[bot]` is the case that would force this list to exist in other
-          # repositories, and this repository has no `dependabot.yml`.
           skip-actors: ''
-          # Already `true` at `v2`'s default; declared because every other input here is.
-          # The PAT is what keeps the board out of `github-actions[bot]`'s name, and being a
-          # separate input is what keeps `permissions` above at `read`.
           enable-status-comment: true
-          comment-token: ${{ secrets.AILURA_KITTY_TOKEN }}
+          comment-token: ${{ secrets.AILURA_PR_COMPLIANCE_TOKEN }}
           comment-author: AiluraKitty
 
   triage:
     name: Issue triage
     if: github.event_name == 'issues'
     runs-on: ubuntu-latest
-    # The only `issues: write` here, and the only job that writes with the workflow's own
-    # token rather than with `comment-token`.
+    timeout-minutes: 10
     permissions:
       issues: write
     steps:
       - uses: ailuracollective/actions/triage@v2
         with:
-          # Every one of the seven issue templates already declares this label, so the action
-          # is idempotent in the ordinary case. It is kept because it is what covers an issue
-          # opened through any other route, and because `blank_issues_enabled: false` in
-          # `ISSUE_TEMPLATE/config.yml` does not stop a maintainer opening one by hand.
+          # Covers issues opened without a template.
           auto-label-name: status/needs-review

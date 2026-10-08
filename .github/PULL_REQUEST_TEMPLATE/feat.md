@@ -8,17 +8,13 @@ closed faster than one that states the need clearly.
 
 ## Linked issue (required)
 
-<!-- The linked issue MUST carry the `status/ready` label. Apply exactly one of these
-closing keywords on its own line. `Refs #N` does NOT close the issue and does not satisfy
-this requirement. Bot pull requests are exempt; see `skip-actors` in `policy.yml`. -->
+<!-- The issue must carry `status/ready`. Use a closing keyword on its own line; `Refs #N` does not close it. -->
 
 Closes #
 
 ## Type (required)
 
-<!-- Check exactly ONE. This is the Conventional Commit type for your TITLE; the LABEL
-is separate and coarser: there are twelve title types and only five `type/*` labels.
-Apply exactly one `type/*` label. -->
+<!-- Check one. The title type and the label differ: twelve title types, five `type/*` labels. -->
 
 - [ ] `feat`
 
@@ -26,17 +22,11 @@ Apply exactly one `type/*` label. -->
 
 ## User-facing outcome
 
-<!--
-What can a user do now that they could not do before? State it as a capability, not as an
-implementation.
--->
+<!-- What a user can do now that they could not before, as a capability. -->
 
 ## What is new
 
-<!--
-The new surface: exports, components, directives, CLI flags, configuration keys, or endpoints.
-Link the files that define them.
--->
+<!-- The new surface (exports, flags, config keys, endpoints), linking its definitions. -->
 
 | Surface | Location | Purpose |
 | --- | --- | --- |
@@ -44,23 +34,15 @@ Link the files that define them.
 
 ## How to try it
 
-<!--
-Give the reviewer a runnable path. Prefer a snippet they can paste and run. If no snippet is
-possible, spell out the exact manual steps, including the command to run and what they should
-observe.
--->
+<!-- A runnable path for the reviewer: a snippet, or exact commands and expected output. -->
 
-```
+```text
 // Runnable snippet, or the concrete manual path below
 ```
 
 ## Compatibility impact
 
-<!--
-State explicitly whether existing code keeps working unchanged. Name any new opt-in flag,
-default, or deprecation. If existing behavior changes, this belongs in `breaking-change`
-instead.
--->
+<!-- Whether existing code keeps working, and any new flag, default or deprecation. -->
 
 - Backward compatible: yes / no
 - New opt-in behavior: <!-- describe the flag or config key, or "none" -->
@@ -68,18 +50,11 @@ instead.
 
 ## Screenshots or demo
 
-<!--
-Required when the change is visual — components, styling, rendered output. Paste before and
-after, or link a recording. Write "Not visual" when it is not.
--->
+<!-- Required for visual changes: before and after, or a recording. Otherwise "Not visual". -->
 
 ## Test plan
 
-<!-- REPO OWNER: replace every line below with the checks CI actually runs in THIS
-     repository. The gate only requires that this heading exists, but a contributor
-     cannot verify a change from a template that lists commands this repository does
-     not have — a TypeScript repository cannot run `cargo test`. Keep this block in
-     sync with CI in the same pull request that changes CI. -->
+<!-- REPO OWNER: replace with the checks this repository's CI runs. -->
 
 - [ ] `TODO: lint and formatting`
 - [ ] `TODO: unit tests`

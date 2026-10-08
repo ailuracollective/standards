@@ -1,84 +1,33 @@
 # Code owners — ailuracollective/standards
 #
-# Every file here is load-bearing for every repository in the organisation. A
-# change to a heading in a pull request template changes what every contributor
-# in every repository is required to write; a change to labels.yml changes what
-# every repository can label. There is no file in this repository that is safe
-# to change casually.
-#
-# Every rule below resolves to the same single owner today, because
-# @SiddharthaGF is currently the only collaborator with write access, so the
-# grouping changes no outcome yet. It is written as though a second owner
-# already existed: each group is a real rule that overrides the catch-all, and
-# it records which files carry which blast radius, so adding an owner later is
-# a one-line change per group rather than a redesign.
-#
-# Syntax follows gitignore rules and the LAST matching pattern wins, so the
-# catch-all comes first and the specific rules follow it. Rules do not
-# accumulate: naming a second owner on a later pattern REPLACES the owners of
-# the patterns before it for that path, it does not add to them. Put both
-# accounts on one line, separated by a space, when both should be asked.
-#
-# `*` is the catch-all GitHub documents, and it matches at every depth: a
-# pattern containing no slash applies in subdirectories too, so this line alone
-# owns every file in the repository, present and future. It is used rather than
-# the gitignore-looking `/**` because `/**` is ambiguous in this grammar, and an
-# ambiguous pattern in a governance file is not worth carrying.
+# The LAST matching pattern wins and replaces earlier owners, so put every owner on one
+# line. `*` matches at every depth. GitHub silently skips unparseable lines and owners
+# without write access. See docs/enforcement.md.
 
 *                       @SiddharthaGF
 
-# CODEOWNERS owns itself. Without this rule, a pull request that removes a
-# reviewer's own required approval could be merged by that reviewer, because
-# the rule that would have demanded their review is the thing being deleted.
+# Owns itself, so a pull request cannot remove the review it needs.
 .github/CODEOWNERS      @SiddharthaGF
 
-# Pull request templates — the widest blast radius in the repository. The
-# body-structure gate in ailuracollective/actions/pull-request@v2 resolves
-# these files from the consuming repository and requires every heading declared
-# here to appear in a pull request body. Renaming or removing a heading changes
-# the contract for every open and future pull request across the organisation.
+# Headings here are required in every adopting repository's pull requests.
 .github/PULL_REQUEST_TEMPLATE/*   @SiddharthaGF
 
-# labels.yml — the label set. Mirrored by hand into every consuming repository's
-# manifest AND into the type-labels input of its policy.yml. A change here that
-# is not mirrored makes a gate unsatisfiable rather than merely strict.
+# Mirrored by hand into each adopting repository's manifest and `policy.yml`.
 .github/labels.yml     @SiddharthaGF
 
-# Issue templates — the forms in the issue chooser. Renaming a body field id
-# breaks bookmarked and prefilled links, and GitHub drops a label named here
-# without an error when the repository does not have it, so label changes in
-# these files are invisible until someone files a test issue.
+# A renamed field id breaks links; an unknown label is dropped silently.
 .github/ISSUE_TEMPLATE/*          @SiddharthaGF
 
-# ISSUE_STANDARD.md — prose, not data. It does not parse as YAML by design and
-# is not read by any tool, which means nothing validates the type list against
-# the templates. Editing it deserves the same care as editing a template.
+# Prose, read by no tool.
 .github/ISSUE_STANDARD.md         @SiddharthaGF
 
-# The release files — the only artifacts here that a machine rewrites without a pull
-# request, and the only workflow here that holds a write grant. `release.yml` decides
-# when a tag exists; the manifest is the current version, and `initial-version` in the
-# config decides what the FIRST tag claims. Raising that number above 0.1.0 asserts a
-# compatibility guarantee that no release has earned, and every repository that copies
-# this one inherits the claim.
+# Rewritten by a machine, and the only workflow with a write grant.
 release-please-config.json          @SiddharthaGF
 .release-please-manifest.json       @SiddharthaGF
 .github/workflows/release.yml       @SiddharthaGF
 
-# AGENTS.md — the instructions every agent and contributor reads before touching
-# this repository. A wrong claim in here propagates into every repository that
-# copies these files.
+# Read by every agent and contributor.
 /AGENTS.md               @SiddharthaGF
 
-# standards.local.example.yml — the schema every adopting repository copies when it
-# customizes the standard, and an interface another project implements a checker
-# against. Two blast radii rather than one: a wrong field name makes every
-# customization record unreadable, and a wrong rule here teaches repositories to
-# record deviations in a shape nobody can check.
+# A schema that adopting repositories copy and checkers read.
 .github/standards.local.example.yml   @SiddharthaGF
-# templates/AGENTS.md — the starting point for an adopting repository's agent
-# instructions. It ships UNFINISHED by design, so "it still has TODOs" is correct
-# and a completion requirement is deliberately unmet. Filling one in, or deleting
-# the banner that says it is a template, turns it into this repository's
-# instructions and leaves every future adopter copying a file about us.
-templates/AGENTS.md    @SiddharthaGF

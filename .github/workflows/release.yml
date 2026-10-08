@@ -1,68 +1,29 @@
+---
 name: release-please
 
-# Opens a release pull request carrying the version bump and the changelog, and once that
-# pull request merges, creates the tag and the GitHub release for it. Nothing is
-# published from here and nothing is released directly: the version bump is an ordinary
-# pull request that goes through the same `policy.yml` gates as any other change.
-#
-# `simple` rather than `node`: this repository has no package, no manifest to bump and
-# nothing to publish. Its version lives in exactly one place, `.release-please-manifest.json`,
-# and that file being the whole artifact is what makes `simple` the correct release type
-# here. A release type that edits a `package.json` would have nothing to edit.
-#
-# Scope note: this workflow is the only place in the repository that writes anything.
-# `policy.yml` runs its jobs on `permissions: {}` and widens per job, and nothing here is
-# reachable from there. The two workflows do not share a grant.
-on:
+"on":
   push:
     branches: [main]
+permissions: {}
 
-# The three scopes release-please documents as required: it opens a pull request, writes a
-# tag, creates a release, and applies its own `autorelease: pending` label through the issues
-# API. Declared at workflow level and again on the job, because the job-level block is the
-# one that applies and a reader who edits only one of them should not have to guess which.
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
-
-# One transaction per push. A second push while a run is open would re-plan the same changes
-# from a newer commit, and the older run would then open a release pull request describing a
-# changelog that is one merge out of date. The newer run wins and the older is dropped.
 concurrency:
   group: release-please-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # A new push must wait for a release in flight, not interrupt it halfway.
+  cancel-in-progress: false
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
       issues: write
       pull-requests: write
     steps:
-      # `AILURA_KITTY_TOKEN`, the same personal access token that `policy.yml` passes as
-      # `comment-token`. It is the right token here for authorship rather than for
-      # permissions, and that reason is worth stating because both grants would work:
-      # release-please creates its commit through the GitHub API, and GitHub attributes the
-      # author and the committer of a commit to whichever token made the call.
-      # release-please exposes no author setting — its only `author` and `committer`
-      # options live in the unrelated `code-suggester` module — so the token IS the author
-      # setting. With `GITHUB_TOKEN` every release commit is attributed to
-      # `github-actions[bot]`; with this token it is attributed to `AiluraKitty`, and the
-      # email follows the token, so the commit links to that account with nothing else
-      # configured.
-      #
-      # The trade, accepted deliberately: this credential now does two jobs. It is also the
-      # token that publishes the status comment on every pull request, so a leak reaches
-      # further than it did when it could only post a comment, and revoking it stops
-      # releases at the tag rather than merely mis-labelling them. A separate
-      # `RELEASE_PLEASE_TOKEN` would keep the blast radius of each to itself; the reason
-      # this reuses the existing one is that the two grants are the same scope on the same
-      # account, so a second token would be a second credential with the same authority
-      # rather than a narrower one.
+      # The PAT sets the commit author, since release-please has no author setting.
+      # See docs/releases.md.
       - uses: googleapis/release-please-action@v5
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          token: ${{ secrets.AILURA_KITTY_TOKEN }}
+          token: ${{ secrets.AILURA_RELEASE_TOKEN }}

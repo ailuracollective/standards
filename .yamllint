@@ -1,0 +1,27 @@
+---
+extends: default
+
+# Tool caches and local state, none of it repository content. Listed rather than read from
+# `.gitignore`, which is local-only and absent from a fresh clone.
+ignore: |
+  .atl/
+  .cache/
+  .codegraph/
+  .odd/
+  .venv/
+  odd/
+
+# The default profile, with every rule that it only warns about raised to an error, so a plain
+# `yamllint .` fails on them and `--strict` is not needed. The one other change is the line ceiling.
+rules:
+  comments:
+    level: error
+  comments-indentation:
+    level: error
+  document-start:
+    level: error
+  truthy:
+    level: error
+  line-length:
+    # The repository wraps at 95-114 columns; 120 is the lint ceiling.
+    max: 120

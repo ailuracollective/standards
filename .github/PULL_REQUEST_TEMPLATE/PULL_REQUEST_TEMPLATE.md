@@ -1,44 +1,24 @@
 # Pull Request
 
-<!--
-Catch-all for any type that has no dedicated template. If a template exists for your
-type under `.github/PULL_REQUEST_TEMPLATE/`, use that one instead — the body-structure
-gate reads the headings from the template that matches your title's type, so using the
-wrong template means writing the wrong headings.
-
-Types without a dedicated template here: see the directory listing. `style` and
-`revert` are covered; `build`, `chore`, and `ci` are covered. If your type is not in
-this directory, no per-type structure is enforced for it.
--->
-
-<!-- REPO OWNER: replace the Test plan block below with this repository's checks. -->
+<!-- Fallback for a title type with no template. Prefer that type's own template. -->
 
 ## Linked issue (required)
 
-<!-- The linked issue MUST carry the `status/ready` label. Apply exactly one of these
-closing keywords on its own line. `Refs #N` does NOT close the issue and does not satisfy
-this requirement. Bot pull requests are exempt; see `skip-actors` in `policy.yml`. -->
+<!-- The issue must carry `status/ready`. Use a closing keyword on its own line; `Refs #N` does not close it. -->
 
 Closes #
 
 ## Type (required)
 
-<!-- Check exactly ONE. This is the Conventional Commit type for your TITLE; the LABEL
-is separate and coarser: there are twelve title types and only five `type/*` labels.
-Apply exactly one `type/*` label. -->
+<!-- Check one. The title type and the label differ: twelve title types, five `type/*` labels. -->
 
 - [ ] `<type>`
-<!-- Check exactly ONE. The twelve allowed types are `breaking-change`, `build`, `chore`, `ci`,
-`docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, and `test`. The LABEL is separate
-and coarser: five `type/*` labels exist. Apply exactly one. -->
+
+<!-- Allowed: breaking-change, build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test. -->
 
 ## Test plan
 
-<!-- REPO OWNER: replace every line below with the checks CI actually runs in THIS
-     repository. The gate only requires that this heading exists, but a contributor
-     cannot verify a change from a template that lists commands this repository does
-     not have — a TypeScript repository cannot run `cargo test`. Keep this block in
-     sync with CI in the same pull request that changes CI. -->
+<!-- REPO OWNER: replace with the checks this repository's CI runs. -->
 
 - [ ] `TODO: lint and formatting`
 - [ ] `TODO: unit tests`
