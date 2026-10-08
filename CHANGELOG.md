@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/ailuracollective/standards/compare/v0.4.0...v0.5.0) (2026-10-08)
+
+
+### Features
+
+* configure CodeRabbit advisory reviews ([#29](https://github.com/ailuracollective/standards/issues/29)) ([85882a0](https://github.com/ailuracollective/standards/commit/85882a04ebfab7cdb2976d2cb1ea8eb63d69de26))
+
 ## [0.4.0](https://github.com/ailuracollective/standards/compare/v0.3.0...v0.4.0) (2026-10-08)
 
 
