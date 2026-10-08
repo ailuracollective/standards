@@ -34,8 +34,9 @@ deadlock the repository. See docs/enforcement.md.
 
 ## Adopting it
 
-Copy the five artifacts into the repository's own `.github/`. Four steps are not
-optional:
+Copy the five artifacts and `policy.yml` verbatim into the repository's own
+`.github/`; the skeletons it completes itself live in [`templates/`](templates/).
+Four steps are not optional:
 
 1. **Replace the `## Test plan` block in all 12 pull request templates.** Here they
    are `TODO` placeholders: structure is universal, commands are not (`vp check` and

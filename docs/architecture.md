@@ -27,6 +27,12 @@ The first five rows are **the standard**: what an adopting repository
 copies. The example file is opt-in (docs/customization.md). The last
 four serve this repository only and are not copied.
 
+`templates/` holds the parts of an adoption that are **skeletons**, not
+copies of a working file: `AGENTS.md`, and the `ci.yml` / `release.yml`
+workflows. Everything else — `policy.yml` and the five standard artifacts —
+is copied verbatim from the real files at the repository root. Nothing is
+duplicated, so nothing can drift.
+
 Facts that are easy to get wrong:
 
 - **`ISSUE_STANDARD.md` is prose, not data.** It was `ISSUE_STANDARD.yml` and did not
@@ -175,9 +181,8 @@ gh api /repos/ailuracollective/actions/commits/main --jq .sha   # equal means th
 
 ## Sync model
 
-This repository is the origin; each adopting repository holds its own copy under its
-own `.github/`. **Edits here do not propagate.** There is no workflow, submodule or
-bot. Copies are manual and drift is expected.
+The rule is in the organisation conventions: the standard is copied by hand, and
+nothing propagates. What follows is this repository's detail behind that rule.
 
 Three layers drift independently:
 

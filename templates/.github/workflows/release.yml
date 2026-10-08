@@ -1,0 +1,45 @@
+---
+name: release-please
+
+# Template: technology-agnostic on purpose. The skeleton below is complete and
+# the invariants are deliberate — do not weaken them when filling the step:
+#
+# - `cancel-in-progress: false`: a new push must wait for a release in flight,
+#   not interrupt it halfway.
+# - A dedicated PAT (`AILURA_RELEASE_TOKEN`), not the workflow's `GITHUB_TOKEN`:
+#   the token's holder becomes the author of release commits. Keep it separate
+#   from `AILURA_PR_COMPLIANCE_TOKEN`, which writes the policy status comment.
+# - Release pull requests are exempt from the policy gate by head ref
+#   (`release-please--branches--*`), never by actor. See policy.yml.
+#
+# REPO OWNER: add the release step (see ailuracollective/standards
+# docs/releases.md) once this repository has something to release.
+#
+# Copy this file to `.github/workflows/release.yml` in the adopting repository
+# and replace the placeholder step with that repository's own release step. The
+# real workflow this repository runs lives at `.github/workflows/release.yml`.
+
+"on":
+  push:
+    branches: [main]
+permissions: {}
+
+concurrency:
+  group: release-please-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      # REPO OWNER: replace with the release step
+      # (see ailuracollective/standards docs/releases.md) once this repository
+      # has something to release. The step is a visible placeholder on purpose:
+      # an empty `steps` fails workflow validation.
+      - name: Release
+        run: 'echo "TODO: the release automation step"'

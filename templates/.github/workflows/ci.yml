@@ -1,0 +1,37 @@
+---
+name: CI
+
+# Template: technology-agnostic on purpose. The skeleton below (permissions,
+# concurrency, checkout, timeouts) is complete; the check steps are not, because
+# the commands belong to the stack the adopting repository chooses — not to the
+# template. Nothing here runs a check until those steps are written.
+#
+# REPO OWNER: add this repository's own checks, one step per check, each with
+# `if: ${{ !cancelled() }}` so a single run reports every failure instead of
+# stopping at the first. Never name a command the repository cannot run.
+#
+# Copy this file to `.github/workflows/ci.yml` in the adopting repository and add
+# that repository's own checks. The real workflow this repository runs lives at
+# `.github/workflows/ci.yml`.
+
+"on":
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint and format
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
