@@ -15,14 +15,6 @@ body:
       required: true
 
   - type: textarea
-    id: question
-    attributes:
-      label: Question
-      description: What needs to be answered?
-    validations:
-      required: true
-
-  - type: textarea
     id: goal
     attributes:
       label: Goal
@@ -51,14 +43,6 @@ body:
       required: true
 
   - type: textarea
-    id: deliverable
-    attributes:
-      label: Deliverable
-      description: What the investigation should produce (findings, recommendation, decision).
-    validations:
-      required: true
-
-  - type: textarea
     id: non-goals
     attributes:
       label: Non-goals
@@ -77,3 +61,19 @@ body:
       description: >-
         Links or paths to authoritative context. A path is a navigation hint
         unless the issue explicitly states that modifying that file is required.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What needs to be answered?
+    validations:
+      required: true
+
+  - type: textarea
+    id: deliverable
+    attributes:
+      label: Deliverable
+      description: What the investigation should produce (findings, recommendation, decision).
+    validations:
+      required: true

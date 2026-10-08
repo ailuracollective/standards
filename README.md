@@ -38,7 +38,7 @@ deadlock the repository. See docs/enforcement.md.
 
 Copy the artifacts and `policy.yml` verbatim into the repository's own
 `.github/`; the skeletons it completes itself live in [`templates/`](templates/).
-Four steps are not optional:
+Five steps are not optional:
 
 1. **Replace the `## Verification` block in all pull request templates.** Here they
    are generic evidence prompts: structure is universal, commands are not. Do it in

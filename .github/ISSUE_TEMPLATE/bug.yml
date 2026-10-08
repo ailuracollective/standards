@@ -15,22 +15,6 @@ body:
       required: true
 
   - type: textarea
-    id: observed-behavior
-    attributes:
-      label: Observed behavior
-      description: What currently happens.
-    validations:
-      required: true
-
-  - type: textarea
-    id: expected-behavior
-    attributes:
-      label: Expected behavior
-      description: What should happen instead.
-    validations:
-      required: true
-
-  - type: textarea
     id: goal
     attributes:
       label: Goal
@@ -58,12 +42,6 @@ body:
       required: true
 
   - type: textarea
-    id: reproduction
-    attributes:
-      label: Reproduction
-      description: The smallest reliable reproduction.
-
-  - type: textarea
     id: non-goals
     attributes:
       label: Non-goals
@@ -82,3 +60,25 @@ body:
       description: >-
         Links or paths to authoritative context. A path is a navigation hint
         unless the issue explicitly states that modifying that file is required.
+
+  - type: textarea
+    id: observed-behavior
+    attributes:
+      label: Observed behavior
+      description: What currently happens.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: What should happen instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: The smallest reliable reproduction.

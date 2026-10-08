@@ -99,13 +99,24 @@ def validate_issue_templates(contract, templates, labels):
                     f"Issue type '{type_name}': label '{label}' not found in labels.yml"
                 )
 
-        # Check sections (skip markdown blocks — they have no id)
+        # Collect input fields. `markdown` elements have no id; every other
+        # element must carry one, or the template is malformed.
         extra_ids = [s["id"] for s in type_contract.get("extra", [])]
         expected_sections = common_ids + extra_ids
-        actual_sections = [
-            field["id"] for field in template.get("body", [])
-            if field.get("type") != "markdown" and "id" in field
-        ]
+        input_fields = []
+        actual_sections = []
+        for index, field in enumerate(template.get("body", [])):
+            if field.get("type") == "markdown":
+                continue
+            field_id = field.get("id")
+            if not field_id:
+                errors.append(
+                    f"Issue type '{type_name}': body element {index} of type "
+                    f"'{field.get('type')}' is missing a required id"
+                )
+                continue
+            input_fields.append((field, field_id))
+            actual_sections.append(field_id)
 
         # Check that all expected sections are present
         missing = set(expected_sections) - set(actual_sections)
@@ -115,31 +126,21 @@ def validate_issue_templates(contract, templates, labels):
             )
 
         # Check that there are no extra sections
-        extra = set(actual_sections) - set(expected_sections)
-        if extra:
+        unexpected = set(actual_sections) - set(expected_sections)
+        if unexpected:
             errors.append(
-                f"Issue type '{type_name}': unexpected sections {sorted(extra)}"
+                f"Issue type '{type_name}': unexpected sections {sorted(unexpected)}"
             )
 
-        # Check that common sections appear in the correct relative order
-        common_in_template = [s for s in actual_sections if s in common_ids]
-        if common_in_template != common_ids:
+        # Check that the full sequence matches the contract exactly: the common
+        # sections first, then the type-specific sections.
+        if actual_sections != expected_sections:
             errors.append(
-                f"Issue type '{type_name}': common sections {common_in_template} != expected {common_ids}"
+                f"Issue type '{type_name}': sections {actual_sections} != expected {expected_sections}"
             )
 
-        # Check that type-specific sections appear in the correct relative order
-        extra_in_template = [s for s in actual_sections if s in extra_ids]
-        if extra_in_template != extra_ids:
-            errors.append(
-                f"Issue type '{type_name}': type-specific sections {extra_in_template} != expected {extra_ids}"
-            )
-
-        # Check required/optional validation (skip markdown blocks)
-        for field in template.get("body", []):
-            if field.get("type") == "markdown" or "id" not in field:
-                continue
-            field_id = field["id"]
+        # Check required/optional validation
+        for field, field_id in input_fields:
             is_required = field.get("validations", {}).get("required", False)
 
             # Find the section in the contract
