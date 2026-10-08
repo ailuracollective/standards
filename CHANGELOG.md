@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/ailuracollective/standards/compare/v0.3.0...v0.4.0) (2026-10-08)
+
+
+### Features
+
+* add canonical issue and PR contract with drift detection ([#26](https://github.com/ailuracollective/standards/issues/26)) ([77e22cf](https://github.com/ailuracollective/standards/commit/77e22cf912f66905ebc7aa5a02b2180fd0b0077b))
+
 ## [0.3.0](https://github.com/ailuracollective/standards/compare/v0.2.0...v0.3.0) (2026-10-08)
 
 
