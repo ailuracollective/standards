@@ -57,6 +57,7 @@ def validate_issue_templates(contract, templates, labels):
     errors = []
     issue_contract = contract["issue"]
     common_ids = [s["id"] for s in issue_contract["common"]]
+    matched_stems = set()
 
     for type_name, type_contract in issue_contract["types"].items():
         # Find all templates matching this type's title prefix
@@ -80,6 +81,7 @@ def validate_issue_templates(contract, templates, labels):
             )
             continue
 
+        matched_stems.add(matching[0][0])
         template = matching[0][1]
 
         # Check labels
@@ -158,6 +160,13 @@ def validate_issue_templates(contract, templates, labels):
                     errors.append(
                         f"Issue type '{type_name}' field '{field_id}': required={is_required} != expected {expected_required}"
                     )
+
+    # Check for templates that don't match any contract type
+    unmatched = set(templates.keys()) - matched_stems
+    if unmatched:
+        errors.append(
+            f"Unmatched issue templates (no contract type): {sorted(unmatched)}"
+        )
 
     return errors
 
