@@ -109,6 +109,7 @@ header is the reference for the sections.
 
 ## Agent instructions
 
+- An agent that opens a pull request opens it as a draft.
 - Every repository has an `AGENTS.md` at its root. Agents read the nearest one
   above the file they are editing; the deeper file wins for the paths it covers.
 - `AGENTS.md` links these conventions and does not restate them. If a rule is not
