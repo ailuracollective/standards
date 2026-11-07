@@ -47,7 +47,6 @@ after comparing each destination with its existing contents:
 | `.github/labels.yml` | `.github/labels.yml` |
 | `.github/CODEOWNERS` | `.github/CODEOWNERS` |
 | `.github/workflows/policy.yml` | `.github/workflows/policy.yml` |
-| `scripts/validate_contract.py` | `scripts/validate_contract.py` |
 
 Copy the organization's
 [conventions](../.agents/organization-conventions.md) to
@@ -76,16 +75,64 @@ not ready-to-run files. Inspect the actual paths and contents before use.
 - Complete every `TODO` in the target's `AGENTS.md`; preserve its
   repository-specific instructions and mandatory organization links.
   Do not replace an existing valid `AGENTS.md` wholesale.
-- Adapt CI to the target's real stack and commands. Include contract
-  validation in CI after copying the validator.
-- Configure release automation for the target only if applicable;
-  placeholder release steps and source-repository release settings
-  are not usable as-is.
+- Adapt CI to the target's real stack and test commands; do not install the
+  source-only contract validator in the target.
+- Ask separately whether automated releases and deployment are needed;
+  neither is required for standards adoption.
 - Replace the generic `## Verification` section in **every** PR
   template with evidence prompts and commands that actually apply to
   the target repository when wiring up CI.
 
-### 3. Reconcile labels and policy
+### 3. Choose release and deployment options
+
+Before configuring release or deployment workflows, **ask the owner**:
+
+1. Should the project automatically version packages, generate changelogs,
+   create tags or GitHub releases, or publish packages? Which packages?
+2. Does it need deployment? If so, to which hosting provider, environment,
+   and region, with what approval and rollback requirements? Deployment
+   and releases are separate decisions; either, both, or neither may apply.
+3. Which languages, frameworks, package managers, and build artifacts
+   are in use? Inspect manifests and workflows and confirm assumptions.
+
+Recommend options suited to the detected stack: npm for Node.js/TypeScript
+packages, PyPI for Python packages, Maven repositories for JVM libraries,
+or container registries for container-based services. Applications may
+deploy to Cloud Run, Kubernetes, or an existing approved hosting service.
+These are **examples**, not default requirements. Confirm the choice
+with the owner before creating any configuration.
+
+For automatic versioning, changelogs, and GitHub releases, normally
+propose [Google Release Please](https://github.com/googleapis/release-please).
+It is optional and **does not perform deployment**. If selected:
+
+- Configure `.github/workflows/release.yml`,
+  `release-please-config.json`, and
+  `.release-please-manifest.json` according to the target's package
+  type, existing version, paths, and release branch. Do not assume
+  the standards repository's `simple` release type is applicable.
+- Configure the release labels that the chosen technology actually uses.
+  This standards repository overrides Release Please's default
+  `autorelease: pending` and `autorelease: tagged` labels with custom
+  `release/pending` and `release/tagged` labels via its `label`
+  and `release-label` settings. These are **not universal** labels:
+  decide which names the target will use, reconcile only those names
+  in its manifest and remote GitHub labels, and obtain approval.
+- Verify release PR behavior against the target's pull request policy.
+  If an exemption is needed, scope it to release branches, not every
+  PR authored by a bot account.
+- Configure target-specific credentials, permissions, and secrets.
+  Do not copy this repository's tokens or assume its token names apply.
+
+If no releases are requested, do not install the placeholder release
+workflow, release secrets, or release labels. If there is no deployment,
+do not create deployment workflows, environments, or credentials. For
+deployments that are requested, document build, delivery, approval, and
+rollback independently from Release Please.
+
+See [releases](releases.md) for the source repository's implementation.
+
+### 4. Reconcile labels and policy
 
 Treat the target's remote GitHub labels, manifest, and policy inputs as
 three separate records that must agree.
@@ -93,11 +140,13 @@ three separate records that must agree.
 1. Inspect remote label names in the target repository:
 
    ```sh
-   gh label list --limit 100 --json name --jq '.[].name' | sort
+   gh api --paginate --slurp 'repos/{owner}/{repo}/labels?per_page=100' \
+     --jq '[.[][] | .name] | sort | .[]'
    ```
 
-2. Compare them with `.github/labels.yml` and every label referenced
-   by issue templates and workflows. Reconcile the target's manifest
+2. Use the **complete paginated inventory** for both comparison and
+   post-installation verification. Compare all remote labels against
+   `.github/labels.yml` and names referenced by templates and workflows. Reconcile the target's manifest
    shape and any label-management recipe before replacing it. Do not
    assume copying the manifest creates GitHub labels.
 3. With authorization, create or update missing or mismatched remote
@@ -114,28 +163,45 @@ three separate records that must agree.
    configure the policy's `default-template` input accordingly;
    the action otherwise assumes `.github/PULL_REQUEST_TEMPLATE.md`.
 
-See [architecture](architecture.md) for the label sync model and
-[customization](customization.md) for permitted deviations.
+A target may retain an approved manifest with a top-level `labels:`
+mapping rather than the source's top-level list. Preserve its valid
+structure and reconcile the actual entries against templates, policy,
+and remote labels. **Do not copy or adapt the source-only validator**.
 
-### 4. Wire up validation and repository permissions
+For policy status comments, the source workflow uses
+`AILURA_PR_COMPLIANCE_TOKEN` and a fixed `comment-author`. A target
+must configure its own suitably scoped `pull-requests: write` token,
+set the appropriate `comment-token` and matching `comment-author`
+in both relevant policy jobs, and verify that comments appear on a
+test PR. Alternatively, disable status comments if supported by the
+policy action, record the approved deviation, and check the rest of
+the policy independently. Do not widen read-only checker job
+permissions just to post comments.
 
-Run the copied contract validator in the target with PyYAML available:
+See [architecture](architecture.md) for label reconciliation and
+[customization](customization.md) for approved deviations.
 
-```sh
-uv run --with PyYAML python scripts/validate_contract.py
-```
+### 5. Validate the adopted configuration and permissions
 
-Add the same check to the target's CI workflow. Ensure CI runs the
-target's real lint, build, and test commands rather than placeholders.
-Confirm that `CODEOWNERS` refers to accounts with the appropriate
-repository permissions and that branch rules and required checks
-actually exist; a committed `CODEOWNERS` file does not enforce reviews
-on its own.
+`scripts/validate_contract.py` is **internal to the standards source
+repository**. Do not copy it or add it to a target's CI. Instead,
+compare the target's copied files against the pinned source revision
+and verify that its templates, policy inputs, and remote GitHub
+labels are consistent. Adopters do not require Python or `uv`
+to validate this documentation-based adoption.
 
-Inspect the target's policy and release workflows before supplying
-secrets or permissions. Never copy token values from another repository,
-print them in logs, or assume source-repository credentials are valid
-for the target.
+Configure real stack-specific lint, build, and test commands in the
+target's CI. Ask its maintainers to confirm **each** `CODEOWNERS`
+account before adopting source owners: the standard repository's
+`@SiddharthaGF` must not inadvertently own target files. Preserve
+the catch-all rule, record approved owner deviations, and check that
+the selected owners have appropriate permissions. Verify branch
+protection and required checks in the target's actual settings;
+`CODEOWNERS` alone cannot enforce reviews.
+
+Inspect policy and optional release/deployment workflows before
+supplying secrets. Never copy token values between repositories
+or print them in logs.
 
 ## Verify the adoption
 
@@ -143,15 +209,17 @@ In the target repository, check and record the results of all of these:
 
 1. Every relative link in the completed `AGENTS.md` resolves; there
    are no `TODO` markers or unused template placeholders.
-2. `uv run --with PyYAML python scripts/validate_contract.py`
-   succeeds against the copied contract, templates, and labels.
+2. Copied artifacts match the pinned source revision or have
+   approved deviations, with the templates, policy configuration,
+   and labels checked without a copied validator.
 3. All labels used by forms and policy inputs exist on the target's
    GitHub remote, with the expected names.
 4. The policy points at the actual default PR template and has
    consistent `type-labels`, `title-types`, and status labels.
-5. Target-specific CI and release workflows contain real, reviewed
-   configuration; required checks, reviewers, and permissions are
-   validated against the target repository rather than assumed.
+5. CI uses real project commands. Optional release and deployment
+   workflows exist only if requested, with checked technology-specific
+   labels, credentials, destinations, approvals, and rollback plans.
+   Required checks, reviewers, and permissions reflect the target.
 6. The adoption pull request lists the source revision, files copied,
    intentional deviations, commands run, observed output, and any
    approvals or follow-up work still required.
