@@ -26,18 +26,19 @@ no test suite.
 | `release-please-config.json` + `.release-please-manifest.json` | the release type, and the current version | release-please                                                         |
 | `.coderabbit.yaml`                                             | the advisory review bot                   | CodeRabbit                                                             |
 
-The shared standard artifacts above are copied into adopting
-repositories **except** `scripts/validate_contract.py`, which is an
-internal source-repository validator. The customization example is
-opt-in (docs/customization.md). Source-specific infrastructure is
-not copied into adopting repositories.
+An adopting repository copies `CONTRACT.yml`, `ISSUE_STANDARD.md`,
+`labels.yml`, the issue and pull request templates, and `policy.yml`
+(after reconciling its inputs). It copies the `CODEOWNERS`
+**structure** and replaces every owner line; it does not adopt this
+repository's owners. `scripts/validate_contract.py` is an internal
+source-repository validator and is not copied. `ci.yml`, `release.yml`,
+the release files and `.coderabbit.yaml` serve this repository only.
+The customization example is opt-in (docs/customization.md).
 
 `templates/` holds the parts of an adoption that are **skeletons**, not
 copies of a working file: `AGENTS.md`, and the `ci.yml` / `release.yml`
-workflows. Release automation is optional; deployment is an
-independent choice. The `policy.yml` workflow and canonical standard
-artifacts are copied from this root after reconciling approved local
-changes. The source-only validator is not copied.
+workflows. Release automation is optional; deployment is an independent
+choice.
 
 Facts that are easy to get wrong:
 

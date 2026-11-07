@@ -89,7 +89,8 @@ the defect that fails silently — configuration naming something that does not 
 
 ```sh
 # 1. which labels exist on the remote? Every label a template or workflow names must be here.
-gh label list --limit 100 --json name --jq '.[].name' | sort
+gh api --paginate --slurp 'repos/{owner}/{repo}/labels?per_page=100' \
+  --jq '[.[][] | .name] | sort | .[]'
 
 # 2. which labels do the gate's inputs name?
 grep -A3 'type-labels:\|approved-label:\|auto-label-name:' .github/workflows/policy.yml

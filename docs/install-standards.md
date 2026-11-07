@@ -45,7 +45,6 @@ after comparing each destination with its existing contents:
 | `.github/ISSUE_TEMPLATE/` | `.github/ISSUE_TEMPLATE/` |
 | `.github/PULL_REQUEST_TEMPLATE/` | `.github/PULL_REQUEST_TEMPLATE/` |
 | `.github/labels.yml` | `.github/labels.yml` |
-| `.github/CODEOWNERS` | `.github/CODEOWNERS` |
 | `.github/workflows/policy.yml` | `.github/workflows/policy.yml` |
 
 Copy the organization's
@@ -77,6 +76,10 @@ not ready-to-run files. Inspect the actual paths and contents before use.
   Do not replace an existing valid `AGENTS.md` wholesale.
 - Adapt CI to the target's real stack and test commands; do not install the
   source-only contract validator in the target.
+- Rewrite `.github/CODEOWNERS`: copy the pattern structure, never the owner
+  list. The source's catch-all `* @SiddharthaGF` would make an outsider the
+  code owner of every target file and, with required code-owner review, no
+  pull request could satisfy the gate.
 - Ask separately whether automated releases and deployment are needed;
   neither is required for standards adoption.
 - Replace the generic `## Verification` section in **every** PR
@@ -157,7 +160,10 @@ three separate records that must agree.
    `type-labels` must name the actual `type/*` labels,
    `title-types` must name PR title types, and
    `approved-label` / `auto-label-name` must resolve to real
-   status labels. Do not conflate the type and title vocabularies.
+   status labels. `branch-types` in the branch-validation job must
+   match the same title vocabulary minus `breaking-change`, or every
+   branch is rejected; review `title-min` / `title-max` and
+   `skip-actors` too. Do not conflate the type and title vocabularies.
 5. Check where the default PR template is stored. If it lives in
    `.github/PULL_REQUEST_TEMPLATE/PULL_REQUEST_TEMPLATE.md`,
    configure the policy's `default-template` input accordingly;
