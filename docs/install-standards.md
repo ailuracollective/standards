@@ -173,9 +173,9 @@ For policy status comments, the source workflow uses
 must configure its own suitably scoped `pull-requests: write` token,
 set the appropriate `comment-token` and matching `comment-author`
 in both relevant policy jobs, and verify that comments appear on a
-test PR. Alternatively, disable status comments if supported by the
-policy action, record the approved deviation, and check the rest of
-the policy independently. Do not widen read-only checker job
+test PR. Alternatively, set `enable-status-comment: false` in both jobs,
+remove the unused comment credentials, document the approved
+deviation, and verify the remaining policy checks independently. Do not widen read-only checker job
 permissions just to post comments.
 
 See [architecture](architecture.md) for label reconciliation and
