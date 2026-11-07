@@ -197,11 +197,11 @@ labels are consistent. Adopters do not require Python or `uv`
 to validate this documentation-based adoption.
 
 Configure real stack-specific lint, build, and test commands in the
-target's CI. Ask its maintainers to confirm **each** `CODEOWNERS`
-account before adopting source owners: the standard repository's
-`@SiddharthaGF` must not inadvertently own target files. Preserve
-the catch-all rule, record approved owner deviations, and check that
-the selected owners have appropriate permissions. Verify branch
+target's CI. Confirm **each** `CODEOWNERS` account with the target's
+maintainers and check that it has write access: the standard
+repository's `@SiddharthaGF` is not a reviewer there. Preserve the
+catch-all rule, record approved owner deviations, and check that the
+selected owners have appropriate permissions. Verify branch
 protection and required checks in the target's actual settings;
 `CODEOWNERS` alone cannot enforce reviews.
 
