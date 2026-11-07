@@ -26,15 +26,18 @@ no test suite.
 | `release-please-config.json` + `.release-please-manifest.json` | the release type, and the current version | release-please                                                         |
 | `.coderabbit.yaml`                                             | the advisory review bot                   | CodeRabbit                                                             |
 
-The first seven rows are **the standard**: what an adopting repository
-copies. The example file is opt-in (docs/customization.md). The last
-five serve this repository only and are not copied.
+The shared standard artifacts above are copied into adopting
+repositories **except** `scripts/validate_contract.py`, which is an
+internal source-repository validator. The customization example is
+opt-in (docs/customization.md). Source-specific infrastructure is
+not copied into adopting repositories.
 
 `templates/` holds the parts of an adoption that are **skeletons**, not
 copies of a working file: `AGENTS.md`, and the `ci.yml` / `release.yml`
-workflows. Everything else — `policy.yml`, `scripts/validate_contract.py`,
-and the standard artifacts — is copied verbatim from the real files at the
-repository root. Nothing is duplicated, so nothing can drift.
+workflows. Release automation is optional; deployment is an
+independent choice. The `policy.yml` workflow and canonical standard
+artifacts are copied from this root after reconciling approved local
+changes. The source-only validator is not copied.
 
 Facts that are easy to get wrong:
 
@@ -108,19 +111,16 @@ uv run python scripts/validate_contract.py
 
 ### Contract validation
 
-`scripts/validate_contract.py` is part of the standard: an adopting
-repository copies it by hand alongside `CONTRACT.yml` and the templates.
-It imports PyYAML, so run it in an environment that provides it:
+`scripts/validate_contract.py` verifies the canonical contract
+against the templates **in this standards source repository**.
+It must not be copied into adopting repositories or added to
+their CI. Adopters instead compare files against their pinned
+source revision and verify the target's templates, policy inputs,
+and GitHub labels directly.
 
-```sh
-uv run --with PyYAML python scripts/validate_contract.py
-```
-
-Wire the same command into the repository's CI (here, the *Contract
-validation* step in `.github/workflows/ci.yml`). The check fails when a
-template's sections, headings, labels, or taxonomy mappings drift from
-`CONTRACT.yml`. Because it runs against the copied files, an adopter gets
-the same drift detection this repository does.
+Automated releases and deployment are independent opt-in choices
+for the target repository, based on its stack and owner approval.
+See [installation guidance](install-standards.md).
 
 ### The invariant: one type, one template, one title prefix
 
