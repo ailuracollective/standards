@@ -29,6 +29,14 @@ sync model, and the copy divergences are in docs/architecture.md.
 Root documents: `README.md` (human entry point), `CONTRIBUTING.md` (how to
 contribute), `CHANGELOG.md` (written by release-please).
 
+## Installing the standards in another repository
+
+AI agents tasked with adopting these standards must read the
+[installation guide](docs/install-standards.md) before changing a target
+repository. The guide covers canonical files, repository-specific setup,
+label reconciliation, and verification. Follow the target repository's
+own agent instructions and preserve approved local customizations.
+
 ## Critical invariants
 
 ### Canonical contract
