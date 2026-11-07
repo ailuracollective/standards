@@ -55,11 +55,17 @@ Five steps are not optional:
    keep it at `.github/PULL_REQUEST_TEMPLATE.md`. The gate defaults to the second, so
    set `default-template` if you use the first — otherwise the body-structure check
    resolves to nothing.
-5. **Wire the contract validator into CI.** Copy `scripts/validate_contract.py` into
-   the repository and run it with PyYAML available:
-   `uv run --with PyYAML python scripts/validate_contract.py`. The check fails when
-   templates drift from `.github/CONTRACT.yml` — see *Contract validation* in
-   docs/architecture.md.
+5. **Verify the copied artifacts against their source revision.**
+   The contract validator is an internal check for this standards
+   repository only; do not copy it or add it to adopting repositories'
+   CI. Check templates, policy inputs, and remote labels for consistency.
+
+Ask whether the project needs automated releases and deployment as
+**separate decisions**. Recommend options based on its actual
+languages and operational requirements. Google Release Please is a
+common option for GitHub releases, not mandatory. Configure only
+the workflows, labels, and secrets required by the chosen solution.
+See the [agent installation guide](docs/install-standards.md).
 
 ## If the repository deviates from the standard
 
@@ -83,7 +89,8 @@ the defect that fails silently — configuration naming something that does not 
 
 ```sh
 # 1. which labels exist on the remote? Every label a template or workflow names must be here.
-gh label list --limit 100 --json name --jq '.[].name' | sort
+gh api --paginate --slurp 'repos/{owner}/{repo}/labels?per_page=100' \
+  --jq '[.[][] | .name] | sort | .[]'
 
 # 2. which labels do the gate's inputs name?
 grep -A3 'type-labels:\|approved-label:\|auto-label-name:' .github/workflows/policy.yml
