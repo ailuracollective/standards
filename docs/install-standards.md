@@ -205,6 +205,14 @@ or print them in logs.
 
 ## Verify the adoption
 
+Before merging a change to this installation guide, complete its adoption
+workflow in a separate, authorized test repository. Record the steps performed,
+commands and checks run, their outcomes, and any failures or deviations.
+Compare all required label names against that test repository's **GitHub remote**
+using the complete paginated inventory described above, and record the results.
+Do not consider this pre-merge test complete until the workflow and remote-label
+checks have verifiable evidence in the pull request.
+
 In the target repository, check and record the results of all of these:
 
 1. Every relative link in the completed `AGENTS.md` resolves; there
