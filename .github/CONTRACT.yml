@@ -7,7 +7,8 @@
 #
 # The contract defines what information is required for each type of work,
 # separating repository policy (in guidance/automation) from task definition
-# (in issues) and implementation evidence (in PRs).
+# (in issues) and implementation evidence (in PRs). It also defines canonical
+# issue-label policy where that policy is part of the shared contract.
 
 issue:
   # Sections common to all issue types, in order.
@@ -124,6 +125,35 @@ issue:
             What the investigation should produce (findings, recommendation,
             decision).
           required: true
+
+  # Canonical issue complexity classification. Complexity expresses
+  # implementation uncertainty and difficulty independent of effort estimates
+  # and AI providers. Classification can change as evidence emerges.
+  complexity:
+    description: >-
+      Canonical implementation-complexity classification for issues. Complexity
+      expresses uncertainty and implementation difficulty independent of effort
+      estimates and AI providers. Classification can change as evidence emerges.
+    cardinality: at-most-one
+    required_for:
+      - status/ready
+    labels:
+      - name: complexity/low
+        description: >-
+          Scope and approach are clear; implementation risk is low with no
+          significant unknowns.
+      - name: complexity/medium
+        description: >-
+          Scope is understood, but work involves bounded design choices or
+          limited coordination.
+      - name: complexity/high
+        description: >-
+          Scope or approach has significant unknowns, cross-cutting impact, or
+          elevated risk.
+      - name: complexity/unknown
+        description: >-
+          Evidence is insufficient to classify; use until evidence supports low,
+          medium, or high.
 
 pr:
   # Sections common to all PR types, in order.

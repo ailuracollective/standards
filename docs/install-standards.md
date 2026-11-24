@@ -137,8 +137,8 @@ See [releases](releases.md) for the source repository's implementation.
 
 ### 4. Reconcile labels and policy
 
-Treat the target's remote GitHub labels, manifest, and policy inputs as
-three separate records that must agree.
+Treat the target's remote GitHub labels, manifest, policy inputs, and live
+issue-label state as records that must agree.
 
 1. Inspect remote label names in the target repository:
 
@@ -149,14 +149,24 @@ three separate records that must agree.
 
 2. Use the **complete paginated inventory** for both comparison and
    post-installation verification. Compare all remote labels against
-   `.github/labels.yml` and names referenced by templates and workflows. Reconcile the target's manifest
-   shape and any label-management recipe before replacing it. Do not
-   assume copying the manifest creates GitHub labels.
+   `.github/labels.yml`, including all four canonical `complexity/*` labels,
+   not only labels named by forms or workflows. Reconcile the target's manifest
+   shape and any label-management recipe before replacing it. Preserve approved
+   local customizations in `.github/standards.local.yml`. Do not assume copying
+   the manifest creates GitHub labels.
 3. With authorization, create or update missing or mismatched remote
    labels using the target's reviewed manifest and a documented
    reconciliation procedure. Verify the result against the remote API.
-   Do not delete unrelated labels.
-4. Check the target `.github/workflows/policy.yml`:
+   Do not delete unrelated labels. If the target already uses `complexity/*`
+   names with different meanings, stop and reconcile that conflict as an
+   explicit customization decision before applying the canonical labels.
+4. Audit existing issue assignments. Every issue carrying `status/ready` must
+   have exactly one `complexity/*` label; `complexity/unknown` is valid when
+   evidence is insufficient. If an issue has conflicting complexity labels, keep
+   the one supported by current evidence and remove the others. Document the
+   migration path for existing issues and record any issues that still need
+   human classification.
+5. Check the target `.github/workflows/policy.yml`:
    `type-labels` must name the actual `type/*` labels,
    `title-types` must name PR title types, and
    `approved-label` / `auto-label-name` must resolve to real
@@ -164,7 +174,7 @@ three separate records that must agree.
    match the same title vocabulary minus `breaking-change`, or every
    branch is rejected; review `title-min` / `title-max` and
    `skip-actors` too. Do not conflate the type and title vocabularies.
-5. Check where the default PR template is stored. If it lives in
+6. Check where the default PR template is stored. If it lives in
    `.github/PULL_REQUEST_TEMPLATE/PULL_REQUEST_TEMPLATE.md`,
    configure the policy's `default-template` input accordingly;
    the action otherwise assumes `.github/PULL_REQUEST_TEMPLATE.md`.
@@ -226,15 +236,17 @@ In the target repository, check and record the results of all of these:
 2. Copied artifacts match the pinned source revision or have
    approved deviations, with the templates, policy configuration,
    and labels checked without a copied validator.
-3. All labels used by forms and policy inputs exist on the target's
-   GitHub remote, with the expected names.
-4. The policy points at the actual default PR template and has
+3. All labels used by forms, policy inputs, and the canonical complexity
+   contract exist on the target's GitHub remote, with the expected names.
+4. Existing `status/ready` issues have exactly one `complexity/*` label, or
+   any unresolved cases are explicitly recorded as not verified.
+5. The policy points at the actual default PR template and has
    consistent `type-labels`, `title-types`, and status labels.
-5. CI uses real project commands. Optional release and deployment
+6. CI uses real project commands. Optional release and deployment
    workflows exist only if requested, with checked technology-specific
    labels, credentials, destinations, approvals, and rollback plans.
    Required checks, reviewers, and permissions reflect the target.
-6. The adoption pull request lists the source revision, files copied,
+7. The adoption pull request lists the source revision, files copied,
    intentional deviations, commands run, observed output, and any
    approvals or follow-up work still required.
 

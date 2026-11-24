@@ -47,8 +47,8 @@ Facts that are easy to get wrong:
   CONTRACT.yml and a template disagree, the template is wrong.
 - **`ISSUE_STANDARD.md` is documentation, not data.** It describes the
   contract for humans. It is not parsed by any tool.
-- **`labels.yml` is a reviewed record, not configuration.** GitHub does not read it
-  and no CI parses it. Editing it changes no remote.
+- **`labels.yml` is a reviewed record, not configuration.** GitHub does not read it;
+  CI validates it against CONTRACT.yml, but editing it changes no remote.
 - **`policy.yml` never runs code under review.** The action checks out the base
   branch, so nothing from the head reaches a runner holding a token.
 - **`release.yml` is the only workflow that writes**, and the release files are the
@@ -96,6 +96,8 @@ issue and PR contract. It defines:
 - **Issue common sections**: Context, Goal, Scope, Acceptance criteria,
   Non-goals (optional), Constraints (optional), References (optional)
 - **Issue type-specific deltas**: only Bug and Spike add sections
+- **Issue complexity classification**: canonical `complexity/*` labels,
+  at-most-one cardinality, and the `status/ready` requirement
 - **PR common sections**: Linked issue, Summary, Changes, Verification,
   Risk / compatibility (optional), Migration (optional)
 - **PR type-specific deltas**: only breaking-change, perf, ci, and build
@@ -113,11 +115,14 @@ uv run python scripts/validate_contract.py
 ### Contract validation
 
 `scripts/validate_contract.py` verifies the canonical contract
-against the templates **in this standards source repository**.
-It must not be copied into adopting repositories or added to
-their CI. Adopters instead compare files against their pinned
-source revision and verify the target's templates, policy inputs,
-and GitHub labels directly.
+against the templates and label manifest **in this standards source repository**.
+It checks issue/PR template structure, taxonomy mappings, and the canonical
+complexity label policy. It must not be copied into adopting repositories or
+added to their CI. Adopters instead compare files against their pinned source
+revision and verify the target's templates, policy inputs, remote labels, and
+live issue-label state directly. The validator cannot verify live GitHub issue
+assignments; complexity readiness enforcement on issue events remains
+procedural unless a repository adds its own automation.
 
 Automated releases and deployment are independent opt-in choices
 for the target repository, based on its stack and owner approval.
@@ -289,9 +294,12 @@ Divergences to know before copying in either direction:
    `type/documentation` share `0075CA`).
 3. For a `type/*` label, also update every adopting repository's manifest and its
    `type-labels`. A gate naming a label the remote lacks is unsatisfiable.
-4. Removing an entry does not remove the remote label. The apply recipe is in the
+4. For a `complexity/*` label, update CONTRACT.yml, labels.yml, docs, and
+   validation together. Complexity is canonical at four members; changing it is
+   a cross-repository standard change, not a local extension.
+5. Removing an entry does not remove the remote label. The apply recipe is in the
    header of `labels.yml`; read the target's own copy before overwriting it.
-5. A change for **one** repository is not an edit here: declare it in that
+6. A change for **one** repository is not an edit here: declare it in that
    repository's `standards.local.yml` under `extensions`.
 
 ### `labels.yml`
@@ -299,9 +307,10 @@ Divergences to know before copying in either direction:
 - Each entry has exactly `name`, `color`, `description`, in that order. Colors are
   quoted six-digit hex without `#` (`"D73A4A"`), the form `gh label create` expects.
   Descriptions are quoted and end with a period.
-- One blank line between entries. Families in the order `type`, `status`, `scope`,
-  `meta`, `github_actions`, `release`; within `type`: bug, feature, improvement,
-  task, documentation. Neither is alphabetical — match the file, do not re-sort.
+- One blank line between entries. Families in the order `type`, `status`,
+  `complexity`, `scope`, `meta`, `github_actions`, `release`; within `type`: bug,
+  feature, improvement, task, documentation; within `complexity`: low, medium,
+  high, unknown. Neither is alphabetical — match the file, do not re-sort.
 
 ### Issue templates
 

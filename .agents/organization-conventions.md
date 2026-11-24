@@ -63,11 +63,16 @@ in `.github/ISSUE_TEMPLATE/`. The standard's `config.yml` disables blank issues.
 `.github/labels.yml` is the manifest. It is a record, not configuration: GitHub
 does not read it, and editing it changes no remote.
 
-- Six families: `type/`, `status/`, `scope/`, `meta/`, `github_actions`, and
-  `release/`.
+- Seven families: `type/`, `status/`, `complexity/`, `scope/`, `meta/`,
+  `github_actions`, and `release/`.
 - `type/` is frozen at five members. A repository-specific concern uses an
   existing `type/*` label plus an `extensions` entry in its customization record;
   it does not add a `type/*` label.
+- `complexity/` is canonical at four members: `complexity/low`,
+  `complexity/medium`, `complexity/high`, and `complexity/unknown`. An issue
+  carries at most one complexity label. `status/ready` requires exactly one
+  complexity label; `complexity/unknown` is a valid classification while evidence
+  is insufficient. Change the complexity label when evidence changes.
 - Never name a label the manifest does not declare.
 
 ## Commits

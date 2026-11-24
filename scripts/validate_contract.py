@@ -6,6 +6,7 @@ This script checks:
 2. PR templates have the correct headings (matching CONTRACT.yml)
 3. Labels named in templates exist in labels.yml
 4. Taxonomy mappings are consistent
+5. Complexity label policy and manifest entries match CONTRACT.yml
 
 Exit code 0 means all validations passed. Exit code 1 means at least one validation failed.
 """
@@ -50,7 +51,7 @@ def load_pr_templates():
 
 def load_labels():
     labels = load_yaml(REPO_ROOT / ".github" / "labels.yml")
-    return {label["name"] for label in labels}
+    return {label["name"]: label.get("description", "") for label in labels}
 
 
 def validate_issue_templates(contract, templates, labels):
@@ -280,6 +281,81 @@ def validate_taxonomy(contract, templates, labels):
     return errors
 
 
+def validate_complexity(contract, labels):
+    errors = []
+    issue_contract = contract.get("issue", {})
+    complexity = issue_contract.get("complexity")
+    if not isinstance(complexity, dict):
+        errors.append("Complexity: issue.complexity section is missing or invalid")
+        return errors
+
+    cardinality = complexity.get("cardinality")
+    if cardinality != "at-most-one":
+        errors.append(
+            f"Complexity: cardinality must be 'at-most-one', got {cardinality!r}"
+        )
+
+    required_for = complexity.get("required_for")
+    if not isinstance(required_for, list) or "status/ready" not in required_for:
+        errors.append(
+            "Complexity: required_for must include 'status/ready'"
+        )
+    elif required_for != ["status/ready"]:
+        errors.append(
+            f"Complexity: required_for must be exactly ['status/ready'], got {required_for!r}"
+        )
+
+    for required_label in required_for or []:
+        if required_label not in labels:
+            errors.append(
+                f"Complexity: required_for label '{required_label}' not found in labels.yml"
+            )
+
+    contract_labels = complexity.get("labels")
+    if not isinstance(contract_labels, list) or not contract_labels:
+        errors.append("Complexity: labels must be a non-empty list")
+        return errors
+
+    expected_names = [
+        "complexity/low",
+        "complexity/medium",
+        "complexity/high",
+        "complexity/unknown",
+    ]
+    actual_names = []
+    for entry in contract_labels:
+        if not isinstance(entry, dict):
+            errors.append(f"Complexity: label entry must be a mapping, got {entry!r}")
+            continue
+        name = entry.get("name")
+        description = entry.get("description")
+        if not isinstance(name, str) or not name:
+            errors.append("Complexity: label entry missing non-empty name")
+            continue
+        actual_names.append(name)
+        if not isinstance(description, str) or not description.strip():
+            errors.append(f"Complexity: label '{name}' missing description")
+        if name not in labels:
+            errors.append(f"Complexity: label '{name}' not found in labels.yml")
+        elif description != labels.get(name):
+            errors.append(
+                f"Complexity: label '{name}' description in labels.yml does not match CONTRACT.yml"
+            )
+
+    if actual_names != expected_names:
+        errors.append(
+            f"Complexity: labels {actual_names} != expected {expected_names}"
+        )
+
+    manifest_complexity = sorted(label for label in labels if label.startswith("complexity/"))
+    if manifest_complexity != sorted(expected_names):
+        errors.append(
+            f"Complexity: labels.yml complexity labels {manifest_complexity} != expected {sorted(expected_names)}"
+        )
+
+    return errors
+
+
 def main():
     contract = load_contract()
     issue_templates = load_issue_templates()
@@ -290,6 +366,7 @@ def main():
     errors.extend(validate_issue_templates(contract, issue_templates, labels))
     errors.extend(validate_pr_templates(contract, pr_templates))
     errors.extend(validate_taxonomy(contract, issue_templates, labels))
+    errors.extend(validate_complexity(contract, labels))
 
     if errors:
         print("Contract validation failed:")

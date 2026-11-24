@@ -5,8 +5,9 @@
 # changes no behaviour. To change the gate, edit that repository's own `policy.yml`.
 #
 # `reason` is required on every override, drop and structural entry. Level 3 also needs
-# `issue:`. Reserved families: type/, status/, scope/, meta/, github_actions, release/.
-# `type/` is frozen at five members. Policy: docs/customization.md.
+# `issue:`. Reserved families: type/, status/, complexity/, scope/, meta/, github_actions, release/.
+# `type/` is frozen at five members; `complexity/` is canonical at four members.
+# Policy: docs/customization.md.
 #
 # Keep only the sections you use:
 #

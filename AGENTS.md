@@ -90,8 +90,8 @@ all PR templates; change one, change all.
 ### Labels
 
 `chore`, `test`, and `spike` use `type/task`; the reasoning is in
-docs/architecture.md. The manifest's role, the six families, and the rules for
-`type/*` are in the organisation conventions.
+docs/architecture.md. The manifest's role, the label families, and the rules for
+`type/*` and `complexity/*` are in the organisation conventions.
 
 ### Release PRs
 

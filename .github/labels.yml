@@ -13,6 +13,8 @@
 # into 0).
 #
 # `type/*` has five members, deliberately without `type/breaking-change`.
+# `complexity/*` has four members; issues carry at most one, and `status/ready`
+# requires exactly one.
 
 - name: "type/bug"
   color: "D73A4A"
@@ -44,7 +46,7 @@
 
 - name: "status/ready"
   color: "0E8A16"
-  description: "The issue is sufficiently defined and ready to be worked on."
+  description: "The issue is sufficiently defined, classified, and ready to be worked on."
 
 - name: "status/in-progress"
   color: "1D76DB"
@@ -53,6 +55,22 @@
 - name: "status/waiting"
   color: "CFD3D7"
   description: "Work is waiting for information, feedback, approval, or another action."
+
+- name: "complexity/low"
+  color: "0E8A16"
+  description: "Scope and approach are clear; implementation risk is low with no significant unknowns."
+
+- name: "complexity/medium"
+  color: "FBCA04"
+  description: "Scope is understood, but work involves bounded design choices or limited coordination."
+
+- name: "complexity/high"
+  color: "D93F0B"
+  description: "Scope or approach has significant unknowns, cross-cutting impact, or elevated risk."
+
+- name: "complexity/unknown"
+  color: "BFD4F2"
+  description: "Evidence is insufficient to classify; use until evidence supports low, medium, or high."
 
 - name: "scope/frontend"
   color: "BFDADC"
