@@ -160,12 +160,13 @@ issue-label state as records that must agree.
    Do not delete unrelated labels. If the target already uses `complexity/*`
    names with different meanings, stop and reconcile that conflict as an
    explicit customization decision before applying the canonical labels.
-4. Audit existing issue assignments. Every issue carrying `status/ready` must
-   have exactly one `complexity/*` label; `complexity/unknown` is valid when
-   evidence is insufficient. If an issue has conflicting complexity labels, keep
-   the one supported by current evidence and remove the others. Document the
-   migration path for existing issues and record any issues that still need
-   human classification.
+4. Audit existing issue assignments. Every issue must carry at most one
+   `complexity/*` label. Every issue carrying `status/ready` must have exactly
+   one `complexity/*` label; `complexity/unknown` is valid when evidence is
+   insufficient. If an issue has conflicting complexity labels, keep the one
+   supported by current evidence and remove the others. Document the migration
+   path for existing issues and record any issues that still need human
+   classification.
 5. Check the target `.github/workflows/policy.yml`:
    `type-labels` must name the actual `type/*` labels,
    `title-types` must name PR title types, and

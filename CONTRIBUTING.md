@@ -82,6 +82,9 @@ Merging here is the midpoint. A change is finished when:
 2. Every `policy.yml` agrees, if labels or types changed.
 3. Every changed label has been applied to each remote with
    `gh label create --force`. Editing `labels.yml` changes no remote.
+4. Every adopting repository has been audited for `status/ready` issues missing
+   a complexity label or carrying conflicting `complexity/*` labels, and any
+   issues found have been remediated or recorded.
 
 Steps 1–3 cannot be verified from here, because this repository does not track who
 adopted it (see *Sync model* in docs/architecture.md). Finishing a change means

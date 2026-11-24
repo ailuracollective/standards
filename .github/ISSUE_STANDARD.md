@@ -65,9 +65,10 @@ historical (`bug.yml`, `maintenance.yml`, `investigation.yml`).
 
 ## Complexity classification
 
-Issues carry exactly one canonical complexity label. Complexity expresses
-implementation uncertainty and difficulty independent of effort estimates and
-AI providers. Classification can change as evidence emerges.
+Issues carry at most one canonical complexity label. An issue with
+`status/ready` requires exactly one. Complexity expresses implementation
+uncertainty and difficulty independent of effort estimates and AI providers.
+Classification can change as evidence emerges.
 
 | Label                | Meaning                                                                                 |
 | -------------------- | --------------------------------------------------------------------------------------- |
