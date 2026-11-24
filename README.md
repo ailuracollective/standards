@@ -10,7 +10,7 @@ copies the artifacts by hand:
 | `.github/ISSUE_STANDARD.md`      | how an issue is written — documentation of the contract    |
 | `.github/ISSUE_TEMPLATE/*.yml`   | the 7 forms in the issue chooser, plus `config.yml`        |
 | `.github/PULL_REQUEST_TEMPLATE/` | 12 forms, one per Conventional Commit type, plus a default |
-| `.github/labels.yml`             | the 26-label set                                           |
+| `.github/labels.yml`             | the 30-label set                                           |
 | `.github/CODEOWNERS`             | who reviews a change, per file                             |
 
 A sixth file, `.github/standards.local.example.yml`, is opt-in: it is the shape of a
@@ -46,10 +46,15 @@ Five steps are not optional:
    repository cannot run.
 2. **Reconcile the label vocabulary.** Do not copy `labels.yml` over an existing
    manifest without porting its reconciliation recipe — see *Sync model* in
-   docs/architecture.md. If the repository runs `pull-request@v2`, fix `type-labels` in the
-   same change, or the gate rejects the labels the templates ask for.
-3. **Create the labels on the remote.** GitHub does not read the manifest. Until a
-   label exists, any template naming it has it silently discarded.
+   docs/architecture.md. Reconcile all canonical labels, including the four
+   `complexity/*` labels, against the complete remote inventory. If the repository
+   runs `pull-request@v2`, fix `type-labels` in the same change when PR type
+   labels change, or the gate rejects the labels the templates ask for.
+3. **Create the labels on the remote and audit issue assignments.** GitHub does
+   not read the manifest. Until a label exists, any template or triage process
+   naming it has it silently discarded. Existing `status/ready` issues need
+   exactly one `complexity/*` label; use `complexity/unknown` when evidence is
+   insufficient.
 4. **Tell the gate where the default pull request form is.** Here it lives inside
    the directory (`.github/PULL_REQUEST_TEMPLATE/PULL_REQUEST_TEMPLATE.md`); others
    keep it at `.github/PULL_REQUEST_TEMPLATE.md`. The gate defaults to the second, so
@@ -79,8 +84,9 @@ It declares, it does not configure: **nothing reads it, not even the gate**. A v
 there changes nothing until you also edit your own `policy.yml`. docs/customization.md
 has the four deviation levels and what each costs.
 
-A label in a new family such as `area/` needs no approval. A new `type/*` label
-does: it is the family the gate reads, and it is frozen at five.
+A label in a new family such as `area/` needs no approval. A new `type/*` or
+`complexity/*` label does: `type/` is frozen at five and `complexity/` is
+canonical at four.
 
 ## Verifying an adoption
 
@@ -88,9 +94,13 @@ Nothing here runs against an adopting repository, so checks are manual. Start wi
 the defect that fails silently — configuration naming something that does not exist:
 
 ```sh
-# 1. which labels exist on the remote? Every label a template or workflow names must be here.
+# 1. which labels exist on the remote? Every label the manifest, templates, or workflows name must be here.
 gh api --paginate --slurp 'repos/{owner}/{repo}/labels?per_page=100' \
   --jq '[.[][] | .name] | sort | .[]'
+
+# 1b. audit complexity on ready issues; status/ready requires exactly one complexity/* label.
+gh api --paginate --slurp 'repos/{owner}/{repo}/issues?state=all&labels=status/ready&per_page=100' \
+  --jq '[.[][] | {number, labels: [.labels[].name | select(startswith("complexity/"))]}]'
 
 # 2. which labels do the gate's inputs name?
 grep -A3 'type-labels:\|approved-label:\|auto-label-name:' .github/workflows/policy.yml

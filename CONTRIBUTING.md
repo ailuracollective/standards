@@ -9,8 +9,10 @@ written down, before the change exists.
 
 Say what has to happen outside this repository. Adding one label to
 `.github/labels.yml` is four changes, none of them automatic: the manifest here, the
-manifest in each adopting repository, the `type-labels` input of each `policy.yml`,
-and the label on each remote.
+manifest in each adopting repository, the relevant policy/input or contract
+validation in each affected repository, and the label on each remote. For
+`type/*` labels, `type-labels` must also change; for `complexity/*` labels, the
+contract, validator, docs, and readiness migration guidance must change together.
 
 File issues with the forms in `.github/ISSUE_TEMPLATE/` (blank issues are disabled).
 If none of the seven fits, that is a finding about the templates: open it as a
@@ -80,6 +82,9 @@ Merging here is the midpoint. A change is finished when:
 2. Every `policy.yml` agrees, if labels or types changed.
 3. Every changed label has been applied to each remote with
    `gh label create --force`. Editing `labels.yml` changes no remote.
+4. Every adopting repository has been audited for `status/ready` issues missing
+   a complexity label or carrying conflicting `complexity/*` labels, and any
+   issues found have been remediated or recorded.
 
 Steps 1–3 cannot be verified from here, because this repository does not track who
 adopted it (see *Sync model* in docs/architecture.md). Finishing a change means

@@ -63,6 +63,28 @@ All other types use the common contract alone.
 Do not derive an issue type from the template filename: some filenames are
 historical (`bug.yml`, `maintenance.yml`, `investigation.yml`).
 
+## Complexity classification
+
+Issues carry at most one canonical complexity label. An issue with
+`status/ready` requires exactly one. Complexity expresses implementation
+uncertainty and difficulty independent of effort estimates and AI providers.
+Classification can change as evidence emerges.
+
+| Label                | Meaning                                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| `complexity/low`     | Scope and approach are clear; implementation risk is low with no significant unknowns.  |
+| `complexity/medium`  | Scope is understood, but work involves bounded design choices or limited coordination.  |
+| `complexity/high`    | Scope or approach has significant unknowns, cross-cutting impact, or elevated risk.     |
+| `complexity/unknown` | Evidence is insufficient to classify; use until evidence supports low, medium, or high. |
+
+Rules:
+
+- At most one complexity label is permitted per issue.
+- Exactly one complexity label is required for `status/ready`, including
+  `complexity/unknown` as a valid classification.
+- Change the complexity label when evidence changes; do not leave conflicting
+  complexity labels on an issue.
+
 ## Writing principles
 
 - Prefer outcomes over implementation steps.
@@ -100,5 +122,13 @@ Agents must not infer that:
 
 ## Migration
 
-Existing issues are not rewritten. Only newly created issues use the new
-contract. Old template filenames remain as compatibility aliases.
+Existing issue bodies are not rewritten. Only newly created issues use the
+current body contract. Old template filenames remain as compatibility aliases.
+
+For complexity classification adoption, existing issues also keep their current
+bodies. Repositories should audit existing issues, especially those carrying
+`status/ready`, and add exactly one `complexity/*` label. When evidence is
+insufficient, use `complexity/unknown` until evidence supports `low`, `medium`,
+or `high`. If an issue has conflicting complexity labels, keep the one supported
+by current evidence and remove the others. No automatic organization-wide
+relabeling is performed.

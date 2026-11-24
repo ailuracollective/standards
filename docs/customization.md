@@ -37,11 +37,14 @@ edit — the failure it prevents is silent.
 
 - Level 1 needs no approval because level 2 does not either; a policy
   with an approval step at the bottom is one nobody follows.
-- Reserved are the core families — `type/`, `status/`, `scope/`,
-  `meta/`, `release/`, `github_actions` — not a closed list of new
+- Reserved are the core families — `type/`, `status/`, `complexity/`,
+  `scope/`, `meta/`, `release/`, `github_actions` — not a closed list of new
   ones.
 - `type/` is frozen at five. A project-specific type is an existing
   `type/*` label plus an entry in `extensions`.
+- `complexity/` is canonical at four members: `low`, `medium`, `high`, and
+  `unknown`. A project-specific complexity scheme is a level-3 deviation; do
+  not add or replace canonical `complexity/*` labels as extensions.
 - `reason` is **required** wherever a deviation is recorded. It is what
   separates a decision from rot.
 

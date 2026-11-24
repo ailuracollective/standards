@@ -65,6 +65,29 @@ Until then: CODEOWNERS owns itself, so a pull request cannot remove
 the review it needs; and nobody pushes straight to `main` even though
 they could — the review is the point.
 
+## Complexity classification enforcement
+
+The complexity contract is partly static and partly procedural.
+
+- **Static:** `scripts/validate_contract.py` verifies that
+  `.github/CONTRACT.yml` declares the canonical `complexity/*` labels and
+  readiness rule, and that `.github/labels.yml` contains the matching
+  manifest entries. CI runs this validator on pull requests.
+- **Not enforced by workflow:** no workflow currently enforces "at most one
+  complexity label per issue" or "exactly one complexity label required for
+  `status/ready`" on live issue events. The issue triage job only applies
+  `status/needs-review` on `issues.opened`; it does not validate or add
+  complexity labels.
+- **Pull request boundary:** the PR policy requires the linked issue to carry
+  `status/ready`, but it does not verify the linked issue's complexity label.
+  A PR gate passing is not evidence that complexity classification is correct.
+
+Maintainers apply or correct the complexity label during triage and before
+moving an issue to `status/ready`. During adoption, audit existing remote
+issues — especially `status/ready` issues — and reconcile their complexity
+labels manually. Record any repository-specific enforcement automation as a
+deviation or local extension, not as part of the canonical shared standard.
+
 ## How to tell, for any repository
 
 Check **both** APIs:
