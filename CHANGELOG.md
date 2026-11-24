@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/ailuracollective/standards/compare/v0.5.0...v0.6.0) (2026-11-24)
+
+
+### Features
+
+* standardize issue complexity classification ([#39](https://github.com/ailuracollective/standards/issues/39)) ([07aebe5](https://github.com/ailuracollective/standards/commit/07aebe56724bf95438e869bb6d24fad7d740ec97))
+
 ## [0.5.0](https://github.com/ailuracollective/standards/compare/v0.4.0...v0.5.0) (2026-10-08)
 
 
